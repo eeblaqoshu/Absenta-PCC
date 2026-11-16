@@ -271,7 +271,11 @@ export async function ubahTutupSesiAction(sesiId: number, jamMaksDatang: string)
       where: { id: sesiId },
       include: {
         agenda: {
-          select: { proker: { select: { id: true, periode: { select: { status: true } } } } },
+          select: {
+            tglPelaksanaan: true,
+            tglSelesai: true,
+            proker: { select: { id: true, periode: { select: { status: true } } } },
+          },
         },
       },
     });
@@ -283,6 +287,14 @@ export async function ubahTutupSesiAction(sesiId: number, jamMaksDatang: string)
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat mengubah sesi pada periode kepengurusan yang sudah selesai",
+        },
+      };
+    }
+    if (agendaTelahBerlalu(sesi.agenda.tglPelaksanaan, sesi.agenda.tglSelesai)) {
+      return {
+        error: {
+          kode: "AGENDA_SELESAI",
+          pesan: "Agenda ini sudah selesai, jadwal sesi tidak bisa diubah lagi",
         },
       };
     }
@@ -365,7 +377,11 @@ export async function hapusSesiAction(sesiId: number) {
       where: { id: sesiId },
       include: {
         agenda: {
-          select: { proker: { select: { id: true, periode: { select: { status: true } } } } },
+          select: {
+            tglPelaksanaan: true,
+            tglSelesai: true,
+            proker: { select: { id: true, periode: { select: { status: true } } } },
+          },
         },
         _count: { select: { presensi: true } },
       },
@@ -379,6 +395,15 @@ export async function hapusSesiAction(sesiId: number) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat menghapus sesi pada periode kepengurusan yang sudah selesai",
+        },
+      };
+    }
+    if (agendaTelahBerlalu(sesi.agenda.tglPelaksanaan, sesi.agenda.tglSelesai)) {
+      return {
+        error: {
+          kode: "AGENDA_SELESAI",
+          pesan:
+            "Agenda ini sudah selesai, sesi presensi tidak bisa dihapus lagi. Anda masih bisa melihat daftar hadirnya.",
         },
       };
     }

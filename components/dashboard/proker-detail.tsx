@@ -16,8 +16,8 @@ import { PeranPanitia, JenisAgenda, TargetPeserta, StatusPeriode } from "@prisma
 import { motion, AnimatePresence } from "framer-motion";
 import { konfirmasiHapus } from "@/lib/swal";
 import { SesiModal, type LokasiOption, type SesiItem } from "@/components/dashboard/sesi-modal";
-import { KehadiranModal } from "@/components/dashboard/kehadiran-modal";
 import { AgendaStatusTabs } from "@/components/agenda-status-tabs";
+import { EmptyAgenda } from "@/components/empty-agenda";
 import {
   Modal,
   ModalBody,
@@ -188,10 +188,6 @@ export function ProkerDetail({
   const [modalSesi, setModalSesi] = useState<{
     agenda: AgendaItem;
     sesiAwal: SesiItem | null;
-  } | null>(null);
-  const [modalKehadiran, setModalKehadiran] = useState<{
-    agenda: AgendaItem;
-    sesiId: number;
   } | null>(null);
 
   // ─────────────────────────────────────────────
@@ -730,25 +726,9 @@ export function ProkerDetail({
           />
 
           {proker.agenda.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
-              <Calendar className="w-10 h-10 text-slate-muted mx-auto mb-3" />
-              <p className="text-sm font-semibold text-navy">
-                Belum ada agenda untuk proker ini
-              </p>
-              <p className="text-xs text-slate-muted mt-1">
-                Klik tombol &quot;Tambah Agenda&quot; untuk membuat jadwal rapat atau hari H kegiatan.
-              </p>
-            </div>
+            <EmptyAgenda judul="Belum ada agenda untuk proker ini" deskripsi="Klik tombol &quot;Tambah Agenda&quot; untuk membuat jadwal rapat atau hari H kegiatan." />
           ) : agendaTerlihat.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
-              <Calendar className="w-10 h-10 text-slate-muted mx-auto mb-3" />
-              <p className="text-sm font-semibold text-navy">
-                Belum ada agenda di kategori ini
-              </p>
-              <p className="text-xs text-slate-muted mt-1">
-                Status agenda berpindah otomatis mengikuti rentang tanggal &amp; jam pelaksanaan.
-              </p>
-            </div>
+            <EmptyAgenda />
           ) : (
             <AnimatePresence mode="wait">
               <motion.div
@@ -927,14 +907,14 @@ export function ProkerDetail({
                                         Layar QR
                                       </Link>
                                     )}
-                                    <button
-                                      onClick={() => setModalKehadiran({ agenda: item, sesiId: sesi.id })}
+                                    <Link
+                                      href={`/dashboard/presensi/${sesi.id}`}
                                       className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-white border border-[#E2E8F0] hover:bg-surface text-navy font-medium text-[11px] transition-all"
                                     >
                                       <Users className="w-3 h-3" />
                                       Daftar Hadir
-                                    </button>
-                                    {!isReadonly && (
+                                    </Link>
+                                    {!isReadonly && !sudahSelesai && (
                                       <button
                                         onClick={() =>
                                           setModalSesi({
@@ -1384,16 +1364,6 @@ export function ProkerDetail({
           radiusM={modalSesi.agenda.radiusM}
           sesiAwal={modalSesi.sesiAwal}
           onTutup={() => setModalSesi(null)}
-        />
-      )}
-
-      {/* MODAL DAFTAR HADIR STO (per sesi) */}
-      {modalKehadiran && (
-        <KehadiranModal
-          judulAgenda={modalKehadiran.agenda.judul}
-          namaProker={proker.nama}
-          rekap={rekap[modalKehadiran.sesiId]}
-          onTutup={() => setModalKehadiran(null)}
         />
       )}
     </div>

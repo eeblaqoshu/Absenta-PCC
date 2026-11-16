@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle, QrCode } from "lucide-react";
 import Link from "next/link";
 import { AgendaStatusTabs } from "@/components/agenda-status-tabs";
+import { EmptyAgenda } from "@/components/empty-agenda";
 
 export interface AgendaItem {
   id: number;
@@ -77,15 +78,7 @@ export function StoAgendaTabs({
           className="space-y-3"
         >
           {currentTabData.length === 0 ? (
-            <div className="py-14 px-4 rounded-3xl bg-white border border-[#E2E8F0] text-center shadow-sm">
-              <Calendar className="w-9 h-9 text-slate-muted mx-auto mb-2.5" />
-              <p className="text-sm font-semibold text-navy">
-                Belum ada agenda di kategori ini
-              </p>
-              <p className="text-xs text-slate-muted mt-1 max-w-sm mx-auto leading-relaxed">
-                Agenda kegiatan akan otomatis terdata setelah dijadwalkan oleh adsek/panitia terkait.
-              </p>
-            </div>
+            <EmptyAgenda />
           ) : (
             currentTabData.map((agenda) => (
               <div
