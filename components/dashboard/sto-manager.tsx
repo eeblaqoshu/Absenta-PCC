@@ -10,6 +10,7 @@ import {
   imporCsvStoAction,
   CsvBarisSto,
 } from "@/lib/actions/sto";
+import { konfirmasiHapus } from "@/lib/swal";
 import {
   Users,
   Plus,
@@ -43,7 +44,10 @@ export function StoManager({
   namaPeriode: string;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
+  const [pesan, setPesan] = useState<{
+    tipe: "sukses" | "error";
+    teks: string;
+  } | null>(null);
 
   // Search & Filter
   const [search, setSearch] = useState("");
@@ -88,7 +92,8 @@ export function StoManager({
         item.nim.toLowerCase().includes(search.toLowerCase()) ||
         item.emailGoogle.toLowerCase().includes(search.toLowerCase());
       const matchDivisi =
-        filterDivisi === "all" || item.divisi?.toLowerCase() === filterDivisi.toLowerCase();
+        filterDivisi === "all" ||
+        item.divisi?.toLowerCase() === filterDivisi.toLowerCase();
       return matchSearch && matchDivisi;
     });
   }, [initialSto, search, filterDivisi]);
@@ -159,8 +164,13 @@ export function StoManager({
     });
   };
 
-  const handleHapusSto = (id: number, namaSto: string) => {
-    if (!confirm(`Hapus data pengurus "${namaSto}"?`)) return;
+  const handleHapusSto = async (id: number, namaSto: string) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus Pengurus STO?",
+      pesan: `Anda yakin ingin menghapus data pengurus "${namaSto}"? Data kepanitiaan dan presensi terkait akan terhapus.`,
+      tombolHapus: "Ya, Hapus Pengurus",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await hapusStoAction(id);
@@ -205,7 +215,9 @@ export function StoManager({
 
       const parsedRows: CsvBarisSto[] = [];
       for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(delimiter).map((c) => c.trim().replace(/^["']|["']$/g, ""));
+        const cols = lines[i]
+          .split(delimiter)
+          .map((c) => c.trim().replace(/^["']|["']$/g, ""));
         if (cols.length < 3) continue;
 
         parsedRows.push({
@@ -270,7 +282,8 @@ export function StoManager({
             Data Pengurus STO
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Terikat pada periode aktif: <span className="font-semibold text-primary">{namaPeriode}</span>
+            Terikat pada periode aktif:{" "}
+            <span className="font-semibold text-primary">{namaPeriode}</span>
           </p>
         </div>
 
@@ -370,7 +383,10 @@ export function StoManager({
             <tbody className="divide-y divide-[#E2E8F0]">
               {filteredSto.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-muted">
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-slate-muted"
+                  >
                     Tidak ada data pengurus STO yang sesuai.
                   </td>
                 </tr>
@@ -389,7 +405,9 @@ export function StoManager({
                           <div className="font-semibold text-navy">
                             {item.nama}
                           </div>
-                          <div className="text-[11px] text-slate-muted">{item.nim}</div>
+                          <div className="text-[11px] text-slate-muted">
+                            {item.nim}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -459,7 +477,9 @@ export function StoManager({
             >
               <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
                 <h3 className="text-sm font-bold text-primary">
-                  {modalTambahBuka ? "Tambah Pengurus STO" : "Edit Pengurus STO"}
+                  {modalTambahBuka
+                    ? "Tambah Pengurus STO"
+                    : "Edit Pengurus STO"}
                 </h3>
                 <button
                   onClick={() => {
@@ -474,7 +494,9 @@ export function StoManager({
               </div>
 
               <form
-                onSubmit={modalTambahBuka ? handleSubmitTambah : handleSubmitEdit}
+                onSubmit={
+                  modalTambahBuka ? handleSubmitTambah : handleSubmitEdit
+                }
                 className="p-6 space-y-4"
               >
                 <div>
@@ -566,7 +588,9 @@ export function StoManager({
                     disabled={isPending}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
                   >
-                    {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     Simpan
                   </button>
                 </div>
@@ -659,7 +683,10 @@ export function StoManager({
                       <span className="text-navy">Laporan Impor:</span>
                     </div>
                     <p className="text-slate-muted">
-                      • Berhasil disimpan: <strong className="text-emerald-600">{csvHasil.totalBerhasil} data</strong>
+                      • Berhasil disimpan:{" "}
+                      <strong className="text-emerald-600">
+                        {csvHasil.totalBerhasil} data
+                      </strong>
                     </p>
                     {csvHasil.totalGagal > 0 && (
                       <div className="space-y-1">
@@ -681,7 +708,8 @@ export function StoManager({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-navy">
-                        Preview Data ({csvPreview.length} baris ditemukan di {csvFileName}):
+                        Preview Data ({csvPreview.length} baris ditemukan di{" "}
+                        {csvFileName}):
                       </span>
                     </div>
                     <div className="border border-[#E2E8F0] rounded-xl overflow-x-auto max-h-48 text-[11px]">
@@ -698,11 +726,21 @@ export function StoManager({
                         <tbody className="divide-y divide-[#E2E8F0]">
                           {csvPreview.slice(0, 10).map((row, i) => (
                             <tr key={i}>
-                              <td className="px-3 py-1.5 font-medium text-navy">{row.nama}</td>
-                              <td className="px-3 py-1.5 text-slate-muted">{row.nim}</td>
-                              <td className="px-3 py-1.5 font-mono text-slate-muted">{row.email}</td>
-                              <td className="px-3 py-1.5 text-navy">{row.jabatan || "-"}</td>
-                              <td className="px-3 py-1.5 text-navy">{row.divisi || "-"}</td>
+                              <td className="px-3 py-1.5 font-medium text-navy">
+                                {row.nama}
+                              </td>
+                              <td className="px-3 py-1.5 text-slate-muted">
+                                {row.nim}
+                              </td>
+                              <td className="px-3 py-1.5 font-mono text-slate-muted">
+                                {row.email}
+                              </td>
+                              <td className="px-3 py-1.5 text-navy">
+                                {row.jabatan || "-"}
+                              </td>
+                              <td className="px-3 py-1.5 text-navy">
+                                {row.divisi || "-"}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -710,7 +748,8 @@ export function StoManager({
                     </div>
                     {csvPreview.length > 10 && (
                       <p className="text-[10px] text-slate-muted italic">
-                        + {csvPreview.length - 10} baris lainnya akan diproses...
+                        + {csvPreview.length - 10} baris lainnya akan
+                        diproses...
                       </p>
                     )}
                   </div>
@@ -732,7 +771,9 @@ export function StoManager({
                     onClick={handleProsesImporCsv}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
                   >
-                    {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     Mulai Impor ({csvPreview.length} Data)
                   </button>
                 )}
