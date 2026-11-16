@@ -10,6 +10,7 @@ import {
   hapusPeriodeAction,
 } from "@/lib/actions/periode";
 import { StatusPeriode } from "@prisma/client";
+import { konfirmasiHapus, konfirmasiAksi } from "@/lib/swal";
 import {
   Calendar,
   Plus,
@@ -35,10 +36,17 @@ interface PeriodeItem {
   };
 }
 
-export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem[] }) {
+export function PeriodeManager({
+  initialPeriode,
+}: {
+  initialPeriode: PeriodeItem[];
+}) {
   const [modalBuka, setModalBuka] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
+  const [pesan, setPesan] = useState<{
+    tipe: "sukses" | "error";
+    teks: string;
+  } | null>(null);
 
   // Form State
   const [nama, setNama] = useState("");
@@ -70,14 +78,15 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
     });
   };
 
-  const handleTutupPeriode = (id: number, namaPeriode: string) => {
-    if (
-      !confirm(
-        `Yakin ingin menutup periode "${namaPeriode}"?\n\nPERINGATAN: Sesuai aturan PRD, periode selesai akan berstatus READ-ONLY (proker, panitia, agenda, dan sesi presensi tidak dapat dimanipulasi lagi).`
-      )
-    ) {
-      return;
-    }
+  const handleTutupPeriode = async (id: number, namaPeriode: string) => {
+    const setuju = await konfirmasiAksi({
+      judul: "Tutup Periode Kepengurusan?",
+      pesan: `Yakin ingin menutup periode "${namaPeriode}"?\n PERINGATAN: Periode selesai akan berstatus READ-ONLY (proker, panitia, agenda, dan sesi presensi tidak dapat dimanipulasi lagi).`,
+      icon: "warning",
+      tombolYa: "Ya, Tutup Periode",
+      warnaKonfirmasi: "#F5B301",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await tutupPeriodeAction(id);
@@ -89,14 +98,15 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
     });
   };
 
-  const handleAktifkanPeriode = (id: number, namaPeriode: string) => {
-    if (
-      !confirm(
-        `Jadikan periode "${namaPeriode}" sebagai periode aktif?\nPeriode aktif saat ini akan otomatis dialihkan menjadi selesai.`
-      )
-    ) {
-      return;
-    }
+  const handleAktifkanPeriode = async (id: number, namaPeriode: string) => {
+    const setuju = await konfirmasiAksi({
+      judul: "Aktifkan Periode?",
+      pesan: `Jadikan periode "${namaPeriode}" sebagai periode aktif? Periode aktif saat ini akan otomatis dialihkan menjadi selesai.`,
+      icon: "question",
+      tombolYa: "Ya, Jadikan Aktif",
+      warnaKonfirmasi: "#1E6FE0",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await aktifkanPeriodeAction(id);
@@ -108,8 +118,13 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
     });
   };
 
-  const handleHapusPeriode = (id: number, namaPeriode: string) => {
-    if (!confirm(`Hapus periode "${namaPeriode}"?`)) return;
+  const handleHapusPeriode = async (id: number, namaPeriode: string) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus Periode?",
+      pesan: `Anda yakin ingin menghapus periode kosong "${namaPeriode}"?`,
+      tombolHapus: "Ya, Hapus Periode",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await hapusPeriodeAction(id);
@@ -131,7 +146,8 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
             Kelola Periode Kepengurusan
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Hanya 1 periode aktif pada satu waktu. Periode selesai bersifat read-only untuk menjaga riwayat.
+            Hanya 1 periode aktif pada satu waktu. Periode selesai bersifat
+            read-only untuk menjaga riwayat.
           </p>
         </div>
 
@@ -227,7 +243,9 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleAktifkanPeriode(item.id, item.nama)}
+                        onClick={() =>
+                          handleAktifkanPeriode(item.id, item.nama)
+                        }
                         disabled={isPending}
                         title="Jadikan sebagai Periode Aktif"
                         className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-surface text-navy border border-[#CBD5E1] transition-colors"
@@ -363,10 +381,14 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
                   </label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as "aktif" | "selesai")}
+                    onChange={(e) =>
+                      setStatus(e.target.value as "aktif" | "selesai")
+                    }
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
                   >
-                    <option value="aktif">Aktif (Akan menutup periode aktif sebelumnya)</option>
+                    <option value="aktif">
+                      Aktif (Akan menutup periode aktif sebelumnya)
+                    </option>
                     <option value="selesai">Selesai (Read-only)</option>
                   </select>
                 </div>
@@ -384,7 +406,9 @@ export function PeriodeManager({ initialPeriode }: { initialPeriode: PeriodeItem
                     disabled={isPending}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
                   >
-                    {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     Simpan Periode
                   </button>
                 </div>

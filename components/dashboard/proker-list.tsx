@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react";
 import { buatProkerAction, ubahProkerAction, hapusProkerAction } from "@/lib/actions/proker";
 import { motion, AnimatePresence } from "framer-motion";
+import { konfirmasiHapus } from "@/lib/swal";
 import {
   FolderKanban,
   Plus,
@@ -92,14 +93,13 @@ export function ProkerList({
     });
   };
 
-  const handleHapusProker = (id: number, namaProker: string) => {
-    if (
-      !confirm(
-        `Yakin ingin menghapus proker "${namaProker}"?\nSemua susunan panitia dan agenda di dalamnya akan ikut terhapus.`
-      )
-    ) {
-      return;
-    }
+  const handleHapusProker = async (id: number, namaProker: string) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus Program Kerja?",
+      pesan: `Yakin ingin menghapus proker "${namaProker}"? Semua susunan panitia dan agenda di dalamnya akan ikut terhapus.`,
+      tombolHapus: "Ya, Hapus Proker",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await hapusProkerAction(id);

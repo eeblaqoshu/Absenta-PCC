@@ -14,6 +14,7 @@ import {
   hapusAgendaAction,
 } from "@/lib/actions/agenda";
 import { PeranPanitia, JenisAgenda, TargetPeserta, StatusPeriode } from "@prisma/client";
+import { konfirmasiHapus } from "@/lib/swal";
 import {
   Users,
   Calendar,
@@ -178,8 +179,13 @@ export function ProkerDetail({
     });
   };
 
-  const handleHapusPanitia = (kepanitiaanId: number, namaSto: string) => {
-    if (!confirm(`Hapus "${namaSto}" dari kepanitiaan proker ini?`)) return;
+  const handleHapusPanitia = async (kepanitiaanId: number, namaSto: string) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus dari Kepanitiaan?",
+      pesan: `Anda yakin ingin menghapus "${namaSto}" dari kepanitiaan proker ini?`,
+      tombolHapus: "Ya, Hapus Panitia",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await hapusPanitiaAction(kepanitiaanId);
@@ -273,8 +279,13 @@ export function ProkerDetail({
     });
   };
 
-  const handleHapusAgenda = (agendaId: number, judul: string) => {
-    if (!confirm(`Hapus agenda "${judul}"?`)) return;
+  const handleHapusAgenda = async (agendaId: number, judul: string) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus Agenda Kegiatan?",
+      pesan: `Anda yakin ingin menghapus agenda "${judul}"? Sesi presensi dan rekap terkait akan terhapus.`,
+      tombolHapus: "Ya, Hapus Agenda",
+    });
+    if (!setuju) return;
 
     startTransition(async () => {
       const res = await hapusAgendaAction(agendaId);
