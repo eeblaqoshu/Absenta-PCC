@@ -1,9 +1,9 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, FolderKanban, LayoutDashboard, Users } from "lucide-react";
+import { DashboardNav } from "@/components/dashboard/dashboard-nav";
+import { AdsekUserDropdown } from "@/components/dashboard/adsek-user-dropdown";
 
 export default async function DashboardLayout({
   children,
@@ -24,9 +24,9 @@ export default async function DashboardLayout({
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(11,42,91,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Left: Brand & Navigation */}
-            <div className="flex items-center gap-8">
+          <div className="relative flex items-center justify-between h-16">
+            {/* Left: Brand */}
+            <div className="flex items-center shrink-0">
               <Link href="/dashboard" className="flex items-center gap-3 group">
                 <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#E2E8F0] bg-white p-0.5 shadow-sm group-hover:scale-105 transition-transform">
                   <Image
@@ -40,100 +40,32 @@ export default async function DashboardLayout({
                 </div>
                 <div>
                   <h1 className="text-sm font-bold tracking-tight text-primary leading-tight">
-                    Presensi Adsek
+                    Presensi PCC
                   </h1>
                   <p className="text-[10px] text-secondary uppercase tracking-wider font-semibold">
                     {adsek.role.replace("_", " ")}
                   </p>
                 </div>
               </Link>
-
-              {/* Navigation Tabs */}
-              <nav className="hidden md:flex items-center gap-1">
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-muted hover:text-secondary hover:bg-surface transition-colors"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-secondary" />
-                  Ringkasan
-                </Link>
-                <Link
-                  href="/dashboard/proker"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-muted hover:text-secondary hover:bg-surface transition-colors"
-                >
-                  <FolderKanban className="w-4 h-4 text-accent" />
-                  Proker & Agenda
-                </Link>
-                {isAdmin && (
-                  <>
-                    <Link
-                      href="/dashboard/periode"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-muted hover:text-secondary hover:bg-surface transition-colors"
-                    >
-                      <Calendar className="w-4 h-4 text-primary" />
-                      Periode
-                    </Link>
-                    <Link
-                      href="/dashboard/sto"
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-muted hover:text-secondary hover:bg-surface transition-colors"
-                    >
-                      <Users className="w-4 h-4 text-secondary" />
-                      Data STO
-                    </Link>
-                  </>
-                )}
-              </nav>
             </div>
 
-            {/* Right: User Profile & Logout */}
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex flex-col text-right">
-                <span className="text-xs font-bold text-navy">
-                  {adsek.nama}
-                </span>
-                <span className="text-[10px] text-slate-muted">
-                  {session.email}
-                </span>
+            {/* Center: Navigation Tabs */}
+            <div className="hidden md:flex items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-none">
+              <div className="pointer-events-auto">
+                <DashboardNav isAdmin={isAdmin} />
               </div>
-              <LogoutButton />
+            </div>
+
+            {/* Right: User Dropdown (Profil & Keluar) */}
+            <div className="flex items-center shrink-0">
+              <AdsekUserDropdown adsek={adsek} email={session.email} />
             </div>
           </div>
         </div>
 
-        {/* Mobile Nav */}
-        <div className="md:hidden flex items-center gap-1 px-4 py-2 border-t border-[#E2E8F0] overflow-x-auto bg-white">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-muted hover:text-secondary hover:bg-surface whitespace-nowrap"
-          >
-            <LayoutDashboard className="w-3.5 h-3.5 text-secondary" />
-            Ringkasan
-          </Link>
-          <Link
-            href="/dashboard/proker"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-muted hover:text-secondary hover:bg-surface whitespace-nowrap"
-          >
-            <FolderKanban className="w-3.5 h-3.5 text-accent" />
-            Proker & Agenda
-          </Link>
-          {isAdmin && (
-            <>
-              <Link
-                href="/dashboard/periode"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-muted hover:text-secondary hover:bg-surface whitespace-nowrap"
-              >
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-                Periode
-              </Link>
-              <Link
-                href="/dashboard/sto"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-muted hover:text-secondary hover:bg-surface whitespace-nowrap"
-              >
-                <Users className="w-3.5 h-3.5 text-secondary" />
-                Data STO
-              </Link>
-            </>
-          )}
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <DashboardNav isAdmin={isAdmin} mobile={true} />
         </div>
       </header>
 
