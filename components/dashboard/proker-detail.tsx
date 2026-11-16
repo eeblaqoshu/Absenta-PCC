@@ -1,7 +1,7 @@
 // components/dashboard/proker-detail.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import {
   tambahPanitiaAction,
   ubahPanitiaAction,
@@ -13,6 +13,20 @@ import {
   hapusAgendaAction,
 } from "@/lib/actions/agenda";
 import { PeranPanitia, JenisAgenda, TargetPeserta, StatusPeriode } from "@prisma/client";
+import { motion, AnimatePresence } from "framer-motion";
+import { SesiModal, type LokasiOption, type SesiItem } from "@/components/dashboard/sesi-modal";
+import { KehadiranModal } from "@/components/dashboard/kehadiran-modal";
+import { Modal } from "@/components/ui/modal";
+import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";
+import {
+  hitungStatusAgenda,
+  hitungStatusSesi,
+  formatTanggalIndo,
+  jamDariWaktuAgenda,
+  keInputLokalWib,
+  type StatusAgendaDihitung,
+} from "@/lib/waktu";
+import type { RekapKehadiranSesi } from "@/lib/kehadiran";
 import {
   Users,
   Calendar,
@@ -26,8 +40,8 @@ import {
   MapPin,
   Trash2,
   Edit2,
-  Shield,
   QrCode,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -45,21 +59,28 @@ interface PanitiaItem {
   };
 }
 
+interface SesiRingkas {
+  id: number;
+  bukaAt: Date;
+  tutupAt: Date;
+}
+
 interface AgendaItem {
   id: number;
   jenis: JenisAgenda;
   judul: string;
   urutan: number;
   tglPelaksanaan: Date;
+  tglSelesai: Date | null;
   waktuPelaksanaan: Date;
   lokasiNama: string | null;
+  lokasiId: number | null;
+  lat: number | null;
+  lng: number | null;
+  radiusM: number | null;
   targetPeserta: TargetPeserta;
-  sesi: {
-    id: number;
-    durasiMenit: number;
-    bukaAt: Date;
-    tutupAt: Date;
-  }[];
+  statusDihitung: "akan_datang" | "sedang_berlangsung" | "selesai";
+  sesi: SesiRingkas[];
 }
 
 interface StoOption {
@@ -69,9 +90,31 @@ interface StoOption {
   divisi: string | null;
 }
 
+// Denyut waktu untuk menghitung ulang status agenda (tiada render loop).
+const DETAK_MS = 30_000;
+function langgananDetak(cb: () => void) {
+  const t = setInterval(cb, DETAK_MS);
+  return () => clearInterval(t);
+}
+function cuplikanDetak() {
+  return Math.floor(Date.now() / DETAK_MS);
+}
+
+/** Jam "HH:mm" (WIB) dari sebuah Date — dipakai kartu agenda. */
+function keInputJam(date: Date | string): string {
+  return keInputLokalWib(new Date(date)).split("T")[1] ?? "00:00";
+}
+
+/** Tanggal "YYYY-MM-DD" (WIB) dari sebuah Date. */
+function keTanggalWib(date: Date | string): string {
+  return keInputLokalWib(new Date(date)).split("T")[0] ?? "";
+}
+
 export function ProkerDetail({
   proker,
   availableStos,
+  daftarLokasi,
+  rekap,
 }: {
   proker: {
     id: number;
@@ -86,12 +129,63 @@ export function ProkerDetail({
     agenda: AgendaItem[];
   };
   availableStos: StoOption[];
+  daftarLokasi: LokasiOption[];
+  /** Rekap kehadiran per SESI (key = sesiId). */
+  rekap: Record<number, RekapKehadiranSesi>;
 }) {
   const [tabAktif, setTabAktif] = useState<"panitia" | "agenda">("panitia");
   const [isPending, startTransition] = useTransition();
   const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
 
   const isReadonly = proker.periode.status === StatusPeriode.selesai;
+
+  // ─────────────────────────────────────────────
+  // STATUS AGENDA (dihitung dari rentang tanggal + jam agenda)
+  // ─────────────────────────────────────────────
+  const [tabStatus, setTabStatus] = useState<StatusAgendaDihitung>("akan_datang");
+
+  const detak = useSyncExternalStore(langgananDetak, cuplikanDetak, () => 0);
+  const now = useMemo(() => (detak > 0 ? new Date(detak * DETAK_MS) : null), [detak]);
+
+  const agendaBerstatus = useMemo(() => {
+    return proker.agenda.map((a) => {
+      const statusLive =
+        now === null
+          ? a.statusDihitung
+          : hitungStatusAgenda(a.tglPelaksanaan, a.waktuPelaksanaan, a.tglSelesai, now);
+      return { ...a, statusLive };
+    });
+  }, [proker.agenda, now]);
+
+  const kelompokAgenda = useMemo(
+    () => ({
+      sedang_berlangsung: agendaBerstatus.filter((a) => a.statusLive === "sedang_berlangsung"),
+      akan_datang: agendaBerstatus.filter((a) => a.statusLive === "akan_datang"),
+      selesai: agendaBerstatus.filter((a) => a.statusLive === "selesai"),
+    }),
+    [agendaBerstatus]
+  );
+
+  const tabEfektif: StatusAgendaDihitung =
+    kelompokAgenda[tabStatus].length > 0
+      ? tabStatus
+      : (["sedang_berlangsung", "akan_datang", "selesai"] as StatusAgendaDihitung[]).find(
+        (k) => kelompokAgenda[k].length > 0
+      ) ?? tabStatus;
+
+  const agendaTerlihat = kelompokAgenda[tabEfektif];
+
+  // ─────────────────────────────────────────────
+  // MODAL SESI PRESENSI & DAFTAR HADIR
+  // ─────────────────────────────────────────────
+  const [modalSesi, setModalSesi] = useState<{
+    agenda: AgendaItem;
+    sesiAwal: SesiItem | null;
+  } | null>(null);
+  const [modalKehadiran, setModalKehadiran] = useState<{
+    agenda: AgendaItem;
+    sesiId: number;
+  } | null>(null);
 
   // ─────────────────────────────────────────────
   // MODAL PANITIA STATE
@@ -115,9 +209,15 @@ export function ProkerDetail({
   const [jenisAgenda, setJenisAgenda] = useState<JenisAgenda>(JenisAgenda.rapat_besar);
   const [urutanAgenda, setUrutanAgenda] = useState<number>(1);
   const [tglAgenda, setTglAgenda] = useState("");
+  const [tglSelesaiAgenda, setTglSelesaiAgenda] = useState("");
   const [waktuAgenda, setWaktuAgenda] = useState("15:00");
   const [lokasiAgenda, setLokasiAgenda] = useState("");
+  const [lokasiAgendaId, setLokasiAgendaId] = useState("");
+  const [radiusAgenda, setRadiusAgenda] = useState<number>(500);
+  const [titikAgenda, setTitikAgenda] = useState<{ lat: number; lng: number } | null>(null);
   const [targetPeserta, setTargetPeserta] = useState<TargetPeserta>(TargetPeserta.semua_panitia);
+
+  const titikAgendaAktif = titikAgenda ?? { lat: -7.0513, lng: 110.4337 };
 
   // ─────────────────────────────────────────────
   // FILTER STO YANG BELUM TERDAFTAR DI PROKER
@@ -196,10 +296,25 @@ export function ProkerDetail({
     setJenisAgenda(JenisAgenda.rapat_besar);
     setUrutanAgenda(proker.agenda.length + 1);
     setTglAgenda("");
+    setTglSelesaiAgenda("");
     setWaktuAgenda("15:00");
     setLokasiAgenda("");
+    setLokasiAgendaId("");
+    setRadiusAgenda(500);
+    setTitikAgenda(null);
     setTargetPeserta(TargetPeserta.semua_panitia);
     setAgendaDiedit(null);
+  };
+
+  /** Pilih master lokasi -> isi nama, radius, dan titik peta. */
+  const pilihLokasiMaster = (idMentah: string) => {
+    setLokasiAgendaId(idMentah);
+    if (!idMentah) return;
+    const lok = daftarLokasi.find((l) => l.id === Number(idMentah));
+    if (!lok) return;
+    setLokasiAgenda(lok.nama);
+    setRadiusAgenda(lok.radiusM);
+    setTitikAgenda({ lat: lok.lat, lng: lok.lng });
   };
 
   const handleSubmitTambahAgenda = (e: React.FormEvent) => {
@@ -212,8 +327,15 @@ export function ProkerDetail({
     formData.append("jenis", jenisAgenda);
     formData.append("urutan", urutanAgenda.toString());
     formData.append("tglPelaksanaan", tglAgenda);
+    formData.append("tglSelesai", tglSelesaiAgenda);
     formData.append("waktuPelaksanaan", waktuAgenda);
     formData.append("lokasiNama", lokasiAgenda);
+    formData.append("lokasiId", lokasiAgendaId);
+    if (titikAgenda) {
+      formData.append("lat", String(titikAgenda.lat));
+      formData.append("lng", String(titikAgenda.lng));
+      formData.append("radiusM", String(radiusAgenda));
+    }
     formData.append("targetPeserta", targetPeserta);
 
     startTransition(async () => {
@@ -233,15 +355,15 @@ export function ProkerDetail({
     setJudulAgenda(item.judul);
     setJenisAgenda(item.jenis);
     setUrutanAgenda(item.urutan);
-
-    const tgl = new Date(item.tglPelaksanaan).toISOString().split("T")[0];
-    setTglAgenda(tgl);
-
-    const jam = new Date(item.waktuPelaksanaan).getUTCHours().toString().padStart(2, "0");
-    const menit = new Date(item.waktuPelaksanaan).getUTCMinutes().toString().padStart(2, "0");
-    setWaktuAgenda(`${jam}:${menit}`);
-
+    setTglAgenda(keTanggalWib(item.tglPelaksanaan));
+    setTglSelesaiAgenda(item.tglSelesai ? keTanggalWib(item.tglSelesai) : "");
+    setWaktuAgenda(jamDariWaktuAgenda(item.waktuPelaksanaan));
     setLokasiAgenda(item.lokasiNama || "");
+    setLokasiAgendaId(item.lokasiId ? String(item.lokasiId) : "");
+    setRadiusAgenda(item.radiusM ?? 500);
+    setTitikAgenda(
+      item.lat !== null && item.lng !== null ? { lat: item.lat, lng: item.lng } : null
+    );
     setTargetPeserta(item.targetPeserta);
     setModalEditAgendaBuka(true);
   };
@@ -256,8 +378,15 @@ export function ProkerDetail({
     formData.append("jenis", jenisAgenda);
     formData.append("urutan", urutanAgenda.toString());
     formData.append("tglPelaksanaan", tglAgenda);
+    formData.append("tglSelesai", tglSelesaiAgenda);
     formData.append("waktuPelaksanaan", waktuAgenda);
     formData.append("lokasiNama", lokasiAgenda);
+    formData.append("lokasiId", lokasiAgendaId);
+    if (titikAgenda) {
+      formData.append("lat", String(titikAgenda.lat));
+      formData.append("lng", String(titikAgenda.lng));
+      formData.append("radiusM", String(radiusAgenda));
+    }
     formData.append("targetPeserta", targetPeserta);
 
     startTransition(async () => {
@@ -301,19 +430,6 @@ export function ProkerDetail({
     }
   };
 
-  const getJenisAgendaBadge = (jenis: JenisAgenda) => {
-    switch (jenis) {
-      case JenisAgenda.rapat_pj:
-        return { label: "Rapat PJ & PI", color: "text-purple-600 bg-purple-50 dark:bg-purple-950/50" };
-      case JenisAgenda.rapat_besar:
-        return { label: "Rapat Besar", color: "text-blue-600 bg-blue-50 dark:bg-blue-950/50" };
-      case JenisAgenda.rapat_koordinasi:
-        return { label: "Rapat Koordinasi", color: "text-amber-600 bg-amber-50 dark:bg-amber-950/50" };
-      case JenisAgenda.hari_h:
-        return { label: "Hari H Pelaksanaan", color: "text-rose-600 bg-rose-50 dark:bg-rose-950/50" };
-    }
-  };
-
   const getTargetPesertaLabel = (target: TargetPeserta) => {
     switch (target) {
       case TargetPeserta.hanya_pj_pi:
@@ -341,11 +457,10 @@ export function ProkerDetail({
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                  !isReadonly
-                    ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
-                    : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
-                }`}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${!isReadonly
+                  ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+                  : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  }`}
               >
                 {!isReadonly ? "Periode Aktif" : "Periode Selesai (Read-Only)"}
               </span>
@@ -379,11 +494,10 @@ export function ProkerDetail({
       {/* Alert Notification */}
       {pesan && (
         <div
-          className={`p-4 rounded-xl border flex items-start gap-3 text-xs ${
-            pesan.tipe === "sukses"
-              ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200"
-              : "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200"
-          }`}
+          className={`p-4 rounded-xl border flex items-start gap-3 text-xs ${pesan.tipe === "sukses"
+            ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200"
+            : "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200"
+            }`}
         >
           {pesan.tipe === "sukses" ? (
             <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
@@ -405,22 +519,20 @@ export function ProkerDetail({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setTabAktif("panitia")}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all ${
-              tabAktif === "panitia"
-                ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-            }`}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all ${tabAktif === "panitia"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              }`}
           >
             <Users className="w-4 h-4" />
             Susunan Kepanitiaan ({proker.kepanitiaan.length})
           </button>
           <button
             onClick={() => setTabAktif("agenda")}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all ${
-              tabAktif === "agenda"
-                ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-            }`}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all ${tabAktif === "agenda"
+              ? "border-blue-600 text-blue-600 dark:text-blue-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              }`}
           >
             <Calendar className="w-4 h-4" />
             Agenda Kegiatan ({proker.agenda.length})
@@ -476,7 +588,7 @@ export function ProkerDetail({
             </div>
           ) : (
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
                 <table className="w-full text-left text-xs">
                   <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 uppercase tracking-wider font-semibold border-b border-zinc-200 dark:border-zinc-800">
                     <tr>
@@ -560,6 +672,52 @@ export function ProkerDetail({
       ───────────────────────────────────────────── */}
       {tabAktif === "agenda" && (
         <div className="space-y-4">
+          <div className="p-1.5 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50 overflow-x-auto scrollbar-none" data-lenis-prevent>
+            <div className="flex items-center min-w-full sm:min-w-0 sm:grid sm:grid-cols-3 gap-1">
+              {(
+                [
+                  { id: "akan_datang", label: "Akan Datang" },
+                  { id: "sedang_berlangsung", label: "Sedang Berlangsung" },
+                  { id: "selesai", label: "Selesai" },
+                ] as const
+              ).map((t) => {
+                const aktif = tabEfektif === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTabStatus(t.id)}
+                    className="relative flex-1 shrink-0 py-2.5 px-3 sm:px-4 rounded-xl text-xs font-medium transition-all duration-200 flex items-center justify-center gap-2 whitespace-nowrap focus:outline-none"
+                  >
+                    <span
+                      className={`transition-colors duration-200 ${aktif
+                        ? "text-zinc-950 dark:text-white font-semibold"
+                        : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                        }`}
+                    >
+                      {t.label}
+                    </span>
+                    <span
+                      className={`text-[10px] min-w-[18px] h-[18px] px-1 rounded-full font-bold flex items-center justify-center transition-all ${aktif
+                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-sm"
+                        : "bg-zinc-200/80 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+                        }`}
+                    >
+                      {kelompokAgenda[t.id].length}
+                    </span>
+                    {aktif && (
+                      <motion.div
+                        layoutId="adminTabPill"
+                        transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                        className="absolute inset-0 bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200/80 dark:border-zinc-700/80 -z-10"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {proker.agenda.length === 0 ? (
             <div className="p-12 text-center rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900">
               <Calendar className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
@@ -570,110 +728,221 @@ export function ProkerDetail({
                 Klik tombol &quot;Tambah Agenda&quot; untuk membuat jadwal rapat atau hari H kegiatan.
               </p>
             </div>
+          ) : agendaTerlihat.length === 0 ? (
+            <div className="p-12 text-center rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+              <Calendar className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                Belum ada agenda di kategori ini
+              </p>
+              <p className="text-xs text-zinc-500 mt-1">
+                Status agenda berpindah otomatis mengikuti rentang tanggal &amp; jam pelaksanaan.
+              </p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {proker.agenda.map((item) => {
-                const jenisBadge = getJenisAgendaBadge(item.jenis);
-                const targetText = getTargetPesertaLabel(item.targetPeserta);
-                const tglStr = new Date(item.tglPelaksanaan).toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                });
-                const jamStr = `${new Date(item.waktuPelaksanaan)
-                  .getUTCHours()
-                  .toString()
-                  .padStart(2, "0")}:${new Date(item.waktuPelaksanaan)
-                  .getUTCMinutes()
-                  .toString()
-                  .padStart(2, "0")} WIB`;
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={tabEfektif}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
+                {agendaTerlihat.map((item) => {
+                  const targetText = getTargetPesertaLabel(item.targetPeserta);
+                  const sedangBerjalan = item.statusLive === "sedang_berlangsung";
+                  const sudahSelesai = item.statusLive === "selesai";
+                  const tglStr = formatTanggalIndo(new Date(item.tglPelaksanaan));
+                  const tglSelesaiStr = item.tglSelesai
+                    ? formatTanggalIndo(new Date(item.tglSelesai))
+                    : null;
+                  const jamAgendaWib = jamDariWaktuAgenda(item.waktuPelaksanaan);
+                  const adaTitik = item.lat !== null && item.lng !== null;
 
-                return (
-                  <div
-                    key={item.id}
-                    className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${jenisBadge.color}`}
-                        >
-                          {jenisBadge.label}
-                        </span>
-
-                        {!isReadonly && (
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleOpenEditAgenda(item)}
-                              title="Edit Agenda"
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleHapusAgenda(item.id, item.judul)}
-                              disabled={isPending}
-                              title="Hapus Agenda"
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 shadow-[0_2px_12px_rgb(0,0,0,0.02)] hover:border-zinc-300 dark:hover:border-zinc-700 transition-all space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div className="space-y-2 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                              {item.jenis.replace("_", " ")}
+                            </span>
+                            <span className="text-xs text-zinc-300 dark:text-zinc-700">•</span>
+                            <span className="text-xs font-medium text-zinc-500">{targetText}</span>
+                            {sedangBerjalan ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                Sedang berlangsung
+                              </span>
+                            ) : sudahSelesai ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                                Selesai
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                                Belum mulai
+                              </span>
+                            )}
                           </div>
-                        )}
+
+                          <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
+                            {item.judul}
+                          </h4>
+
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                              <span>
+                                {tglStr}
+                                {tglSelesaiStr && ` – ${tglSelesaiStr}`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                              <span>{jamAgendaWib} WIB</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-400" />
+                              <span>
+                                {item.lokasiNama ?? "Lokasi belum diisi"}
+                                {item.radiusM ? ` • radius ${item.radiusM} m` : ""}
+                              </span>
+                            </div>
+                          </div>
+
+                          {!adaTitik && (
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Titik presensi belum diatur — atur di tombol edit agenda sebelum membuat sesi.
+                            </p>
+                          )}
+
+                          {!isReadonly && (
+                            <div className="flex items-center gap-1 pt-0.5">
+                              <button
+                                onClick={() => handleOpenEditAgenda(item)}
+                                title="Edit Agenda"
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleHapusAgenda(item.id, item.judul)}
+                                disabled={isPending}
+                                title="Hapus Agenda"
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Aksi agenda: "Buat Sesi" hanya saat sedang berlangsung.
+                            Agenda akan datang tanpa sesi tidak menampilkan aksi apa pun. */}
+                        <div className="sm:self-start shrink-0">
+                          {!isReadonly && sedangBerjalan && (
+                            <button
+                              onClick={() => setModalSesi({ agenda: item, sesiAwal: null })}
+                              className="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-md shadow-blue-500/20 transition-all"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Tambah Sesi
+                            </button>
+                          )}
+                          {isReadonly && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-xs font-medium">
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              Periode selesai
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50 mb-2">
-                        {item.judul}
-                      </h3>
-
-                      <div className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                          <span>
-                            {tglStr} • {jamStr}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                          <span>{item.lokasiNama || "Lokasi belum ditentukan"}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Shield className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                          <span>
-                            Target Peserta: <strong className="text-zinc-800 dark:text-zinc-200">{targetText}</strong>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sesi Presensi Status / Quick Action */}
-                    <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs">
-                      <div className="text-zinc-500">
-                        {item.sesi.length > 0 ? (
-                          <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            {item.sesi.length} Sesi Presensi
-                          </span>
-                        ) : (
-                          <span className="text-zinc-400">Belum ada sesi presensi</span>
-                        )}
-                      </div>
-
+                      {/* Daftar sesi: daftar hadir & QR muncul setelah sesi dibuat. */}
                       {item.sesi.length > 0 && (
-                        <Link
-                          href={`/dashboard/presensi/${item.sesi[0].id}`}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 text-[11px] font-semibold transition-colors"
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                          Buka Layar Sesi
-                        </Link>
+                        <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 divide-y divide-zinc-100 dark:divide-zinc-800 overflow-hidden">
+                          {item.sesi.map((sesi) => {
+                            const statusSesi = hitungStatusSesi(
+                              new Date(sesi.bukaAt),
+                              new Date(sesi.tutupAt),
+                              now ?? undefined
+                            );
+                            const rekapSesi = rekap[sesi.id];
+                            return (
+                              <div
+                                key={sesi.id}
+                                className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 bg-zinc-50/60 dark:bg-zinc-900/40"
+                              >
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500">
+                                  <span className="inline-flex items-center gap-1 font-semibold text-zinc-700 dark:text-zinc-200">
+                                    <QrCode className="w-3 h-3" />
+                                    {keInputJam(sesi.bukaAt)}–{keInputJam(sesi.tutupAt)} WIB
+                                  </span>
+                                  <span>
+                                    {statusSesi === "berjalan"
+                                      ? "Sedang dibuka"
+                                      : statusSesi === "belum_dibuka"
+                                        ? "Belum dibuka"
+                                        : "Sudah ditutup"}
+                                  </span>
+                                  {rekapSesi && (
+                                    <span>
+                                      Hadir{" "}
+                                      {rekapSesi.ringkasan.hadir + rekapSesi.ringkasan.terlambat}/
+                                      {rekapSesi.ringkasan.total}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {statusSesi === "berjalan" && (
+                                    <Link
+                                      href={`/dashboard/presensi/${sesi.id}`}
+                                      className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] shadow-sm transition-all"
+                                    >
+                                      <QrCode className="w-3 h-3" />
+                                      Layar QR
+                                    </Link>
+                                  )}
+                                  <button
+                                    onClick={() => setModalKehadiran({ agenda: item, sesiId: sesi.id })}
+                                    className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 font-medium text-[11px] transition-all"
+                                  >
+                                    <Users className="w-3 h-3" />
+                                    Daftar Hadir
+                                  </button>
+                                  {!isReadonly && (
+                                    <button
+                                      onClick={() =>
+                                        setModalSesi({
+                                          agenda: item,
+                                          sesiAwal: {
+                                            id: sesi.id,
+                                            bukaAt: new Date(sesi.bukaAt),
+                                            tutupAt: new Date(sesi.tutupAt),
+                                          },
+                                        })
+                                      }
+                                      title="Ubah sesi"
+                                      className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
       )}
@@ -682,9 +951,9 @@ export function ProkerDetail({
           MODAL TAMBAH PANITIA
       ───────────────────────────────────────────── */}
       {modalPanitiaBuka && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <Modal onClose={() => setModalPanitiaBuka(false)} ariaLabel="Tambah panitia ke proker" overlayClassName="animate-in fade-in duration-200">
+          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-md flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                 Tambah Panitia ke Proker
               </h3>
@@ -696,7 +965,7 @@ export function ProkerDetail({
               </button>
             </div>
 
-            <form onSubmit={handleSubmitTambahPanitia} className="p-6 space-y-4">
+            <form onSubmit={handleSubmitTambahPanitia} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                   Pilih Pengurus STO
@@ -771,16 +1040,16 @@ export function ProkerDetail({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* ─────────────────────────────────────────────
           MODAL EDIT PANITIA
       ───────────────────────────────────────────── */}
       {modalEditPanitiaBuka && panitiaDiedit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <Modal onClose={() => setModalEditPanitiaBuka(false)} ariaLabel="Ubah peran panitia" overlayClassName="animate-in fade-in duration-200">
+          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-md flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                 Ubah Peran Panitia ({panitiaDiedit.sto.nama})
               </h3>
@@ -792,7 +1061,7 @@ export function ProkerDetail({
               </button>
             </div>
 
-            <form onSubmit={handleSubmitEditPanitia} className="p-6 space-y-4">
+            <form onSubmit={handleSubmitEditPanitia} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                   Peran Panitia
@@ -848,16 +1117,16 @@ export function ProkerDetail({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* ─────────────────────────────────────────────
-          MODAL TAMBAH / EDIT AGENDA
+          MODAL TAMBAH / EDIT AGENDA (termasuk titik lokasi presensi)
       ───────────────────────────────────────────── */}
       {(modalAgendaBuka || modalEditAgendaBuka) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <Modal onClose={() => { setModalAgendaBuka(false); setModalEditAgendaBuka(false); resetFormAgenda(); }} ariaLabel={modalAgendaBuka ? "Tambah agenda" : "Edit agenda"} overlayClassName="animate-in fade-in duration-200">
+          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-lg flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                 {modalAgendaBuka ? "Tambah Agenda Kegiatan Baru" : "Edit Agenda Kegiatan"}
               </h3>
@@ -875,7 +1144,7 @@ export function ProkerDetail({
 
             <form
               onSubmit={modalAgendaBuka ? handleSubmitTambahAgenda : handleSubmitEditAgenda}
-              className="p-6 space-y-4"
+              className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6"
             >
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
@@ -924,7 +1193,7 @@ export function ProkerDetail({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                    Tanggal Pelaksanaan
+                    Tanggal Mulai
                   </label>
                   <input
                     type="date"
@@ -936,16 +1205,33 @@ export function ProkerDetail({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                    Jam Mulai (WIB)
+                    Tanggal Selesai (Opsional)
                   </label>
                   <input
-                    type="time"
-                    required
-                    value={waktuAgenda}
-                    onChange={(e) => setWaktuAgenda(e.target.value)}
+                    type="date"
+                    min={tglAgenda || undefined}
+                    value={tglSelesaiAgenda}
+                    onChange={(e) => setTglSelesaiAgenda(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+              </div>
+              <p className="text-[10px] text-zinc-500 -mt-1">
+                Biarkan tanggal selesai kosong bila agenda hanya satu hari. Agenda multi-hari boleh
+                punya sesi presensi di tanggal mana pun di dalam rentang ini.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Jam Mulai Agenda (WIB)
+                </label>
+                <input
+                  type="time"
+                  required
+                  value={waktuAgenda}
+                  onChange={(e) => setWaktuAgenda(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
               <div>
@@ -972,17 +1258,66 @@ export function ProkerDetail({
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Lokasi Pertemuan (Opsional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Ruang Sidang Utama Lt. 2 / Google Meet"
-                  value={lokasiAgenda}
-                  onChange={(e) => setLokasiAgenda(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Lokasi Pertemuan (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Ruang Sidang Utama Lt. 2 / Google Meet"
+                    value={lokasiAgenda}
+                    onChange={(e) => setLokasiAgenda(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Titik dari Master Lokasi
+                    </label>
+                    <select
+                      value={lokasiAgendaId}
+                      onChange={(e) => pilihLokasiMaster(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">-- Titik manual (peta) --</option>
+                      {daftarLokasi.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.nama} (radius {l.radiusM} m)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                      Radius Presensi (m)
+                    </label>
+                    <input
+                      type="number"
+                      min={10}
+                      max={5000}
+                      value={radiusAgenda}
+                      onChange={(e) => setRadiusAgenda(parseInt(e.target.value) || 500)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 bg-zinc-50/60 dark:bg-zinc-900/40">
+                  <p className="text-[10px] text-zinc-500 mb-2">
+                    Titik presensi melekat pada agenda (bukan sesi). Semua sesi agenda ini memakai
+                    titik &amp; radius yang sama.
+                  </p>
+                  <PetaPilihLokasi
+                    lat={titikAgendaAktif.lat}
+                    lng={titikAgendaAktif.lng}
+                    radiusM={radiusAgenda}
+                    tinggi="220px"
+                    onPilih={(lat, lng) => setTitikAgenda({ lat, lng })}
+                  />
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
@@ -1008,7 +1343,34 @@ export function ProkerDetail({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
+      )}
+
+      {/* MODAL SESI PRESENSI (buat/ubah) */}
+      {modalSesi && (
+        <SesiModal
+          agendaId={modalSesi.agenda.id}
+          judulAgenda={modalSesi.agenda.judul}
+          tglMulai={keTanggalWib(modalSesi.agenda.tglPelaksanaan)}
+          tglSelesai={
+            modalSesi.agenda.tglSelesai ? keTanggalWib(modalSesi.agenda.tglSelesai) : null
+          }
+          jamAgendaWib={jamDariWaktuAgenda(modalSesi.agenda.waktuPelaksanaan)}
+          lokasiNama={modalSesi.agenda.lokasiNama}
+          radiusM={modalSesi.agenda.radiusM}
+          sesiAwal={modalSesi.sesiAwal}
+          onTutup={() => setModalSesi(null)}
+        />
+      )}
+
+      {/* MODAL DAFTAR HADIR STO (per sesi) */}
+      {modalKehadiran && (
+        <KehadiranModal
+          judulAgenda={modalKehadiran.agenda.judul}
+          namaProker={proker.nama}
+          rekap={rekap[modalKehadiran.sesiId]}
+          onTutup={() => setModalKehadiran(null)}
+        />
       )}
     </div>
   );

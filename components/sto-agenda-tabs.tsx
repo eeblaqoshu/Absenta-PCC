@@ -16,6 +16,10 @@ export interface AgendaItem {
   targetPeserta: string;
   statusDihitung: "akan_datang" | "sedang_berlangsung" | "selesai";
   adaSesiAktif: boolean;
+  sudahPresensi: boolean;
+  statusPresensi: "hadir" | "terlambat" | null;
+  diLuarRadius: boolean;
+  statusVerifikasi: "menunggu" | "diterima" | "ditolak" | null;
 }
 
 export function StoAgendaTabs({
@@ -55,7 +59,7 @@ export function StoAgendaTabs({
   return (
     <div className="space-y-4">
       {/* Tab Header Controls: Sangat rapi di mobile & desktop (tanpa teks terpotong/turun baris) */}
-      <div className="p-1.5 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50 overflow-x-auto scrollbar-none">
+      <div className="p-1.5 bg-zinc-100/90 dark:bg-zinc-800/70 rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50 overflow-x-auto scrollbar-none" data-lenis-prevent>
         <div className="flex items-center min-w-full sm:min-w-0 sm:grid sm:grid-cols-3 gap-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -136,6 +140,20 @@ export function StoAgendaTabs({
                     <span className="text-xs font-medium text-zinc-500">
                       {agenda.prokerNama}
                     </span>
+                    {agenda.statusDihitung === "sedang_berlangsung" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Sedang berlangsung
+                      </span>
+                    ) : agenda.statusDihitung === "selesai" ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                        Selesai
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                        Belum mulai
+                      </span>
+                    )}
                   </div>
 
                   <h4 className="text-base font-semibold text-zinc-900 dark:text-zinc-50 tracking-tight">
@@ -162,7 +180,37 @@ export function StoAgendaTabs({
 
                 {/* Status / Aksi Presensi */}
                 <div className="sm:self-center shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-zinc-100 dark:border-zinc-800">
-                  {agenda.adaSesiAktif ? (
+                  {agenda.adaSesiAktif && agenda.sudahPresensi ? (
+                    <div className="flex flex-col items-start sm:items-end gap-1">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold border border-emerald-200/70 dark:border-emerald-900/60">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Sudah Presensi
+                        {agenda.statusPresensi && (
+                          <span className="text-[10px] font-medium opacity-80">
+                            ({agenda.statusPresensi})
+                          </span>
+                        )}
+                      </span>
+                      {agenda.diLuarRadius && (
+                        <span
+                          className={`text-[10px] font-semibold ${
+                            agenda.statusVerifikasi === "ditolak"
+                              ? "text-red-600 dark:text-red-400"
+                              : agenda.statusVerifikasi === "menunggu"
+                                ? "text-amber-600 dark:text-amber-400"
+                                : "text-emerald-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          di luar radius •{" "}
+                          {agenda.statusVerifikasi === "menunggu"
+                            ? "menunggu verifikasi adsek"
+                            : agenda.statusVerifikasi === "ditolak"
+                              ? "ditolak adsek"
+                              : "diterima adsek"}
+                        </span>
+                      )}
+                    </div>
+                  ) : agenda.adaSesiAktif ? (
                     <Link
                       href="/scan"
                       className="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs shadow-md shadow-blue-500/20 transition-all"
