@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, FolderKanban, LayoutDashboard, Users } from "lucide-react";
+import { Calendar, FolderKanban, LayoutDashboard, Users, MapPin, FileText, Trophy } from "lucide-react";
 
 export default async function DashboardLayout({
   children,
@@ -64,6 +64,20 @@ export default async function DashboardLayout({
                   <FolderKanban className="w-4 h-4" />
                   Proker & Agenda
                 </Link>
+                <Link
+                  href="/dashboard/izin"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  Izin
+                </Link>
+                <Link
+                  href="/dashboard/leaderboard"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors"
+                >
+                  <Trophy className="w-4 h-4" />
+                  Leaderboard
+                </Link>
                 {isAdmin && (
                   <>
                     <Link
@@ -79,6 +93,13 @@ export default async function DashboardLayout({
                     >
                       <Users className="w-4 h-4" />
                       Data STO
+                    </Link>
+                    <Link
+                      href="/dashboard/lokasi"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Lokasi
                     </Link>
                   </>
                 )}
@@ -101,7 +122,7 @@ export default async function DashboardLayout({
         </div>
 
         {/* Mobile Nav */}
-        <div className="md:hidden flex items-center gap-1 px-4 py-2 border-t border-zinc-200/60 dark:border-zinc-800/60 overflow-x-auto">
+        <div className="md:hidden flex items-center gap-1 px-4 py-2 border-t border-zinc-200/60 dark:border-zinc-800/60 overflow-x-auto" data-lenis-prevent>
           <Link
             href="/dashboard"
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 whitespace-nowrap"
@@ -115,6 +136,20 @@ export default async function DashboardLayout({
           >
             <FolderKanban className="w-3.5 h-3.5" />
             Proker & Agenda
+          </Link>
+          <Link
+            href="/dashboard/izin"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 whitespace-nowrap"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Izin
+          </Link>
+          <Link
+            href="/dashboard/leaderboard"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 whitespace-nowrap"
+          >
+            <Trophy className="w-3.5 h-3.5" />
+            Leaderboard
           </Link>
           {isAdmin && (
             <>
@@ -131,6 +166,13 @@ export default async function DashboardLayout({
               >
                 <Users className="w-3.5 h-3.5" />
                 Data STO
+              </Link>
+              <Link
+                href="/dashboard/lokasi"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 whitespace-nowrap"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                Lokasi
               </Link>
             </>
           )}
