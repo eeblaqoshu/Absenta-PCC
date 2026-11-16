@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
+import { Modal } from "@/components/ui/modal";
 import {
   tambahStoAction,
   ubahStoAction,
@@ -355,7 +356,7 @@ export function StoManager({
 
       {/* Table STO */}
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
           <table className="w-full text-left text-xs">
             <thead className="bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 uppercase tracking-wider font-semibold border-b border-zinc-200 dark:border-zinc-800">
               <tr>
@@ -432,9 +433,9 @@ export function StoManager({
 
       {/* Modal Tambah / Edit STO */}
       {(modalTambahBuka || modalEditBuka) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <Modal onClose={() => { setModalTambahBuka(false); setModalEditBuka(false); }} ariaLabel={modalTambahBuka ? "Tambah pengurus STO" : "Edit pengurus STO"} overlayClassName="animate-in fade-in duration-200">
+          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-md flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                 {modalTambahBuka ? "Tambah Pengurus STO" : "Edit Pengurus STO"}
               </h3>
@@ -452,7 +453,7 @@ export function StoManager({
 
             <form
               onSubmit={modalTambahBuka ? handleSubmitTambah : handleSubmitEdit}
-              className="p-6 space-y-4"
+              className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6"
             >
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
@@ -549,14 +550,14 @@ export function StoManager({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* Modal Impor CSV */}
       {modalCsvBuka && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <Modal onClose={() => setModalCsvBuka(false)} ariaLabel="Impor data STO" overlayClassName="animate-in fade-in duration-200">
+          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-xl flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
@@ -571,7 +572,7 @@ export function StoManager({
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-4">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6">
               {/* Petunjuk & Download Template */}
               <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div>
@@ -624,7 +625,7 @@ export function StoManager({
                       <p className="text-rose-600 font-semibold">
                         • Dilewati / Gagal: {csvHasil.totalGagal} data
                       </p>
-                      <ul className="list-disc pl-5 text-[11px] text-rose-500 space-y-0.5 max-h-28 overflow-y-auto">
+                      <ul className="list-disc pl-5 text-[11px] text-rose-500 space-y-0.5 max-h-28 overflow-y-auto scrollbar-none" data-lenis-prevent>
                         {csvHasil.pesanGagal.map((msg, idx) => (
                           <li key={idx}>{msg}</li>
                         ))}
@@ -642,7 +643,7 @@ export function StoManager({
                       Preview Data ({csvPreview.length} baris ditemukan di {csvFileName}):
                     </span>
                   </div>
-                  <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto max-h-48 text-[11px]">
+                  <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-x-auto max-h-48 text-[11px] scrollbar-none" data-lenis-prevent>
                     <table className="w-full text-left">
                       <thead className="bg-zinc-100 dark:bg-zinc-800 sticky top-0 font-semibold text-zinc-600 dark:text-zinc-400">
                         <tr>
@@ -675,7 +676,7 @@ export function StoManager({
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-2 bg-zinc-50 dark:bg-zinc-900">
+            <div className="flex shrink-0 items-center justify-end gap-2 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
               <button
                 type="button"
                 onClick={() => setModalCsvBuka(false)}
@@ -696,7 +697,7 @@ export function StoManager({
               )}
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

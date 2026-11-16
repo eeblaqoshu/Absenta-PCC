@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Modal } from "@/components/ui/modal";
 import { buatProkerAction, ubahProkerAction, hapusProkerAction } from "@/lib/actions/proker";
 import {
   FolderKanban,
@@ -248,9 +249,9 @@ export function ProkerList({
 
       {/* Modal Tambah / Edit Proker */}
       {modalBuka && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+        <Modal onClose={() => setModalBuka(false)} ariaLabel={prokerDiedit ? "Edit proker" : "Tambah proker"} overlayClassName="animate-in fade-in duration-200">
+          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-md flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
                 {prokerDiedit ? "Edit Program Kerja" : "Buat Program Kerja Baru"}
               </h3>
@@ -265,7 +266,7 @@ export function ProkerList({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6">
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                   Nama Program Kerja
@@ -315,7 +316,7 @@ export function ProkerList({
               </div>
             </form>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
