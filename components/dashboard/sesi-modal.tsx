@@ -13,9 +13,9 @@ import {
   hapusSesiAction,
 } from "@/lib/actions/sesi";
 import { keInputLokalWib } from "@/lib/waktu";
-import { Modal } from "@/components/ui/modal";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import { konfirmasiAksi, konfirmasiHapus } from "@/lib/swal";
 import {
-  X,
   Loader2,
   Plus,
   Trash2,
@@ -120,9 +120,16 @@ export function SesiModal({
     });
   }
 
-  function tutupSekarang() {
+  async function tutupSekarang() {
     if (!sesiAwal) return;
-    if (!confirm("Tutup sesi ini sekarang? STO tidak bisa absen lagi setelah ditutup.")) return;
+    const ya = await konfirmasiAksi({
+      judul: "Tutup sesi sekarang?",
+      pesan: "STO tidak bisa absen lagi setelah sesi ditutup.",
+      icon: "warning",
+      tombolYa: "Ya, Tutup Sesi",
+      warnaKonfirmasi: "#B45309",
+    });
+    if (!ya) return;
     startTransition(async () => {
       const hasil = await tutupSesiSekarangAction(sesiAwal.id);
       if (hasil.error) {
@@ -134,9 +141,14 @@ export function SesiModal({
     });
   }
 
-  function hapus() {
+  async function hapus() {
     if (!sesiAwal) return;
-    if (!confirm("Hapus sesi ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    const ya = await konfirmasiHapus({
+      judul: "Hapus sesi ini?",
+      pesan: "Presensi pada sesi ini tidak bisa dikembalikan.",
+      tombolHapus: "Ya, Hapus Sesi",
+    });
+    if (!ya) return;
     startTransition(async () => {
       const hasil = await hapusSesiAction(sesiAwal.id);
       if (hasil.error) {
@@ -149,44 +161,35 @@ export function SesiModal({
   }
 
   return (
-    <Modal onClose={onTutup} ariaLabel={sesiAwal ? "Ubah sesi presensi" : "Buat sesi presensi"}>
-      <form
-        onSubmit={simpan}
-        className="mx-auto flex max-h-full min-h-0 w-full max-w-md flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-2xl"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
-          <div>
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-              {sesiAwal ? "Ubah Sesi Presensi" : "Buat Sesi Presensi"}
-            </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">{judulAgenda}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onTutup}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            aria-label="Tutup"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+    <Modal
+      onClose={onTutup}
+      ariaLabel={sesiAwal ? "Ubah sesi presensi" : "Buat sesi presensi"}
+      size="md"
+    >
+      <form onSubmit={simpan} className="flex min-h-0 flex-1 flex-col">
+        <ModalHeader
+          title={sesiAwal ? "Ubah Sesi Presensi" : "Buat Sesi Presensi"}
+          description={judulAgenda}
+          icon={CalendarClock}
+          onClose={onTutup}
+        />
 
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-5">
+        <ModalBody>
           {/* Titik presensi hanya informasi: diatur di kartu agenda. */}
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/60">
-            <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 rounded-xl border border-[#E2E8F0] bg-surface p-3">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
             <div className="text-[11px] leading-relaxed">
-              <p className="font-semibold text-zinc-700 dark:text-zinc-200">
+              <p className="font-semibold text-navy">
                 {lokasiNama ?? "Titik lokasi belum diatur"}
               </p>
-              <p className="text-zinc-500">
+              <p className="text-slate-muted">
                 Radius {radiusM ?? "-"} m • titik presensi mengikuti agenda, bukan sesi
               </p>
             </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+            <label className="mb-1 block text-[11px] font-semibold text-navy">
               Tanggal sesi
             </label>
             <input
@@ -196,10 +199,10 @@ export function SesiModal({
               min={tglMulai}
               max={tglSelesai ?? tglMulai}
               onChange={(e) => setTanggal(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
             />
-            <p className="text-[10px] text-zinc-500 mt-1 flex items-center gap-1">
-              <CalendarClock className="w-3 h-3" />
+            <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-muted">
+              <CalendarClock className="h-3 w-3" />
               Rentang agenda: {tglMulai}
               {tglSelesai && tglSelesai !== tglMulai ? ` s/d ${tglSelesai}` : ""}
             </p>
@@ -207,7 +210,7 @@ export function SesiModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="mb-1 block text-[11px] font-semibold text-navy">
                 Jam mulai (WIB)
               </label>
               <input
@@ -215,11 +218,11 @@ export function SesiModal({
                 required
                 value={jamMulai}
                 onChange={(e) => setJamMulai(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <label className="mb-1 block text-[11px] font-semibold text-navy">
                 Maks. kedatangan
               </label>
               <input
@@ -227,69 +230,69 @@ export function SesiModal({
                 required
                 value={jamMaksDatang}
                 onChange={(e) => setJamMaksDatang(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3 py-2 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
               />
             </div>
           </div>
-          <p className="text-[10px] text-zinc-500">
+          <p className="text-[10px] text-slate-muted">
             QR hanya tampil antara jam mulai dan jam maksimum kedatangan. Status hadir bila absen ≤
             15 menit dari jam mulai; setelah itu terlambat.
           </p>
 
           {sesiAwal && (
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex flex-wrap items-center gap-2 border-t border-[#E2E8F0] pt-3">
               <button
                 type="button"
                 onClick={tutupSekarang}
                 disabled={isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 text-[11px] font-semibold disabled:opacity-60 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-highlight/15 px-3 py-1.5 text-[11px] font-semibold text-[#8a6500] transition-colors hover:bg-highlight/25 disabled:opacity-60"
               >
-                <PowerOff className="w-3.5 h-3.5" /> Tutup sekarang
+                <PowerOff className="h-3.5 w-3.5" /> Tutup sekarang
               </button>
               <button
                 type="button"
                 onClick={hapus}
                 disabled={isPending}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 text-[11px] font-semibold disabled:opacity-60 transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-[11px] font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Hapus sesi
+                <Trash2 className="h-3.5 w-3.5" /> Hapus sesi
               </button>
             </div>
           )}
 
           {pesan && (
             <p
-              className={`text-[11px] flex items-center gap-1 ${
-                pesan.tipe === "sukses" ? "text-emerald-600" : "text-red-600"
+              className={`flex items-center gap-1 text-[11px] ${
+                pesan.tipe === "sukses" ? "text-emerald-600" : "text-rose-600"
               }`}
             >
               {pesan.tipe === "sukses" ? (
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <CheckCircle2 className="h-3.5 w-3.5" />
               ) : (
-                <AlertCircle className="w-3.5 h-3.5" />
+                <AlertCircle className="h-3.5 w-3.5" />
               )}
               {pesan.teks}
             </p>
           )}
-        </div>
+        </ModalBody>
 
-        <div className="flex shrink-0 justify-end gap-2 p-5 border-t border-zinc-100 dark:border-zinc-800">
+        <ModalFooter>
           <button
             type="button"
             onClick={onTutup}
-            className="px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="rounded-xl border border-[#CBD5E1] px-4 py-2 text-[11px] font-semibold text-navy transition-colors hover:bg-surface"
           >
             Batal
           </button>
           <button
             type="submit"
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-[11px] font-semibold transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-[11px] font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary disabled:opacity-60"
           >
-            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
             {sesiAwal ? "Simpan perubahan" : "Buat sesi"}
           </button>
-        </div>
+        </ModalFooter>
       </form>
     </Modal>
   );

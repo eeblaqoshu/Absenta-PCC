@@ -3,13 +3,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Modal } from "@/components/ui/modal";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import {
   tambahLokasiAction,
   ubahLokasiAction,
   hapusLokasiAction,
 } from "@/lib/actions/lokasi";
 import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";
+import { konfirmasiHapus } from "@/lib/swal";
 import {
   MapPin,
   Plus,
@@ -18,7 +19,6 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  X,
   Crosshair,
 } from "lucide-react";
 
@@ -100,8 +100,12 @@ export function LokasiManager({ initialLokasi }: Props) {
     });
   }
 
-  function hapus(item: LokasiItem) {
-    if (!confirm(`Hapus lokasi "${item.nama}"?`)) return;
+  async function hapus(item: LokasiItem) {
+    const ya = await konfirmasiHapus({
+      judul: "Hapus lokasi?",
+      pesan: `Lokasi "${item.nama}" akan dihapus. Titik pada agenda yang sudah dibuat tidak berubah.`,
+    });
+    if (!ya) return;
     setPesan(null);
     startTransition(async () => {
       const hasil = await hapusLokasiAction(item.id);
@@ -117,14 +121,14 @@ export function LokasiManager({ initialLokasi }: Props) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Master Lokasi Presensi</h1>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <h1 className="text-lg font-bold text-primary">Master Lokasi Presensi</h1>
+          <p className="text-xs text-slate-muted mt-0.5">
             Daftarkan titik pusat dan radius. Lokasi ini bisa langsung dipilih saat membuat sesi presensi.
           </p>
         </div>
         <button
           onClick={bukaTambah}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Daftarkan Lokasi
@@ -135,8 +139,8 @@ export function LokasiManager({ initialLokasi }: Props) {
         <div
           className={`flex items-start gap-2 p-3 rounded-xl text-xs ${
             pesan.tipe === "sukses"
-              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-              : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-rose-50 text-rose-700"
           }`}
         >
           {pesan.tipe === "sukses" ? (
@@ -149,12 +153,12 @@ export function LokasiManager({ initialLokasi }: Props) {
       )}
 
       {initialLokasi.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-          <MapPin className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        <div className="p-12 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
+          <MapPin className="w-10 h-10 text-slate-muted mx-auto mb-3" />
+          <p className="text-sm font-semibold text-navy">
             Belum ada lokasi terdaftar
           </p>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-slate-muted mt-1">
             Tambahkan minimal satu titik agar pembuatan sesi presensi lebih cepat.
           </p>
         </div>
@@ -163,16 +167,16 @@ export function LokasiManager({ initialLokasi }: Props) {
           {initialLokasi.map((item) => (
             <div
               key={item.id}
-              className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm"
+              className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">{item.nama}</h3>
-                  <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1.5">
-                    <Crosshair className="w-3.5 h-3.5 text-blue-500" />
+                  <h3 className="text-sm font-bold text-primary">{item.nama}</h3>
+                  <p className="text-xs text-slate-muted mt-1 flex items-center gap-1.5">
+                    <Crosshair className="w-3.5 h-3.5 text-secondary" />
                     {item.lat.toFixed(6)}, {item.lng.toFixed(6)}
                   </p>
-                  <p className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1.5">
+                  <p className="text-xs text-slate-muted mt-0.5 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-rose-500" />
                     radius {item.radiusM} m
                   </p>
@@ -181,7 +185,7 @@ export function LokasiManager({ initialLokasi }: Props) {
                   <button
                     onClick={() => bukaEdit(item)}
                     title="Ubah"
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-muted hover:text-secondary hover:bg-secondary/10 transition-colors"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
@@ -189,7 +193,7 @@ export function LokasiManager({ initialLokasi }: Props) {
                     onClick={() => hapus(item)}
                     disabled={isPending}
                     title="Hapus"
-                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -201,29 +205,28 @@ export function LokasiManager({ initialLokasi }: Props) {
       )}
 
       {modalBuka && (
-        <Modal onClose={() => { setModalBuka(false); resetForm(); }} ariaLabel={diedit ? "Edit lokasi" : "Tambah lokasi"}>
-          <div className="mx-auto flex max-h-full min-h-0 w-full max-w-2xl flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden">
-            <div className="shrink-0 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
-                {diedit ? `Ubah Lokasi: ${diedit.nama}` : "Daftarkan Lokasi Baru"}
-              </h3>
-              <button
-                onClick={() => {
-                  setModalBuka(false);
-                  resetForm();
-                }}
-                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                aria-label="Tutup"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        <Modal
+          onClose={() => {
+            setModalBuka(false);
+            resetForm();
+          }}
+          ariaLabel={diedit ? "Edit lokasi" : "Tambah lokasi"}
+          size="2xl"
+        >
+          <form onSubmit={simpan} className="flex min-h-0 flex-1 flex-col">
+            <ModalHeader
+              title={diedit ? `Ubah Lokasi: ${diedit.nama}` : "Daftarkan Lokasi Baru"}
+              description="Titik pusat dan radius menjadi nilai awal saat dipilih pada agenda."
+              icon={MapPin}
+              onClose={() => {
+                setModalBuka(false);
+                resetForm();
+              }}
+            />
 
-            <form onSubmit={simpan} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6">
+            <ModalBody>
               <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Nama Lokasi
-                </label>
+                <label className="mb-1 block text-xs font-semibold text-navy">Nama Lokasi</label>
                 <input
                   type="text"
                   required
@@ -231,39 +234,35 @@ export function LokasiManager({ initialLokasi }: Props) {
                   placeholder="Contoh: Auditorium Polines"
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                    Latitude
-                  </label>
+                  <label className="mb-1 block text-xs font-semibold text-navy">Latitude</label>
                   <input
                     type="number"
                     step="0.000001"
                     required
                     value={lat}
                     onChange={(e) => setLat(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                    Longitude
-                  </label>
+                  <label className="mb-1 block text-xs font-semibold text-navy">Longitude</label>
                   <input
                     type="number"
                     step="0.000001"
                     required
                     value={lng}
                     onChange={(e) => setLng(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  <label className="mb-1 block text-xs font-semibold text-navy">
                     Radius (meter)
                   </label>
                   <input
@@ -273,7 +272,7 @@ export function LokasiManager({ initialLokasi }: Props) {
                     required
                     value={radiusM}
                     onChange={(e) => setRadiusM(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
                   />
                 </div>
               </div>
@@ -287,29 +286,29 @@ export function LokasiManager({ initialLokasi }: Props) {
                   setLng(lo);
                 }}
               />
+            </ModalBody>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModalBuka(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-semibold transition-colors"
-                >
-                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {diedit ? "Simpan Perubahan" : "Daftarkan"}
-                </button>
-              </div>
-            </form>
-          </div>
+            <ModalFooter>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalBuka(false);
+                  resetForm();
+                }}
+                className="rounded-xl border border-[#CBD5E1] px-4 py-2.5 text-xs font-semibold text-navy transition-colors hover:bg-surface"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                className="inline-flex items-center gap-2 rounded-xl bg-secondary px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary disabled:opacity-60"
+              >
+                {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {diedit ? "Simpan Perubahan" : "Daftarkan"}
+              </button>
+            </ModalFooter>
+          </form>
         </Modal>
       )}
     </div>

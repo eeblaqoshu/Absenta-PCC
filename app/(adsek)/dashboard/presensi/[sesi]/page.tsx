@@ -56,12 +56,12 @@ export default async function PresensiSesiPage({ params }: PageProps) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href={`/dashboard/proker/${data.agenda.proker.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-blue-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted transition-colors hover:text-secondary"
         >
           <ArrowLeft className="w-4 h-4" />
           Kembali ke {data.agenda.proker.nama}
         </Link>
-        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500">
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-muted">
           <Clock className="w-3.5 h-3.5" />
           Sesi #{data.id} • {formatJamIndo(data.bukaAt)}–{formatJamIndo(data.tutupAt)} WIB
         </span>
@@ -76,17 +76,17 @@ export default async function PresensiSesiPage({ params }: PageProps) {
           isReadonly={isReadonly}
         />
       ) : (
-        <div className="p-5 rounded-3xl bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 flex items-start gap-3">
-          <span className="shrink-0 w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-            <QrCode className="w-5 h-5 text-zinc-400" />
+        <div className="flex items-start gap-3 rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface">
+            <QrCode className="w-5 h-5 text-slate-muted" />
           </span>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+            <p className="text-sm font-semibold text-primary">
               {statusSesi === "belum_dibuka"
                 ? "Sesi belum dibuka"
                 : "Sesi sudah selesai"}
             </p>
-            <p className="text-xs text-zinc-500 leading-relaxed">
+            <p className="text-xs text-slate-muted leading-relaxed">
               {statusSesi === "belum_dibuka"
                 ? `QR baru tampil pada ${formatJamIndo(data.bukaAt)} WIB.`
                 : "QR sudah tidak ditampilkan lagi. Anda tetap dapat melihat dan mengelola daftar hadir serta mengekspor CSV di bawah."}
@@ -97,7 +97,7 @@ export default async function PresensiSesiPage({ params }: PageProps) {
 
       {rekap && (
         <div className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wide text-zinc-400 flex items-center gap-1.5">
+          <h2 className="text-xs font-bold uppercase tracking-wide text-slate-muted flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5" />
             Daftar hadir & kelola kehadiran
           </h2>

@@ -11,7 +11,7 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import jsQR from "jsqr";
 import type { Map as LeafletMap, Marker, Circle } from "leaflet";
 import Link from "next/link";
-import { Modal } from "@/components/ui/modal";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import { formatJamIndo } from "@/lib/waktu";
 import { hitungJarakHaversine } from "@/lib/geo";
 import "leaflet/dist/leaflet.css";
@@ -489,12 +489,12 @@ export function ScanPresensi({ daftarSesi }: Props) {
 
   if (daftarSesi.length === 0) {
     return (
-      <div className="p-10 text-center rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <Camera className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
-        <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+      <div className="p-10 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
+        <Camera className="w-10 h-10 text-slate-muted mx-auto mb-3" />
+        <p className="text-sm font-semibold text-navy">
           Tidak ada sesi presensi yang sedang dibuka
         </p>
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-slate-muted mt-1">
           Tunggu adsek membuka sesi presensi untuk agenda yang menjadi hak Anda.
         </p>
       </div>
@@ -506,8 +506,8 @@ export function ScanPresensi({ daftarSesi }: Props) {
   return (
     <div className="space-y-5">
       {/* Pilih sesi */}
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 space-y-3">
-        <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+      <div className="rounded-2xl bg-white border border-[#E2E8F0] p-5 space-y-3">
+        <label className="block text-xs font-semibold text-navy">
           Sesi presensi yang dibuka
         </label>
         <select
@@ -517,7 +517,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
             setSesiDipilih(pilih);
             setHasil(null);
           }}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs focus:outline-none focus:ring-2 focus:ring-secondary/30"
         >
           {daftarSesi.map((s) => (
             <option key={s.sesiId} value={s.sesiId}>
@@ -528,7 +528,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
         </select>
 
         {sesiDipilih && (
-          <div className="text-[11px] text-zinc-500 space-y-0.5">
+          <div className="text-[11px] text-slate-muted space-y-0.5">
             <p className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-rose-500" />
               {sesiDipilih.lokasiNama ?? "Titik manual"} • radius {sesiDipilih.radiusM} m
@@ -542,10 +542,10 @@ export function ScanPresensi({ daftarSesi }: Props) {
       </div>
 
       {/* Status GPS + jarak */}
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
+      <div className="rounded-2xl bg-white border border-[#E2E8F0] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-            <Navigation className="w-3.5 h-3.5 text-blue-500" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-navy">
+            <Navigation className="w-3.5 h-3.5 text-secondary" />
             {posisi
               ? `Posisi: ${posisi.lat.toFixed(5)}, ${posisi.lng.toFixed(5)} (±${posisi.akurasi} m)`
               : "Mencari sinyal GPS…"}
@@ -555,8 +555,8 @@ export function ScanPresensi({ daftarSesi }: Props) {
               <span
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                   diDalamRadius
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
-                    : "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-rose-100 text-rose-700"
                 }`}
               >
                 <CircleDot className="w-3.5 h-3.5" />
@@ -565,7 +565,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
             )}
             <button
               onClick={ambilLokasiManual}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 text-[11px] font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#CBD5E1] text-[11px] font-semibold text-navy hover:bg-surface transition-colors"
             >
               <LocateFixed className="w-3.5 h-3.5" />
               Ambil lokasi
@@ -574,7 +574,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
         </div>
 
         {gpsGalat || !dukungGps ? (
-          <p className="text-[11px] text-red-600 dark:text-red-400 mb-2 inline-flex items-start gap-1">
+          <p className="text-[11px] text-rose-600 mb-2 inline-flex items-start gap-1">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
             {!dukungGps ? "Perangkat ini tidak mendukung GPS." : gpsGalat}
           </p>
@@ -583,9 +583,9 @@ export function ScanPresensi({ daftarSesi }: Props) {
         <div
           ref={containerRef}
           style={{ height: "260px" }}
-          className="peta-leaflet relative z-0 w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800"
+          className="peta-leaflet relative z-0 w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-surface"
         />
-        <p className="text-[11px] text-zinc-500 mt-2">
+        <p className="text-[11px] text-slate-muted mt-2">
           Titik biru = pusat sesi, titik merah = posisi Anda. Presensi di luar radius tetap
           tercatat, lalu diverifikasi adsek.
         </p>
@@ -593,29 +593,29 @@ export function ScanPresensi({ daftarSesi }: Props) {
 
       {/* Sudah presensi (tampilan berubah, bukan scan lagi) atau scanner */}
       {sudah ? (
-        <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/30 p-6 text-center space-y-2">
-          <CheckCircle2 className="w-10 h-10 text-emerald-600 dark:text-emerald-400 mx-auto" />
-          <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 text-center space-y-2">
+          <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+          <p className="text-sm font-bold text-emerald-800">
             Anda sudah presensi untuk sesi ini
           </p>
-          <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">
+          <p className="text-xs text-emerald-700/80">
             {sesiDipilih?.judulAgenda} • {formatJamIndo(new Date(sudah.waktuScan))}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-            <span className="px-2.5 py-1 rounded-full bg-white dark:bg-emerald-950/60 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+            <span className="px-2.5 py-1 rounded-full bg-white text-[11px] font-bold text-emerald-700 border border-emerald-200">
               {sudah.status}
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-white dark:bg-emerald-950/60 text-[11px] font-bold text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+            <span className="px-2.5 py-1 rounded-full bg-white text-[11px] font-bold text-slate-muted border border-[#E2E8F0]">
               jarak {sudah.jarakM} m
             </span>
             {sudah.diLuarRadius && (
               <span
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                   sudah.statusVerifikasi === "ditolak"
-                    ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900"
+                    ? "bg-rose-50 text-rose-700 border-rose-200"
                     : sudah.statusVerifikasi === "menunggu"
-                      ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900"
-                      : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900"
+                      ? "bg-amber-50 text-[#8a6500] border-amber-200"
+                      : "bg-emerald-50 text-emerald-700 border-emerald-200"
                 }`}
               >
                 di luar radius •{" "}
@@ -627,18 +627,18 @@ export function ScanPresensi({ daftarSesi }: Props) {
               </span>
             )}
           </div>
-          <p className="text-[11px] text-zinc-500 pt-1">
+          <p className="text-[11px] text-slate-muted pt-1">
             Pilih sesi lain di atas bila ada agenda lain yang masih dibuka.
           </p>
         </div>
       ) : (
-      <div className="rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5">
-        <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 mb-3 inline-flex items-center gap-2">
-          <Camera className="w-4 h-4 text-blue-500" />
+      <div className="rounded-2xl bg-white border border-[#E2E8F0] p-5">
+        <h2 className="text-sm font-bold text-primary mb-3 inline-flex items-center gap-2">
+          <Camera className="w-4 h-4 text-secondary" />
           Pindai QR di layar adsek
         </h2>
 
-        <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+        <div className="rounded-xl overflow-hidden border border-[#E2E8F0]">
           <Scanner
             onScan={(codes) => {
               const raw = codes?.[0]?.rawValue;
@@ -651,15 +651,15 @@ export function ScanPresensi({ daftarSesi }: Props) {
         </div>
 
         {kameraGalat && (
-          <p className="mt-2 text-[11px] text-amber-600 dark:text-amber-400 inline-flex items-start gap-1">
+          <p className="mt-2 text-[11px] text-[#8a6500] inline-flex items-start gap-1">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
             {kameraGalat} Anda tetap bisa mengunggah gambar QR di bawah.
           </p>
         )}
 
         {/* Alternatif: unggah gambar QR dari galeri */}
-        <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-          <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+        <div className="mt-4 pt-4 border-t border-[#E2E8F0] space-y-2">
+          <label className="block text-xs font-semibold text-navy">
             Atau unggah gambar QR dari galeri
           </label>
           <input
@@ -677,18 +677,18 @@ export function ScanPresensi({ daftarSesi }: Props) {
           />
           <label
             htmlFor="berkas-qr"
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#CBD5E1] text-xs font-semibold text-navy hover:bg-surface cursor-pointer transition-colors"
           >
             <ImageUp className="w-3.5 h-3.5" />
             Pilih gambar QR
           </label>
-          <p className="text-[11px] text-zinc-500">
+          <p className="text-[11px] text-slate-muted">
             Berguna kalau kamera tidak bisa dipakai. Gambar harus masih dalam jendela QR
             (maksimal 14 menit sejak QR ditampilkan).
           </p>
-          {namaBerkas && <p className="text-[11px] text-zinc-500">Berkas: {namaBerkas}</p>}
+          {namaBerkas && <p className="text-[11px] text-slate-muted">Berkas: {namaBerkas}</p>}
           {galatGambar && (
-            <p className="text-[11px] text-red-600 dark:text-red-400 inline-flex items-start gap-1">
+            <p className="text-[11px] text-rose-600 inline-flex items-start gap-1">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
               {galatGambar}
             </p>
@@ -696,7 +696,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
         </div>
 
         {memproses && (
-          <p className="mt-3 text-xs text-zinc-500 inline-flex items-center gap-2">
+          <p className="mt-3 text-xs text-slate-muted inline-flex items-center gap-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             {pesanProses ?? "Memverifikasi presensi…"}
           </p>
@@ -706,8 +706,8 @@ export function ScanPresensi({ daftarSesi }: Props) {
           <div
             className={`mt-3 flex items-start gap-2 p-3 rounded-xl text-xs ${
               hasil.sukses
-                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300"
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-rose-50 text-rose-700"
             }`}
           >
             {hasil.sukses ? (
@@ -737,55 +737,56 @@ export function ScanPresensi({ daftarSesi }: Props) {
 
       {/* Popup berhasil presensi */}
       {modalSukses && hasil?.sukses && (
-        <Modal onClose={() => setModalSukses(false)} ariaLabel="Presensi berhasil">
-          <div className="my-auto w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-6 space-y-4">
-            <div className="text-center space-y-2">
-              <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+        <Modal onClose={() => setModalSukses(false)} ariaLabel="Presensi berhasil" size="sm">
+          <ModalHeader
+            title="Presensi Berhasil"
+            description={hasil.agendaJudul ?? sesiDipilih?.judulAgenda}
+            icon={CheckCircle2}
+            onClose={() => setModalSukses(false)}
+          />
+
+          <ModalBody className="space-y-4">
+            <div className="space-y-2 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50">
-                Presensi Berhasil
-              </h3>
-              <p className="text-xs text-zinc-500">
-                {hasil.agendaJudul ?? sesiDipilih?.judulAgenda}
-              </p>
+              <p className="text-xs text-slate-muted">Kehadiran Anda sudah tercatat di server.</p>
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60">
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500">Status</p>
-                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 capitalize">
-                  {hasil.status}
-                </p>
+              <div className="rounded-xl bg-surface p-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-slate-muted">Status</p>
+                <p className="text-xs font-bold capitalize text-emerald-600">{hasil.status}</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60">
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500">Jarak</p>
-                <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100">
-                  {hasil.jarakM} m
-                </p>
+              <div className="rounded-xl bg-surface p-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-slate-muted">Jarak</p>
+                <p className="text-xs font-bold text-navy">{hasil.jarakM} m</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/60">
-                <p className="text-[10px] uppercase tracking-wide text-zinc-500">Waktu</p>
-                <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100">
+              <div className="rounded-xl bg-surface p-2.5">
+                <p className="text-[10px] uppercase tracking-wide text-slate-muted">Waktu</p>
+                <p className="text-xs font-bold text-navy">
                   {hasil.waktuScan ? formatJamIndo(new Date(hasil.waktuScan)) : "-"}
                 </p>
               </div>
             </div>
 
             {hasil.diLuarRadius && (
-              <p className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl px-3 py-2 leading-relaxed">
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-[#8a6500]">
                 Anda berada di luar radius {hasil.radiusM} m. Presensi tetap tercatat, tetapi
                 menunggu verifikasi adsek sebelum kehadiran dianggap sah.
               </p>
             )}
+          </ModalBody>
 
+          <ModalFooter>
             <button
+              type="button"
               onClick={() => setModalSukses(false)}
-              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors"
+              className="w-full rounded-xl bg-secondary py-2.5 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary"
             >
               Selesai
             </button>
-          </div>
+          </ModalFooter>
         </Modal>
       )}
     </div>

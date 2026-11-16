@@ -75,18 +75,18 @@ export default async function ScanPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100">
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+    <div className="min-h-screen bg-surface font-sans text-primary">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0]">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link
             href="/home"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-blue-600 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Kembali ke Home
           </Link>
           <div className="flex items-center gap-3">
-            <span className="hidden sm:block text-xs font-bold text-zinc-800 dark:text-zinc-200">
+            <span className="hidden sm:block text-xs font-bold text-navy">
               {sto.nama}
             </span>
             <LogoutButton />
@@ -97,10 +97,10 @@ export default async function ScanPage() {
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
         <div>
           <h1 className="text-lg font-bold inline-flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-blue-500" />
+            <QrCode className="w-5 h-5 text-secondary" />
             Scan Presensi
           </h1>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-slate-muted mt-1">
             Presensi di luar radius tetap tercatat dan akan diverifikasi adsek. Waktu sesi tetap
             harus masih dibuka.
           </p>

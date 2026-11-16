@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle, QrCode } from "lucide-react";
 import Link from "next/link";
+import { AgendaStatusTabs } from "@/components/agenda-status-tabs";
 
 export interface AgendaItem {
   id: number;
@@ -58,55 +59,12 @@ export function StoAgendaTabs({
 
   return (
     <div className="space-y-4">
-      {/* Tab Header Controls: Komponen lonjong (capsule / pill) */}
-      <div className="p-1.5 bg-surface rounded-full border border-[#E2E8F0] overflow-x-auto scrollbar-none shadow-sm" data-lenis-prevent>
-        <div className="flex items-center min-w-full sm:min-w-0 sm:grid sm:grid-cols-3 gap-1.5">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className="relative flex-1 shrink-0 py-2.5 px-4 sm:px-5 rounded-full text-xs font-medium transition-all duration-200 flex items-center justify-center whitespace-nowrap focus:outline-none"
-              >
-                {/* Konten teks & badge selalu di layer atas (z-10) */}
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  <span
-                    className={`transition-colors duration-200 ${
-                      isActive
-                        ? "text-primary font-extrabold"
-                        : "text-slate-muted hover:text-navy"
-                    }`}
-                  >
-                    {tab.label}
-                  </span>
-
-                  {/* Badge Jumlah Agenda */}
-                  <span
-                    className={`text-[10px] min-w-[20px] h-[20px] px-1.5 rounded-full font-bold flex items-center justify-center transition-all ${
-                      isActive
-                        ? "bg-primary text-white shadow-sm"
-                        : "bg-[#E2E8F0] text-slate-muted"
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                </span>
-
-                {/* Komponen lonjong aktif (capsule pill indicator) */}
-                {isActive && (
-                  <motion.div
-                    layoutId="stoTabPill"
-                    transition={{ type: "spring", stiffness: 450, damping: 35 }}
-                    className="absolute inset-0 bg-white rounded-full shadow-[0_2px_10px_rgba(11,42,91,0.12)] border border-[#CBD5E1] z-0"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <AgendaStatusTabs
+        items={tabs.map((tab) => ({ id: tab.id, label: tab.label, count: tab.count }))}
+        value={activeTab}
+        onChange={setActiveTab}
+        layoutId="sto-agenda-tabs"
+      />
 
       {/* Tab Contents */}
       <AnimatePresence mode="wait">
@@ -144,16 +102,16 @@ export function StoAgendaTabs({
                       {agenda.prokerNama}
                     </span>
                     {agenda.statusDihitung === "sedang_berlangsung" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Sedang berlangsung
                       </span>
                     ) : agenda.statusDihitung === "selesai" ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E2E8F0] text-slate-muted">
                         Selesai
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-highlight/15 text-[#8a6500]">
                         Belum mulai
                       </span>
                     )}
@@ -198,7 +156,7 @@ export function StoAgendaTabs({
                         <span
                           className={`text-[10px] font-semibold ${
                             agenda.statusVerifikasi === "ditolak"
-                              ? "text-red-600"
+                              ? "text-rose-600"
                               : agenda.statusVerifikasi === "menunggu"
                                 ? "text-amber-600"
                                 : "text-emerald-600"

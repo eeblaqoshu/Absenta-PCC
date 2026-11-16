@@ -16,10 +16,10 @@ export default async function IzinAdsekPage() {
 
   if (!periodeAktif) {
     return (
-      <div className="p-8 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center space-y-3 max-w-lg mx-auto my-8">
-        <AlertCircle className="w-6 h-6 text-amber-500 mx-auto" />
-        <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Tidak Ada Periode Aktif</h2>
-        <p className="text-xs text-zinc-500">
+      <div className="mx-auto my-8 max-w-lg space-y-3 rounded-2xl border border-[#E2E8F0] bg-white p-8 text-center shadow-sm">
+        <AlertCircle className="mx-auto h-6 w-6 text-[#B45309]" />
+        <h2 className="text-base font-bold text-primary">Tidak Ada Periode Aktif</h2>
+        <p className="text-xs text-slate-muted">
           Izin hanya bisa ditinjau ketika ada periode kepengurusan aktif.
         </p>
       </div>

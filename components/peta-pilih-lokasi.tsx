@@ -146,7 +146,7 @@ export function PetaPilihLokasi({ lat, lng, radiusM, onPilih, tinggi = "260px" }
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-muted">
           <MapPin className="w-3.5 h-3.5" />
           Klik peta atau geser pin untuk menentukan titik pusat
         </span>
@@ -154,7 +154,7 @@ export function PetaPilihLokasi({ lat, lng, radiusM, onPilih, tinggi = "260px" }
           type="button"
           onClick={pakaiLokasiSaya}
           disabled={cariGps}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-60 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#CBD5E1] text-navy hover:bg-surface disabled:opacity-60 transition-colors"
         >
           {cariGps ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
           Pakai lokasi saya
@@ -164,18 +164,18 @@ export function PetaPilihLokasi({ lat, lng, radiusM, onPilih, tinggi = "260px" }
       <div
         ref={containerRef}
         style={{ height: tinggi }}
-        className="peta-leaflet relative z-0 w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800"
+        className="peta-leaflet relative z-0 w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-surface"
       >
         {!siap && (
-          <div className="w-full h-full flex items-center justify-center text-xs text-zinc-500">
+          <div className="w-full h-full flex items-center justify-center text-xs text-slate-muted">
             Memuat peta…
           </div>
         )}
       </div>
 
-      {gpsError && <p className="text-xs text-red-600 dark:text-red-400">{gpsError}</p>}
+      {gpsError && <p className="text-xs text-rose-600">{gpsError}</p>}
 
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+      <p className="text-xs text-slate-muted">
         {lat.toFixed(6)}, {lng.toFixed(6)} • radius {radiusM} m
       </p>
     </div>

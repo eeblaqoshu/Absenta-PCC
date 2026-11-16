@@ -61,39 +61,39 @@ export default async function IzinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100">
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-surface font-sans text-navy">
+      <header className="sticky top-0 z-40 border-b border-[#E2E8F0] bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <Link
             href="/home"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-blue-600 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted transition-colors hover:text-secondary"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="h-4 w-4" />
             Kembali ke Home
           </Link>
           <div className="flex items-center gap-3">
-            <span className="hidden sm:block text-xs font-bold text-zinc-800 dark:text-zinc-200">
-              {sto.nama}
-            </span>
+            <span className="hidden text-xs font-bold text-navy sm:block">{sto.nama}</span>
             <LogoutButton />
           </div>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-        <div>
-          <h1 className="text-lg font-bold inline-flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-500" />
+      <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
+        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+          <h1 className="inline-flex items-center gap-2 text-lg font-bold text-primary">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
+              <FileText className="h-4 w-4 text-secondary" />
+            </span>
             Izin Tidak Hadir
           </h1>
-          <p className="text-xs text-zinc-500 mt-1">
-            Ajukan izin per <strong className="font-semibold">sesi presensi</strong>. Izin yang
-            disetujui adsek membuat poin sesi itu menjadi 0 (tidak mengurangi poin) walau Anda tidak
-            hadir atau datang terlambat.
+          <p className="mt-2 text-xs text-slate-muted">
+            Ajukan izin per <strong className="font-semibold text-navy">sesi presensi</strong>. Izin
+            yang disetujui adsek membuat poin sesi itu menjadi 0 (tidak mengurangi poin) walau Anda
+            tidak hadir atau datang terlambat.
           </p>
-          <p className="text-xs text-zinc-500 mt-1">
-            Hanya sesi yang <strong className="font-semibold">belum ditutup</strong> yang tampil di
-            sini; sesi yang sudah lewat tidak bisa diajukan izin.
+          <p className="mt-1 text-xs text-slate-muted">
+            Hanya sesi yang <strong className="font-semibold text-navy">belum ditutup</strong> yang
+            tampil di sini; sesi yang sudah lewat tidak bisa diajukan izin.
           </p>
         </div>
 
