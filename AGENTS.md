@@ -9,7 +9,7 @@ Website presensi STO/panitia dengan login Firebase Authentication (Google untuk 
 ## 2. Stack
 
 - Next.js (App Router, TypeScript) + Tailwind CSS
-- MySQL 8.4 + Prisma ORM (Laragon, `127.0.0.1:3306`, database `presensi_sto`)
+- MySQL + Prisma ORM
 - Firebase Authentication: provider Google (STO) + Email/Password (adsek). Klien memakai Firebase JS SDK, server memakai **Firebase Admin SDK** (session cookie httpOnly). Auth.js tidak dipakai.
 - `qrcode.react` (menampilkan QR), `@yudiel/react-qr-scanner` (scan)
 - `leaflet` (peta pemilih lokasi & peta radius di halaman scan; pakai plain leaflet, dimuat dinamis di Client Component)

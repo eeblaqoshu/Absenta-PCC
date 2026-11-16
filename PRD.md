@@ -1,6 +1,6 @@
 # PRD: Sistem Presensi Pengurus Organisasi
 
-Versi 1.0 | Status: Draft siap dikembangkan | Stack: Next.js, MySQL, Tailwind CSS
+Versi 1.0 | Status: Siap dikembangkan | Stack: Next.js, MySQL, Tailwind CSS
 
 ## 1. Ringkasan
 

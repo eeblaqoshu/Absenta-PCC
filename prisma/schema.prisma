@@ -114,17 +114,17 @@ model Periode {
 // ─────────────────────────────────────────────
 
 model AkunAdsek {
-  id           Int       @id @default(autoincrement())
-  nama         String
-  email        String    @unique
-  firebaseUid  String?   @unique @map("firebase_uid")
-  role         RoleAdsek
+  id          Int       @id @default(autoincrement())
+  nama        String
+  email       String    @unique
+  firebaseUid String?   @unique @map("firebase_uid")
+  role        RoleAdsek
 
-  prokerDibuat  Proker[]
-  agendaDibuat  Agenda[]
-  sesiDibuat    SesiPresensi[]
-  lokasiDibuat  Lokasi[]
-  izinDitinjau  Izin[]
+  prokerDibuat Proker[]
+  agendaDibuat Agenda[]
+  sesiDibuat   SesiPresensi[]
+  lokasiDibuat Lokasi[]
+  izinDitinjau Izin[]
 
   @@map("akun_adsek")
 }
@@ -154,11 +154,11 @@ model Sto {
 // ─────────────────────────────────────────────
 
 model Proker {
-  id         Int     @id @default(autoincrement())
-  periodeId  Int     @map("periode_id")
+  id         Int      @id @default(autoincrement())
+  periodeId  Int      @map("periode_id")
   nama       String
   deskripsi  String?
-  dibuatOleh Int     @map("dibuat_oleh")
+  dibuatOleh Int      @map("dibuat_oleh")
   createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(6)
 
   periode     Periode       @relation(fields: [periodeId], references: [id])
@@ -171,11 +171,11 @@ model Proker {
 }
 
 model Kepanitiaan {
-  id             Int          @id @default(autoincrement())
-  prokerId       Int          @map("proker_id")
-  stoId          Int          @map("sto_id")
-  peran          PeranPanitia
-  divisiPanitia  String?      @map("divisi_panitia")
+  id            Int          @id @default(autoincrement())
+  prokerId      Int          @map("proker_id")
+  stoId         Int          @map("sto_id")
+  peran         PeranPanitia
+  divisiPanitia String?      @map("divisi_panitia")
 
   proker Proker @relation(fields: [prokerId], references: [id], onDelete: Cascade)
   sto    Sto    @relation(fields: [stoId], references: [id])
@@ -258,7 +258,7 @@ model Lokasi {
   dibuatOleh Int      @map("dibuat_oleh")
   createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(6)
 
-  pembuat AkunAdsek    @relation(fields: [dibuatOleh], references: [id])
+  pembuat AkunAdsek @relation(fields: [dibuatOleh], references: [id])
   agenda  Agenda[]
 
   @@map("lokasi")
