@@ -2,8 +2,9 @@
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusPeriode } from "@prisma/client";
-import { Calendar, FolderKanban, Users, ShieldCheck, ArrowRight, Clock } from "lucide-react";
+import { Calendar, FolderKanban, Users, ShieldCheck, ArrowRight, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
+import { hitungLeaderboard } from "@/lib/rekap-poin";
 
 export default async function AdsekDashboardPage() {
   const adsek = await requireAdsek();
@@ -30,6 +31,10 @@ export default async function AdsekDashboardPage() {
         where: { proker: { periodeId: periodeAktif.id } },
       })
     : 0;
+
+  // Ringkasan poin: tampilkan 3 teratas di dashboard (detail di /dashboard/leaderboard).
+  const rekapPoin = periodeAktif ? await hitungLeaderboard(periodeAktif.id) : null;
+  const topPoin = rekapPoin?.baris.slice(0, 3) ?? [];
 
   return (
     <div className="space-y-6">
@@ -109,6 +114,65 @@ export default async function AdsekDashboardPage() {
             <Clock className="w-5 h-5" />
           </div>
         </div>
+      </div>
+
+      {/* Ringkasan Poin: Top 3 */}
+      <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 className="text-sm font-bold text-zinc-800 dark:text-zinc-100 inline-flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-500" />
+              Top 3 Poin Kehadiran
+            </h3>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {rekapPoin?.periodeNama ?? "Belum ada periode aktif"} •{" "}
+              {rekapPoin?.totalSesiDihitung ?? 0} sesi ditutup dihitung
+            </p>
+          </div>
+          <Link
+            href="/dashboard/leaderboard"
+            className="text-xs font-semibold text-blue-600 dark:text-blue-400 inline-flex items-center gap-1 hover:underline"
+          >
+            Lihat leaderboard lengkap
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {topPoin.length === 0 ? (
+          <p className="text-xs text-zinc-500 py-4 text-center">
+            Belum ada sesi presensi yang selesai pada periode ini.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {topPoin.map((b) => (
+              <div
+                key={b.stoId}
+                className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-800/40"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-lg leading-none">
+                    {["🥇", "🥈", "🥉"][b.peringkat - 1] ?? `#${b.peringkat}`}
+                  </span>
+                  <span
+                    className={`text-xs font-bold px-2 py-0.5 rounded-lg ${
+                      b.poin > 0
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        : b.poin < 0
+                          ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                          : "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+                    }`}
+                  >
+                    {b.poin} poin
+                  </span>
+                </div>
+                <p className="mt-2 text-xs font-bold text-zinc-800 dark:text-zinc-100 truncate">
+                  {b.nama}
+                </p>
+                <p className="text-[11px] text-zinc-500 truncate">{b.divisi ?? "Umum"}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Menu Cepat Navigasi Modul Master Data */}
