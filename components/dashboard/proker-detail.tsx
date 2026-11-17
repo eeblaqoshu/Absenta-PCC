@@ -33,6 +33,79 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+export const OPSI_PERAN_PANITIA = [
+  {
+    key: "ketua_pelaksana",
+    label: "Ketua Pelaksana",
+    peran: PeranPanitia.ketua,
+    kategori: "Pimpinan Inti (PI)",
+    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "wakil_ketua_pelaksana",
+    label: "Wakil Ketua Pelaksana",
+    peran: PeranPanitia.ketua,
+    kategori: "Pimpinan Inti (PI)",
+    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "sekretaris_inti",
+    label: "Sekretaris Inti",
+    peran: PeranPanitia.sekretaris,
+    kategori: "Pimpinan Inti (PI)",
+    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "sekretaris_pelaksana",
+    label: "Sekretaris Pelaksana",
+    peran: PeranPanitia.sekretaris,
+    kategori: "Pimpinan Inti (PI)",
+    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "bendahara_inti",
+    label: "Bendahara Inti",
+    peran: PeranPanitia.bendahara,
+    kategori: "Pimpinan Inti (PI)",
+    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "bendahara_pelaksana",
+    label: "Bendahara Pelaksana",
+    peran: PeranPanitia.bendahara,
+    kategori: "Pimpinan Inti (PI)",
+    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "pj_sie_acara",
+    label: "Penanggung Jawab Sie Acara",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab (PJ)",
+    divisi: "Sie Acara",
+  },
+  {
+    key: "anggota_sie_acara",
+    label: "Anggota Sie Acara",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota",
+    divisi: "Sie Acara",
+  },
+  {
+    key: "pj_dekdok",
+    label: "Penanggung Jawab Dekdok",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab (PJ)",
+    divisi: "Sie Dekdok",
+  },
+  {
+    key: "anggota_sie_dekdok",
+    label: "Anggota Sie Dekdok",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota",
+    divisi: "Sie Dekdok",
+  },
+] as const;
+
 interface PanitiaItem {
   id: number;
   peran: PeranPanitia;
@@ -102,9 +175,8 @@ export function ProkerDetail({
   const [modalEditPanitiaBuka, setModalEditPanitiaBuka] = useState(false);
   const [panitiaDiedit, setPanitiaDiedit] = useState<PanitiaItem | null>(null);
 
+  const [selectedRoleKey, setSelectedRoleKey] = useState<string>("ketua_pelaksana");
   const [pilihanStoId, setPilihanStoId] = useState<string>("");
-  const [peranPanitia, setPeranPanitia] = useState<PeranPanitia>(PeranPanitia.anggota);
-  const [divisiPanitia, setDivisiPanitia] = useState("");
 
   // ─────────────────────────────────────────────
   // MODAL AGENDA STATE
@@ -133,11 +205,15 @@ export function ProkerDetail({
     if (!pilihanStoId) return;
     setPesan(null);
 
+    const roleDef =
+      OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKey) ||
+      OPSI_PERAN_PANITIA[0];
+
     const formData = new FormData();
     formData.append("prokerId", proker.id.toString());
     formData.append("stoId", pilihanStoId);
-    formData.append("peran", peranPanitia);
-    formData.append("divisiPanitia", divisiPanitia);
+    formData.append("peran", roleDef.peran);
+    formData.append("divisiPanitia", roleDef.label);
 
     startTransition(async () => {
       const res = await tambahPanitiaAction(formData);
@@ -147,15 +223,22 @@ export function ProkerDetail({
         setPesan({ tipe: "sukses", teks: res.pesan });
         setModalPanitiaBuka(false);
         setPilihanStoId("");
-        setDivisiPanitia("");
+        setSelectedRoleKey("ketua_pelaksana");
       }
     });
   };
 
   const handleOpenEditPanitia = (item: PanitiaItem) => {
     setPanitiaDiedit(item);
-    setPeranPanitia(item.peran);
-    setDivisiPanitia(item.divisiPanitia || "");
+    const matched = OPSI_PERAN_PANITIA.find(
+      (o) => o.label.toLowerCase() === (item.divisiPanitia || "").toLowerCase()
+    );
+    if (matched) {
+      setSelectedRoleKey(matched.key);
+    } else {
+      const byPeran = OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
+      setSelectedRoleKey(byPeran ? byPeran.key : OPSI_PERAN_PANITIA[0].key);
+    }
     setModalEditPanitiaBuka(true);
   };
 
@@ -164,9 +247,13 @@ export function ProkerDetail({
     if (!panitiaDiedit) return;
     setPesan(null);
 
+    const roleDef =
+      OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKey) ||
+      OPSI_PERAN_PANITIA[0];
+
     const formData = new FormData();
-    formData.append("peran", peranPanitia);
-    formData.append("divisiPanitia", divisiPanitia);
+    formData.append("peran", roleDef.peran);
+    formData.append("divisiPanitia", roleDef.label);
 
     startTransition(async () => {
       const res = await ubahPanitiaAction(panitiaDiedit.id, formData);
@@ -175,6 +262,7 @@ export function ProkerDetail({
       } else {
         setPesan({ tipe: "sukses", teks: res.pesan });
         setModalEditPanitiaBuka(false);
+        setPanitiaDiedit(null);
       }
     });
   };
@@ -298,19 +386,32 @@ export function ProkerDetail({
   };
 
   // Label Helper
-  const getPeranBadge = (peran: PeranPanitia) => {
-    switch (peran) {
-      case PeranPanitia.ketua:
-        return { label: "Ketua Pelaksana", bg: "bg-primary text-white border-primary" };
-      case PeranPanitia.sekretaris:
-        return { label: "Sekretaris", bg: "bg-secondary/10 text-secondary border-secondary/30" };
-      case PeranPanitia.bendahara:
-        return { label: "Bendahara", bg: "bg-highlight/15 text-[#B45309] border-highlight/40" };
-      case PeranPanitia.pj_divisi:
-        return { label: "PJ Divisi", bg: "bg-accent/20 text-primary border-accent/40" };
-      default:
-        return { label: "Anggota", bg: "bg-surface text-slate-muted border-[#E2E8F0]" };
+  const getPeranBadge = (peran: PeranPanitia, roleName?: string | null) => {
+    const label =
+      roleName ||
+      (peran === PeranPanitia.ketua
+        ? "Ketua Pelaksana"
+        : peran === PeranPanitia.sekretaris
+        ? "Sekretaris"
+        : peran === PeranPanitia.bendahara
+        ? "Bendahara"
+        : peran === PeranPanitia.pj_divisi
+        ? "PJ Divisi"
+        : "Anggota");
+    const l = label.toLowerCase();
+    if (l.includes("ketua")) {
+      return { label, bg: "bg-primary text-white border-primary shadow-xs" };
     }
+    if (l.includes("sekretaris")) {
+      return { label, bg: "bg-secondary/15 text-secondary border-secondary/30" };
+    }
+    if (l.includes("bendahara")) {
+      return { label, bg: "bg-highlight/20 text-[#B45309] border-highlight/40" };
+    }
+    if (l.includes("penanggung jawab") || l.includes("pj")) {
+      return { label, bg: "bg-accent/20 text-primary border-accent/40" };
+    }
+    return { label, bg: "bg-surface text-slate-muted border-[#CBD5E1]" };
   };
 
   const getJenisAgendaBadge = (jenis: JenisAgenda) => {
@@ -445,8 +546,7 @@ export function ProkerDetail({
               <button
                 onClick={() => {
                   setPilihanStoId("");
-                  setPeranPanitia(PeranPanitia.anggota);
-                  setDivisiPanitia("");
+                  setSelectedRoleKey(OPSI_PERAN_PANITIA[0].key);
                   setModalPanitiaBuka(true);
                 }}
                 disabled={stoBelumMasuk.length === 0}
@@ -501,7 +601,12 @@ export function ProkerDetail({
                   </thead>
                   <tbody className="divide-y divide-[#E2E8F0]">
                     {proker.kepanitiaan.map((item) => {
-                      const badge = getPeranBadge(item.peran);
+                      const badge = getPeranBadge(item.peran, item.divisiPanitia);
+                      const roleMatch = OPSI_PERAN_PANITIA.find(
+                        (o) => o.label.toLowerCase() === (item.divisiPanitia || "").toLowerCase()
+                      );
+                      const divisiLabel = roleMatch ? roleMatch.divisi : (item.divisiPanitia || "-");
+
                       return (
                         <tr
                           key={item.id}
@@ -530,7 +635,7 @@ export function ProkerDetail({
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap font-medium text-navy">
-                            {item.divisiPanitia || "-"}
+                            {divisiLabel}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-slate-muted">
                             {item.sto.divisi || "Umum"}
@@ -715,18 +820,58 @@ export function ProkerDetail({
               className="relative w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl overflow-hidden z-10"
             >
               <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-                <h3 className="text-sm font-bold text-primary">
-                  Tambah Panitia ke Proker
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold text-primary">
+                    Tambah Panitia ke Proker
+                  </h3>
+                  <p className="text-[11px] text-slate-muted mt-0.5">
+                    Pilih peran dan tugaskan pengurus STO yang tersedia
+                  </p>
+                </div>
                 <button
                   onClick={() => setModalPanitiaBuka(false)}
-                  className="text-slate-muted hover:text-navy"
+                  className="text-slate-muted hover:text-navy cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmitTambahPanitia} className="p-6 space-y-4">
+                {/* 1. Posisi Paling Atas: Peran Panitia */}
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Peran / Posisi Panitia
+                  </label>
+                  <select
+                    value={selectedRoleKey}
+                    onChange={(e) => setSelectedRoleKey(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+                  >
+                    <optgroup label="Pimpinan Inti (PI)">
+                      {OPSI_PERAN_PANITIA.filter((o) => o.kategori.includes("PI")).map((opsi) => (
+                        <option key={opsi.key} value={opsi.key}>
+                          {opsi.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Penanggung Jawab (PJ)">
+                      {OPSI_PERAN_PANITIA.filter((o) => o.kategori.includes("PJ")).map((opsi) => (
+                        <option key={opsi.key} value={opsi.key}>
+                          {opsi.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Anggota">
+                      {OPSI_PERAN_PANITIA.filter((o) => o.kategori === "Anggota").map((opsi) => (
+                        <option key={opsi.key} value={opsi.key}>
+                          {opsi.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* 2. Di Bawahnya: Nama STO */}
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1">
                     Pilih Pengurus STO
@@ -735,65 +880,47 @@ export function ProkerDetail({
                     required
                     value={pilihanStoId}
                     onChange={(e) => setPilihanStoId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+                    disabled={stoBelumMasuk.length === 0}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:bg-surface disabled:text-slate-muted"
                   >
-                    <option value="">-- Pilih Pengurus --</option>
+                    <option value="">
+                      {stoBelumMasuk.length === 0
+                        ? "-- Semua pengurus STO telah terpilih --"
+                        : "-- Pilih Pengurus STO --"}
+                    </option>
                     {stoBelumMasuk.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.nama} ({s.nim}) - {s.divisi || "Umum"}
                       </option>
                     ))}
                   </select>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1">
-                    Peran Panitia
-                  </label>
-                  <select
-                    value={peranPanitia}
-                    onChange={(e) => setPeranPanitia(e.target.value as PeranPanitia)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-                  >
-                    <optgroup label="Pimpinan Inti (PI)">
-                      <option value={PeranPanitia.ketua}>Ketua Pelaksana</option>
-                      <option value={PeranPanitia.sekretaris}>Sekretaris</option>
-                      <option value={PeranPanitia.bendahara}>Bendahara</option>
-                    </optgroup>
-                    <optgroup label="Penanggung Jawab (PJ)">
-                      <option value={PeranPanitia.pj_divisi}>PJ Divisi</option>
-                    </optgroup>
-                    <optgroup label="Anggota">
-                      <option value={PeranPanitia.anggota}>Anggota Panitia</option>
-                    </optgroup>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1">
-                    Divisi Panitia (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Divisi Acara, Humas, Konsumsi"
-                    value={divisiPanitia}
-                    onChange={(e) => setDivisiPanitia(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-                  />
+                  {stoBelumMasuk.length === 0 ? (
+                    <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                      <span>
+                        Semua pengurus STO pada periode ini sudah terpilih dalam kepanitiaan proker ini.
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-muted mt-1">
+                      Pengurus yang telah terpilih di salah satu peran tidak akan muncul dalam pilihan ({stoBelumMasuk.length} pengurus tersedia).
+                    </p>
+                  )}
                 </div>
 
                 <div className="pt-2 flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setModalPanitiaBuka(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy cursor-pointer"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    disabled={isPending}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
+                    disabled={isPending || !pilihanStoId || stoBelumMasuk.length === 0}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-secondary/25 cursor-pointer"
                   >
                     {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Simpan Panitia
@@ -830,66 +957,89 @@ export function ProkerDetail({
               className="relative w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl overflow-hidden z-10"
             >
               <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-                <h3 className="text-sm font-bold text-primary">
-                  Ubah Peran Panitia ({panitiaDiedit.sto.nama})
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold text-primary">
+                    Ubah Peran Panitia
+                  </h3>
+                  <p className="text-[11px] text-slate-muted mt-0.5">
+                    Perbarui posisi tugas untuk pengurus terpilih
+                  </p>
+                </div>
                 <button
                   onClick={() => setModalEditPanitiaBuka(false)}
-                  className="text-slate-muted hover:text-navy"
+                  className="text-slate-muted hover:text-navy cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleSubmitEditPanitia} className="p-6 space-y-4">
+                {/* 1. Posisi Paling Atas: Peran Panitia */}
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1">
-                    Peran Panitia
+                    Peran / Posisi Panitia Baru
                   </label>
                   <select
-                    value={peranPanitia}
-                    onChange={(e) => setPeranPanitia(e.target.value as PeranPanitia)}
+                    value={selectedRoleKey}
+                    onChange={(e) => setSelectedRoleKey(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
                   >
                     <optgroup label="Pimpinan Inti (PI)">
-                      <option value={PeranPanitia.ketua}>Ketua Pelaksana</option>
-                      <option value={PeranPanitia.sekretaris}>Sekretaris</option>
-                      <option value={PeranPanitia.bendahara}>Bendahara</option>
+                      {OPSI_PERAN_PANITIA.filter((o) => o.kategori.includes("PI")).map((opsi) => (
+                        <option key={opsi.key} value={opsi.key}>
+                          {opsi.label}
+                        </option>
+                      ))}
                     </optgroup>
                     <optgroup label="Penanggung Jawab (PJ)">
-                      <option value={PeranPanitia.pj_divisi}>PJ Divisi</option>
+                      {OPSI_PERAN_PANITIA.filter((o) => o.kategori.includes("PJ")).map((opsi) => (
+                        <option key={opsi.key} value={opsi.key}>
+                          {opsi.label}
+                        </option>
+                      ))}
                     </optgroup>
                     <optgroup label="Anggota">
-                      <option value={PeranPanitia.anggota}>Anggota Panitia</option>
+                      {OPSI_PERAN_PANITIA.filter((o) => o.kategori === "Anggota").map((opsi) => (
+                        <option key={opsi.key} value={opsi.key}>
+                          {opsi.label}
+                        </option>
+                      ))}
                     </optgroup>
                   </select>
                 </div>
 
+                {/* 2. Di Bawahnya: Pengurus STO Info Card */}
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1">
-                    Divisi Panitia (Opsional)
+                    Nama Pengurus STO
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Divisi Acara, Humas, Konsumsi"
-                    value={divisiPanitia}
-                    onChange={(e) => setDivisiPanitia(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-                  />
+                  <div className="p-3.5 rounded-xl bg-surface border border-[#E2E8F0] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shrink-0">
+                      {panitiaDiedit.sto.nama.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-navy truncate">
+                        {panitiaDiedit.sto.nama}
+                      </p>
+                      <p className="text-[10px] text-slate-muted truncate">
+                        {panitiaDiedit.sto.nim} • {panitiaDiedit.sto.emailGoogle}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-2 flex items-center justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setModalEditPanitiaBuka(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy cursor-pointer"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25 cursor-pointer"
                   >
                     {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Simpan Perubahan
