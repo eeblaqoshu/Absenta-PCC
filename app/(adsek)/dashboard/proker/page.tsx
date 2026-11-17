@@ -22,7 +22,7 @@ export default async function ProkerPage() {
 
   if (!periodeTerkini) {
     return (
-      <div className="p-8 rounded-2xl bg-white border border-[#E2E8F0] text-center space-y-4 max-w-lg mx-auto my-8 shadow-sm">
+      <div className="p-8 rounded-3xl bg-white border border-[#E2E8F0] text-center space-y-4 max-w-lg mx-auto my-8 shadow-sm">
         <div className="w-12 h-12 rounded-2xl bg-highlight/15 text-[#B45309] flex items-center justify-center mx-auto">
           <AlertCircle className="w-6 h-6" />
         </div>

@@ -46,8 +46,9 @@ export default async function StoPage() {
     orderBy: { nama: "asc" },
   });
 
+  // Leaderboard poin dipindah ke halaman /dashboard/leaderboard.
   return (
-    <div className="py-2">
+    <div className="py-2 space-y-6">
       <StoManager initialSto={daftarSto} namaPeriode={periodeAktif.nama} />
     </div>
   );

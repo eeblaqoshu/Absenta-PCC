@@ -190,7 +190,7 @@ export function PeriodeManager({
       {/* Grid of Periods */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {initialPeriode.length === 0 ? (
-          <div className="col-span-full p-12 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
+          <div className="col-span-full p-12 text-center rounded-3xl border border-dashed border-[#CBD5E1] bg-white">
             <Calendar className="w-10 h-10 text-slate-muted mx-auto mb-3" />
             <p className="text-sm font-semibold text-navy">
               Belum ada periode kepengurusan
@@ -205,10 +205,10 @@ export function PeriodeManager({
             return (
               <div
                 key={item.id}
-                className={`p-5 rounded-2xl border transition-all ${
+                className={`p-5 rounded-3xl border transition-all ${
                   isAktif
                     ? "bg-white border-secondary shadow-[0_4px_16px_rgba(30,111,224,0.08)] ring-1 ring-secondary/30"
-                    : "bg-surface border-[#E2E8F0]"
+                    : "bg-white border-[#E2E8F0] shadow-sm hover:border-secondary"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">

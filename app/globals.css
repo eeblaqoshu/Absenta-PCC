@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: var(--font-poppins), sans-serif;
+  --font-mono: var(--font-poppins), sans-serif;
   --color-primary: #0B2A5B;
   --color-secondary: #1E6FE0;
   --color-accent: #22C4E8;
@@ -14,10 +15,39 @@
 :root {
   --background: #FFFFFF;
   --foreground: #0F172A;
+  font-family: var(--font-poppins), sans-serif;
 }
 
+html,
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Sembunyikan scrollbar tapi tetap bisa di-scroll (dipakai modal). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Peta Leaflet di dalam modal/halaman: jangan telan gerakan vertikal.
+ * Leaflet menulis `touch-action: none` pada container (`.leaflet-touch-drag...`),
+ * sehingga modal tidak bisa di-scroll di perangkat sentuh. Izinkan pan vertikal
+ * (halaman/modal tetap bisa di-scroll) — peta tetap bisa di-klik untuk pindah titik.
+ */
+.peta-leaflet {
+  touch-action: pan-y !important;
 }

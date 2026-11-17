@@ -167,7 +167,7 @@ export function ProkerList({
       {/* Grid of Prokers */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {initialProker.length === 0 ? (
-          <div className="col-span-full p-12 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
+          <div className="col-span-full p-12 text-center rounded-3xl border border-dashed border-[#CBD5E1] bg-white">
             <FolderKanban className="w-10 h-10 text-slate-muted mx-auto mb-3" />
             <p className="text-sm font-semibold text-navy">
               Belum ada program kerja di periode ini
@@ -182,7 +182,7 @@ export function ProkerList({
           initialProker.map((item) => (
             <div
               key={item.id}
-              className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
+              className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between hover:border-secondary hover:shadow-md transition-all group"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">

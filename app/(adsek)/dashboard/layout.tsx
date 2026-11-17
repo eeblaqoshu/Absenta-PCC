@@ -50,7 +50,7 @@ export default async function DashboardLayout({
             </div>
 
             {/* Center: Navigation Tabs */}
-            <div className="hidden md:flex items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-none">
+            <div className="hidden lg:flex items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-none">
               <div className="pointer-events-auto">
                 <DashboardNav isAdmin={isAdmin} />
               </div>
@@ -64,7 +64,7 @@ export default async function DashboardLayout({
         </div>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <DashboardNav isAdmin={isAdmin} mobile={true} />
         </div>
       </header>

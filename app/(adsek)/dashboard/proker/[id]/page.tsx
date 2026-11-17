@@ -2,6 +2,8 @@
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProkerDetail } from "@/components/dashboard/proker-detail";
+import { rekapKehadiranBanyakSesi } from "@/lib/kehadiran";
+import { hitungStatusAgenda } from "@/lib/waktu";
 import { notFound } from "next/navigation";
 
 interface PageProps {
@@ -50,10 +52,10 @@ export default async function ProkerDetailPage({ params }: PageProps) {
           sesi: {
             select: {
               id: true,
-              durasiMenit: true,
               bukaAt: true,
               tutupAt: true,
             },
+            orderBy: { bukaAt: "asc" },
           },
         },
         orderBy: {
@@ -79,9 +81,42 @@ export default async function ProkerDetailPage({ params }: PageProps) {
     orderBy: { nama: "asc" },
   });
 
+  // Daftar master lokasi untuk pilihan titik presensi agenda
+  const daftarLokasi = await prisma.lokasi.findMany({
+    select: { id: true, nama: true, lat: true, lng: true, radiusM: true },
+    orderBy: { nama: "asc" },
+  });
+
+  // Rekap kehadiran tiap SESI (satu agenda bisa punya beberapa sesi) untuk kartu agenda.
+  const semuaSesiId = proker.agenda.flatMap((a) => a.sesi.map((s) => s.id));
+  const rekapMap = await rekapKehadiranBanyakSesi(semuaSesiId);
+
   return (
     <div className="py-2">
-      <ProkerDetail proker={proker} availableStos={availableStos} />
+      <ProkerDetail
+        proker={{
+          ...proker,
+          agenda: proker.agenda.map((a) => ({
+            ...a,
+            lat: a.lat === null ? null : Number(a.lat),
+            lng: a.lng === null ? null : Number(a.lng),
+            statusDihitung: hitungStatusAgenda(
+              a.tglPelaksanaan,
+              a.waktuPelaksanaan,
+              a.tglSelesai
+            ),
+          })),
+        }}
+        availableStos={availableStos}
+        rekap={Object.fromEntries(rekapMap)}
+        daftarLokasi={daftarLokasi.map((l) => ({
+          id: l.id,
+          nama: l.nama,
+          lat: Number(l.lat),
+          lng: Number(l.lng),
+          radiusM: l.radiusM,
+        }))}
+      />
     </div>
   );
 }

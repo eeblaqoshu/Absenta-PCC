@@ -368,7 +368,7 @@ export function StoManager({
       </div>
 
       {/* Table STO */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
@@ -411,7 +411,7 @@ export function StoManager({
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-muted font-mono text-[11px]">
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-muted text-[11px]">
                       {item.emailGoogle}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-navy font-medium">
@@ -644,7 +644,7 @@ export function StoManager({
                     <p className="font-semibold text-primary">
                       Format Kolom CSV:
                     </p>
-                    <p className="text-secondary font-mono text-[11px] mt-0.5">
+                    <p className="text-secondary text-[11px] mt-0.5">
                       Nama, NIM, Email, Jabatan, Divisi
                     </p>
                   </div>
@@ -732,7 +732,7 @@ export function StoManager({
                               <td className="px-3 py-1.5 text-slate-muted">
                                 {row.nim}
                               </td>
-                              <td className="px-3 py-1.5 font-mono text-slate-muted">
+                              <td className="px-3 py-1.5 text-slate-muted">
                                 {row.email}
                               </td>
                               <td className="px-3 py-1.5 text-navy">

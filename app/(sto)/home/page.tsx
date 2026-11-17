@@ -4,13 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import {
   formatTanggalIndo,
-  formatJamIndo,
-  gabungTanggalDanWaktu,
   hitungStatusAgenda,
+  jamDariWaktuAgenda,
 } from "@/lib/waktu";
 import { LogoutButton } from "@/components/logout-button";
 import { StoAgendaTabs, type AgendaItem } from "@/components/sto-agenda-tabs";
-import { QrCode, Sparkles, CheckCircle2, Clock, Shield, Camera } from "lucide-react";
+import { QrCode, Sparkles, CheckCircle2, Clock, Shield, Camera, FileText } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -23,6 +22,7 @@ export default async function StoHomePage() {
   });
 
   // 2. Ambil Semua Agenda di Periode Ini
+  const sekarang = new Date();
   const semuaAgenda = await prisma.agenda.findMany({
     where: {
       proker: {
@@ -31,9 +31,10 @@ export default async function StoHomePage() {
     },
     include: {
       proker: { select: { nama: true } },
+      // Sesi yang sedang dibuka sekarang (satu agenda boleh punya banyak sesi).
       sesi: {
-        orderBy: { bukaAt: "desc" },
-        take: 1,
+        where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
+        orderBy: { bukaAt: "asc" },
       },
     },
     orderBy: [{ tglPelaksanaan: "asc" }, { waktuPelaksanaan: "asc" }],
@@ -54,34 +55,53 @@ export default async function StoHomePage() {
   const sedangBerlangsung: AgendaItem[] = [];
   const selesai: AgendaItem[] = [];
 
+  // Presensi STO pada sesi-sesi agenda tersebut (untuk status "sudah presensi").
+  const sesiIdsSemua = agendaAkses.flatMap((ag) => ag.sesi.map((s) => s.id));
+  const presensiSto =
+    sesiIdsSemua.length > 0
+      ? await prisma.presensi.findMany({
+          where: { stoId: sto.id, sesiId: { in: sesiIdsSemua } },
+          select: {
+            sesiId: true,
+            status: true,
+            diLuarRadius: true,
+            statusVerifikasi: true,
+          },
+        })
+      : [];
+  const presensiBySesi = new Map(presensiSto.map((p) => [p.sesiId, p]));
+
   for (const ag of agendaAkses) {
-    const waktuMulai = gabungTanggalDanWaktu(
-      ag.tglPelaksanaan,
-      ag.waktuPelaksanaan
-    );
-    const sesiAktif = ag.sesi[0];
     const statusDihitung = hitungStatusAgenda(
-      waktuMulai,
-      sesiAktif?.bukaAt,
-      sesiAktif?.tutupAt,
+      ag.tglPelaksanaan,
+      ag.waktuPelaksanaan,
+      ag.tglSelesai,
       now
     );
 
-    const adaSesiAktif =
-      statusDihitung === "sedang_berlangsung" &&
-      Boolean(sesiAktif && now >= sesiAktif.bukaAt && now <= sesiAktif.tutupAt);
+    // Sesi yang sedang dibuka sekarang (bisa lebih dari satu).
+    const sesiAktif = ag.sesi[0] ?? null;
+    const adaSesiAktif = Boolean(sesiAktif);
+
+    const presensiSesi = sesiAktif ? presensiBySesi.get(sesiAktif.id) ?? null : null;
 
     const item: AgendaItem = {
       id: ag.id,
       judul: ag.judul,
       prokerNama: ag.proker.nama,
       jenis: ag.jenis,
-      tglFormatted: formatTanggalIndo(ag.tglPelaksanaan),
-      jamFormatted: formatJamIndo(waktuMulai),
+      tglFormatted: ag.tglSelesai
+        ? `${formatTanggalIndo(ag.tglPelaksanaan)} – ${formatTanggalIndo(ag.tglSelesai)}`
+        : formatTanggalIndo(ag.tglPelaksanaan),
+      jamFormatted: `${jamDariWaktuAgenda(ag.waktuPelaksanaan)} WIB`,
       lokasiNama: ag.lokasiNama,
       targetPeserta: ag.targetPeserta,
       statusDihitung,
       adaSesiAktif,
+      sudahPresensi: Boolean(presensiSesi),
+      statusPresensi: presensiSesi?.status ?? null,
+      diLuarRadius: presensiSesi?.diLuarRadius ?? false,
+      statusVerifikasi: presensiSesi?.statusVerifikasi ?? null,
     };
 
     if (statusDihitung === "sedang_berlangsung") {
@@ -92,6 +112,10 @@ export default async function StoHomePage() {
       selesai.push(item);
     }
   }
+
+  // Semua sesi yang sedang berlangsung sudah diabsen STO ini?
+  const sudahPresensiSemuaBerlangsung =
+    sedangBerlangsung.length > 0 && sedangBerlangsung.every((a) => a.sudahPresensi);
 
   // 5. Hitung Riwayat Kehadiran STO
   const riwayat = await prisma.presensi.findMany({
@@ -141,6 +165,13 @@ export default async function StoHomePage() {
               <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
               {periode?.nama || "Periode Aktif"}
             </span>
+            <Link
+              href="/izin"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-muted hover:text-primary hover:bg-surface transition-colors"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Izin
+            </Link>
             <LogoutButton />
           </div>
         </div>
@@ -190,7 +221,7 @@ export default async function StoHomePage() {
                 <h2 className="text-lg font-bold text-primary tracking-tight">
                   {sto.nama}
                 </h2>
-                <p className="text-xs text-slate-muted mt-0.5 font-mono">{sto.nim}</p>
+                <p className="text-xs text-slate-muted mt-0.5">{sto.nim}</p>
               </div>
 
               <div className="pt-3.5 border-t border-[#E2E8F0] grid grid-cols-2 gap-3 text-xs">
@@ -209,30 +240,56 @@ export default async function StoHomePage() {
               </div>
             </div>
 
-            {/* Quick Action: Scan QR Presensi */}
-            <Link
-              href="/scan"
-              className="group block p-5 rounded-3xl bg-primary hover:bg-secondary text-white shadow-md shadow-primary/20 hover:shadow-lg transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center text-white">
-                    <QrCode className="w-5 h-5 text-accent" />
+            {/* Quick Action: Sudah presensi atau scan QR */}
+            {sudahPresensiSemuaBerlangsung ? (
+              <div className="p-5 rounded-3xl bg-accent/15 border border-accent/40 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-secondary text-white flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold tracking-tight text-primary">
+                        Sudah Presensi
+                      </h3>
+                      <p className="text-[11px] text-slate-muted mt-0.5">
+                        Semua sesi yang sedang berlangsung sudah Anda absen
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold tracking-tight">
-                      Scan QR Presensi
-                    </h3>
-                    <p className="text-[11px] text-accent/90 mt-0.5">
-                      Buka scanner kamera & GPS
-                    </p>
-                  </div>
+                  <Link
+                    href="/scan"
+                    className="text-[11px] font-semibold text-secondary underline shrink-0"
+                  >
+                    Lihat
+                  </Link>
                 </div>
-                <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
               </div>
-            </Link>
+            ) : (
+              <Link
+                href="/scan"
+                className="group block p-5 rounded-3xl bg-primary hover:bg-secondary text-white shadow-md shadow-primary/20 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center text-white">
+                      <QrCode className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold tracking-tight">
+                        Scan QR Presensi
+                      </h3>
+                      <p className="text-[11px] text-accent/90 mt-0.5">
+                        Buka scanner kamera & GPS
+                      </p>
+                    </div>
+                  </div>
+                  <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold group-hover:translate-x-1 transition-transform">
+                    →
+                  </span>
+                </div>
+              </Link>
+            )}
 
             {/* Ringkasan Kehadiran */}
             <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-3">

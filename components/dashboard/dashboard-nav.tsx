@@ -7,16 +7,16 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   FolderKanban,
-  Calendar,
-  Users,
+  FileText,
+  Trophy,
 } from "lucide-react";
 
 interface DashboardNavProps {
-  isAdmin: boolean;
+  isAdmin?: boolean;
   mobile?: boolean;
 }
 
-export function DashboardNav({ isAdmin, mobile = false }: DashboardNavProps) {
+export function DashboardNav({ mobile = false }: DashboardNavProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -32,27 +32,23 @@ export function DashboardNav({ isAdmin, mobile = false }: DashboardNavProps) {
       icon: FolderKanban,
       isActive: pathname.startsWith("/dashboard/proker"),
     },
-    ...(isAdmin
-      ? [
-          {
-            href: "/dashboard/periode",
-            label: "Periode",
-            icon: Calendar,
-            isActive: pathname.startsWith("/dashboard/periode"),
-          },
-          {
-            href: "/dashboard/sto",
-            label: "Data STO",
-            icon: Users,
-            isActive: pathname.startsWith("/dashboard/sto"),
-          },
-        ]
-      : []),
+    {
+      href: "/dashboard/izin",
+      label: "Izin",
+      icon: FileText,
+      isActive: pathname.startsWith("/dashboard/izin"),
+    },
+    {
+      href: "/dashboard/leaderboard",
+      label: "Leaderboard",
+      icon: Trophy,
+      isActive: pathname.startsWith("/dashboard/leaderboard"),
+    },
   ];
 
   if (mobile) {
     return (
-      <div className="flex items-center justify-center gap-6 px-4 border-t border-[#E2E8F0] overflow-x-auto bg-white/95 backdrop-blur-sm">
+      <div className="flex items-center justify-center gap-6 px-4 border-t border-[#E2E8F0] overflow-x-auto bg-white/95 backdrop-blur-sm scrollbar-none" data-lenis-prevent>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -95,7 +91,7 @@ export function DashboardNav({ isAdmin, mobile = false }: DashboardNavProps) {
           <Link
             key={item.href}
             href={item.href}
-            className={`relative flex items-center gap-2 h-16 px-4 text-xs font-medium tracking-wide transition-colors group ${
+            className={`relative flex items-center gap-2 h-16 px-3 text-xs font-medium tracking-wide transition-colors group ${
               item.isActive
                 ? "text-primary font-bold"
                 : "text-slate-muted hover:text-primary font-medium"

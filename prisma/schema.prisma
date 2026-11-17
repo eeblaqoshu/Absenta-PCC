@@ -12,18 +12,22 @@ datasource db {
 }
 
 // ─────────────────────────────────────────────
-// ENUM (Native MySQL ENUM)
+// ENUM
 // ─────────────────────────────────────────────
 
 enum StatusPeriode {
   aktif
   selesai
+
+  @@map("status_periode")
 }
 
 enum RoleAdsek {
   admin
   sekretaris_umum
   sekretaris_inti
+
+  @@map("role_adsek")
 }
 
 enum PeranPanitia {
@@ -32,6 +36,8 @@ enum PeranPanitia {
   bendahara
   pj_divisi
   anggota
+
+  @@map("peran_panitia")
 }
 
 enum JenisAgenda {
@@ -39,17 +45,51 @@ enum JenisAgenda {
   rapat_besar
   rapat_koordinasi
   hari_h
+
+  @@map("jenis_agenda")
 }
 
 enum TargetPeserta {
   hanya_pj_pi
   semua_panitia
   semua_panitia_sto
+
+  @@map("target_peserta")
 }
 
 enum StatusPresensi {
   hadir
   terlambat
+
+  @@map("status_presensi")
+}
+
+enum StatusIzin {
+  menunggu
+  disetujui
+  ditolak
+
+  @@map("status_izin")
+}
+
+// Jenis/label pengajuan izin STO (mis. "terlambat").
+enum JenisIzin {
+  terlambat
+  sakit
+  izin
+  lainnya
+
+  @@map("jenis_izin")
+}
+
+// Hasil verifikasi adsek atas presensi yang dilakukan di luar radius.
+// `diterima` dipakai juga untuk presensi di dalam radius (tidak perlu ditinjau).
+enum StatusVerifikasi {
+  menunggu
+  diterima
+  ditolak
+
+  @@map("status_verifikasi")
 }
 
 // ─────────────────────────────────────────────
@@ -58,7 +98,7 @@ enum StatusPresensi {
 
 model Periode {
   id         Int           @id @default(autoincrement())
-  nama       String        @db.VarChar(255)
+  nama       String
   tglMulai   DateTime      @map("tgl_mulai") @db.Date
   tglSelesai DateTime      @map("tgl_selesai") @db.Date
   status     StatusPeriode @default(aktif)
@@ -75,14 +115,16 @@ model Periode {
 
 model AkunAdsek {
   id          Int       @id @default(autoincrement())
-  nama        String    @db.VarChar(255)
-  email       String    @unique @db.VarChar(191)
-  firebaseUid String?   @unique @map("firebase_uid") @db.VarChar(191)
+  nama        String
+  email       String    @unique
+  firebaseUid String?   @unique @map("firebase_uid")
   role        RoleAdsek
 
   prokerDibuat Proker[]
   agendaDibuat Agenda[]
   sesiDibuat   SesiPresensi[]
+  lokasiDibuat Lokasi[]
+  izinDitinjau Izin[]
 
   @@map("akun_adsek")
 }
@@ -90,17 +132,18 @@ model AkunAdsek {
 model Sto {
   id          Int     @id @default(autoincrement())
   periodeId   Int     @map("periode_id")
-  nama        String  @db.VarChar(255)
-  nim         String  @db.VarChar(50)
-  emailGoogle String  @unique @map("email_google") @db.VarChar(191)
-  firebaseUid String? @unique @map("firebase_uid") @db.VarChar(191)
-  jabatan     String? @db.VarChar(100)
-  divisi      String? @db.VarChar(100)
-  foto        String? @db.Text
+  nama        String
+  nim         String
+  emailGoogle String  @unique @map("email_google")
+  firebaseUid String? @unique @map("firebase_uid")
+  jabatan     String?
+  divisi      String?
+  foto        String?
 
   periode     Periode       @relation(fields: [periodeId], references: [id])
   kepanitiaan Kepanitiaan[]
   presensi    Presensi[]
+  izin        Izin[]
 
   @@index([periodeId])
   @@map("STO")
@@ -113,10 +156,10 @@ model Sto {
 model Proker {
   id         Int      @id @default(autoincrement())
   periodeId  Int      @map("periode_id")
-  nama       String   @db.VarChar(255)
-  deskripsi  String?  @db.Text
+  nama       String
+  deskripsi  String?
   dibuatOleh Int      @map("dibuat_oleh")
-  createdAt  DateTime @default(now()) @map("created_at")
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(6)
 
   periode     Periode       @relation(fields: [periodeId], references: [id])
   pembuat     AkunAdsek     @relation(fields: [dibuatOleh], references: [id])
@@ -132,7 +175,7 @@ model Kepanitiaan {
   prokerId      Int          @map("proker_id")
   stoId         Int          @map("sto_id")
   peran         PeranPanitia
-  divisiPanitia String?      @map("divisi_panitia") @db.VarChar(100)
+  divisiPanitia String?      @map("divisi_panitia")
 
   proker Proker @relation(fields: [prokerId], references: [id], onDelete: Cascade)
   sto    Sto    @relation(fields: [stoId], references: [id])
@@ -150,21 +193,75 @@ model Agenda {
   id               Int           @id @default(autoincrement())
   prokerId         Int           @map("proker_id")
   jenis            JenisAgenda
-  judul            String        @db.VarChar(255)
+  judul            String
   urutan           Int           @default(1)
   tglPelaksanaan   DateTime      @map("tgl_pelaksanaan") @db.Date
+  // Agenda boleh berlangsung lebih dari satu hari; null berarti sehari saja.
+  tglSelesai       DateTime?     @map("tgl_selesai") @db.Date
   waktuPelaksanaan DateTime      @map("waktu_pelaksanaan") @db.Time(0)
-  lokasiNama       String?       @map("lokasi_nama") @db.VarChar(255)
+  lokasiNama       String?       @map("lokasi_nama")
+  // Titik presensi agenda: disalin dari master `lokasi` (snapshot) saat adsek memilih di kartu agenda.
+  lokasiId         Int?          @map("lokasi_id")
+  lat              Decimal?      @db.Decimal(9, 6)
+  lng              Decimal?      @db.Decimal(9, 6)
+  radiusM          Int?          @map("radius_m")
   targetPeserta    TargetPeserta @map("target_peserta")
   dibuatOleh       Int           @map("dibuat_oleh")
-  createdAt        DateTime      @default(now()) @map("created_at")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.DateTime(6)
 
   proker  Proker         @relation(fields: [prokerId], references: [id])
   pembuat AkunAdsek      @relation(fields: [dibuatOleh], references: [id])
+  lokasi  Lokasi?        @relation(fields: [lokasiId], references: [id])
   sesi    SesiPresensi[]
 
   @@index([prokerId, tglPelaksanaan])
+  @@index([lokasiId])
   @@map("agenda")
+}
+
+// ─────────────────────────────────────────────
+// 4c. IZIN (pengajuan izin STO per agenda, ditinjau adsek)
+// ─────────────────────────────────────────────
+
+model Izin {
+  id           Int        @id @default(autoincrement())
+  sesiId       Int        @map("sesi_id")
+  stoId        Int        @map("sto_id")
+  jenis        JenisIzin  @default(izin)
+  alasan       String
+  status       StatusIzin @default(menunggu)
+  ditinjauOleh Int?       @map("ditinjau_oleh")
+  ditinjauAt   DateTime?  @map("ditinjau_at") @db.DateTime(6)
+  createdAt    DateTime   @default(now()) @map("created_at") @db.DateTime(6)
+
+  // Izin diajukan per sesi presensi (satu agenda bisa punya beberapa sesi).
+  sesi     SesiPresensi @relation(fields: [sesiId], references: [id], onDelete: Cascade)
+  sto      Sto          @relation(fields: [stoId], references: [id])
+  peninjau AkunAdsek?   @relation(fields: [ditinjauOleh], references: [id])
+
+  @@unique([sesiId, stoId])
+  @@index([stoId])
+  @@index([status])
+  @@map("izin")
+}
+
+// ─────────────────────────────────────────────
+// 4b. MASTER LOKASI (titik presensi yang didaftarkan admin)
+// ─────────────────────────────────────────────
+
+model Lokasi {
+  id         Int      @id @default(autoincrement())
+  nama       String   @unique
+  lat        Decimal  @db.Decimal(9, 6)
+  lng        Decimal  @db.Decimal(9, 6)
+  radiusM    Int      @default(500) @map("radius_m")
+  dibuatOleh Int      @map("dibuat_oleh")
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(6)
+
+  pembuat AkunAdsek @relation(fields: [dibuatOleh], references: [id])
+  agenda  Agenda[]
+
+  @@map("lokasi")
 }
 
 // ─────────────────────────────────────────────
@@ -172,22 +269,21 @@ model Agenda {
 // ─────────────────────────────────────────────
 
 model SesiPresensi {
-  id          Int      @id @default(autoincrement())
-  agendaId    Int      @map("agenda_id")
-  dibuatOleh  Int      @map("dibuat_oleh")
-  bukaAt      DateTime @map("buka_at")
-  tutupAt     DateTime @map("tutup_at")
-  durasiMenit Int      @map("durasi_menit")
-  lat         Decimal  @db.Decimal(9, 6)
-  lng         Decimal  @db.Decimal(9, 6)
-  radiusM     Int      @default(500) @map("radius_m")
-  qrSecret    String   @map("qr_secret") @db.VarChar(255)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         Int      @id @default(autoincrement())
+  agendaId   Int      @map("agenda_id")
+  dibuatOleh Int      @map("dibuat_oleh")
+  // buka_at = tanggal + jam mulai sesi; tutup_at = jam maksimum kedatangan.
+  bukaAt     DateTime @map("buka_at") @db.DateTime(6)
+  tutupAt    DateTime @map("tutup_at") @db.DateTime(6)
+  qrSecret   String   @map("qr_secret")
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(6)
 
   agenda   Agenda     @relation(fields: [agendaId], references: [id])
   pembuat  AkunAdsek  @relation(fields: [dibuatOleh], references: [id])
   presensi Presensi[]
+  izin     Izin[]
 
+  // Satu agenda boleh punya banyak sesi presensi (mis. beberapa hari / sesi ulang).
   @@index([agendaId])
   @@map("sesi_presensi")
 }
@@ -196,16 +292,47 @@ model Presensi {
   id        Int            @id @default(autoincrement())
   sesiId    Int            @map("sesi_id")
   stoId     Int            @map("sto_id")
-  waktuScan DateTime       @map("waktu_scan")
+  waktuScan DateTime       @map("waktu_scan") @db.DateTime(6)
   lat       Decimal        @db.Decimal(9, 6)
   lng       Decimal        @db.Decimal(9, 6)
   jarakM    Int            @map("jarak_m")
   status    StatusPresensi
+
+  // Radius tidak lagi menggagalkan presensi: jarak dicatat, lalu adsek memverifikasi.
+  diLuarRadius     Boolean          @default(false) @map("di_luar_radius")
+  statusVerifikasi StatusVerifikasi @default(diterima) @map("status_verifikasi")
+
+  // Menit keterlambatan dihitung saat scan, bisa dikoreksi adsek.
+  // Status `hadir` bila menit <= BATAS_TERLAMBAT_MENIT, selain itu `terlambat`.
+  menitTerlambat Int     @default(0) @map("menit_terlambat")
+  // true bila baris dibuat adsek lewat absensi manual (bukan scan sendiri oleh STO).
+  manual         Boolean @default(false)
 
   sesi SesiPresensi @relation(fields: [sesiId], references: [id])
   sto  Sto          @relation(fields: [stoId], references: [id])
 
   @@unique([sesiId, stoId])
   @@index([stoId])
+  @@index([statusVerifikasi])
   @@map("presensi")
 }
+
+// ─────────────────────────────────────────────
+// CATATAN MIGRASI (tidak bisa dinyatakan di Prisma)
+// ─────────────────────────────────────────────
+// 1. Hanya satu periode aktif pada satu waktu. MySQL tidak punya partial index,
+//    jadi pakai generated column + unique index (NULL boleh banyak):
+//
+//      ALTER TABLE periode
+//        ADD COLUMN status_aktif_key TINYINT
+//          AS (IF(status = 'aktif', 1, NULL)) STORED,
+//        ADD UNIQUE INDEX periode_satu_aktif (status_aktif_key);
+//
+// 2. Autentikasi memakai Firebase Authentication (bukan Auth.js). Password tidak
+//    disimpan di database ini. `firebase_uid` diisi saat login pertama (atau saat
+//    admin membuat akun lewat Firebase Admin SDK). Skema ini tidak memerlukan
+//    model Account/Session/VerificationToken.
+// 3. Satu email sebaiknya tidak ada di `akun_adsek` dan `STO` sekaligus. Jika
+//    terjadi, server memprioritaskan `akun_adsek`.
+// 4. Kolom waktu memakai DATETIME(6) (MySQL tidak punya timestamptz). Nilai tetap
+//    disimpan dalam UTC; perbandingan waktu dilakukan di server (Asia/Jakarta).
