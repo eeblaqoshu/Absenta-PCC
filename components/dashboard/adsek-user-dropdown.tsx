@@ -12,9 +12,9 @@ import {
   Shield,
   Mail,
   CheckCircle2,
-  X,
   Loader2,
 } from "lucide-react";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 
 interface AdsekUserDropdownProps {
   adsek: {
@@ -176,106 +176,67 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
       </AnimatePresence>
 
       {/* Profile Modal */}
-      <AnimatePresence>
-        {profileModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+      {profileModalOpen && (
+        <Modal onClose={() => setProfileModalOpen(false)} ariaLabel="Profil akun adsek" size="md">
+          <ModalHeader
+            title="Profil Akun Adsek"
+            description="Informasi akun yang sedang login."
+            icon={User}
+            onClose={() => setProfileModalOpen(false)}
+          />
+
+          <ModalBody>
+            <div className="flex items-center gap-4 rounded-xl border border-[#E2E8F0] bg-surface p-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-white shadow-md shadow-primary/20">
+                {initials || "A"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="truncate text-sm font-bold text-navy">{adsek.nama}</h4>
+                <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-muted">
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                  {email}
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-secondary/25 bg-secondary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary">
+                  <Shield className="h-3 w-3" />
+                  {roleLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] py-2">
+                <span className="text-slate-muted">Tipe Akun</span>
+                <span className="font-semibold text-navy">Adsek (Admin / Sekretaris)</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] py-2">
+                <span className="text-slate-muted">Hak Akses</span>
+                <span className="text-right font-semibold text-navy">
+                  {adsek.role === "admin"
+                    ? "Penuh (Periode, STO, Proker & Agenda)"
+                    : "Operasional (Proker & Agenda)"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] py-2">
+                <span className="text-slate-muted">Status Akun</span>
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Aktif (Firebase Auth)
+                </span>
+              </div>
+            </div>
+          </ModalBody>
+
+          <ModalFooter>
+            <button
+              type="button"
               onClick={() => setProfileModalOpen(false)}
-              className="fixed inset-0 bg-navy/50 backdrop-blur-sm"
-            />
-
-            {/* Modal Dialog */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.94, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.94, y: 16 }}
-              transition={{ type: "spring", damping: 28, stiffness: 360 }}
-              className="relative w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl overflow-hidden z-10"
+              className="w-full rounded-xl bg-primary px-5 py-2.5 text-center text-xs font-semibold text-white shadow-md shadow-primary/20 transition-colors hover:bg-secondary sm:w-auto"
             >
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-secondary/10 text-secondary">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-sm font-bold text-primary">
-                    Profil Akun Adsek
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setProfileModalOpen(false)}
-                  className="text-slate-muted hover:text-navy p-1 rounded-lg hover:bg-surface transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Body */}
-              <div className="p-6 space-y-5">
-                {/* User Card */}
-                <div className="flex items-center gap-4 p-4 rounded-xl bg-surface border border-[#E2E8F0]">
-                  <div className="w-14 h-14 rounded-2xl bg-primary text-white font-bold text-lg flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
-                    {initials || "A"}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-navy truncate">
-                      {adsek.nama}
-                    </h4>
-                    <p className="text-xs text-slate-muted truncate flex items-center gap-1.5 mt-0.5">
-                      <Mail className="w-3.5 h-3.5 shrink-0 text-slate-muted" />
-                      {email}
-                    </p>
-                    <span className="inline-flex items-center gap-1 mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-secondary/15 text-secondary border border-secondary/25">
-                      <Shield className="w-3 h-3" />
-                      {roleLabel}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Account Details */}
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-slate-muted">Tipe Akun</span>
-                    <span className="font-semibold text-navy">
-                      Adsek (Admin / Sekretaris)
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-slate-muted">Hak Akses</span>
-                    <span className="font-semibold text-navy text-right">
-                      {adsek.role === "admin"
-                        ? "Penuh (Periode, STO, Proker & Agenda)"
-                        : "Operasional (Proker & Agenda)"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-[#E2E8F0]">
-                    <span className="text-slate-muted">Status Akun</span>
-                    <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Aktif (Firebase Auth)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer action */}
-                <div className="pt-2 flex items-center justify-end">
-                  <button
-                    onClick={() => setProfileModalOpen(false)}
-                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-primary hover:bg-secondary text-white text-xs font-semibold shadow-md shadow-primary/20 transition-all cursor-pointer text-center"
-                  >
-                    Tutup
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+              Tutup
+            </button>
+          </ModalFooter>
+        </Modal>
+      )}
     </div>
   );
 }

@@ -7,20 +7,30 @@ import {
   PeranPanitia,
   JenisAgenda,
   TargetPeserta,
+  JenisIzin,
+  StatusIzin,
 } from "@prisma/client";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
+
+/** Konstanta jendela QR (sama dengan lib/konstanta.ts) — dipakai hanya untuk seed. */
+function qrSecret() {
+  return crypto.randomBytes(32).toString("hex");
+}
 
 async function main() {
   console.log("🌱 Memulai seeding data simulasi...");
 
   // 1. Bersihkan database terlebih dahulu (urutan penghapusan sesuai relasi)
+  await prisma.izin.deleteMany();
   await prisma.presensi.deleteMany();
   await prisma.sesiPresensi.deleteMany();
   await prisma.agenda.deleteMany();
   await prisma.kepanitiaan.deleteMany();
   await prisma.proker.deleteMany();
   await prisma.sto.deleteMany();
+  await prisma.lokasi.deleteMany();
   await prisma.akunAdsek.deleteMany();
   await prisma.periode.deleteMany();
 
@@ -135,9 +145,42 @@ async function main() {
 
   console.log("✅ Kepanitiaan proker dibuat (Ketua, PJ, Anggota)");
 
-  // 7. Buat Agenda-Agenda dengan variasi Target Peserta
+  // 7. Master lokasi presensi (titik + radius; dipilih adsek saat mengatur titik agenda)
+  const lokasiRapat = await prisma.lokasi.create({
+    data: {
+      nama: "Ruang Rapat UKM PCC Polines",
+      lat: -6.9767,
+      lng: 110.4106,
+      radiusM: 100,
+      dibuatOleh: sekumUser.id,
+    },
+  });
+
+  const lokasiGedung = await prisma.lokasi.create({
+    data: {
+      nama: "Gedung Serbaguna Polines",
+      lat: -6.9752,
+      lng: 110.4121,
+      radiusM: 300,
+      dibuatOleh: adminUser.id,
+    },
+  });
+
+  const lokasiAuditorium = await prisma.lokasi.create({
+    data: {
+      nama: "Auditorium Polines",
+      lat: -6.9731,
+      lng: 110.4152,
+      radiusM: 500,
+      dibuatOleh: adminUser.id,
+    },
+  });
+
+  console.log("✅ 3 Master lokasi dibuat");
+
+  // 8. Agenda (rentang tanggal + titik presensi dari master lokasi).
   // Agenda 1: Rapat PJ & PI (hanya_pj_pi)
-  await prisma.agenda.create({
+  const agenda1 = await prisma.agenda.create({
     data: {
       prokerId: proker.id,
       jenis: JenisAgenda.rapat_pj,
@@ -145,14 +188,18 @@ async function main() {
       urutan: 1,
       tglPelaksanaan: new Date("2026-11-10"),
       waktuPelaksanaan: new Date("1970-01-01T15:00:00Z"),
-      lokasiNama: "Ruang Rapat UKM PCC Polines",
+      lokasiNama: lokasiRapat.nama,
+      lokasiId: lokasiRapat.id,
+      lat: lokasiRapat.lat,
+      lng: lokasiRapat.lng,
+      radiusM: lokasiRapat.radiusM,
       targetPeserta: TargetPeserta.hanya_pj_pi,
       dibuatOleh: sekumUser.id,
     },
   });
 
   // Agenda 2: Rapat Besar Panitia (semua_panitia)
-  await prisma.agenda.create({
+  const agenda2 = await prisma.agenda.create({
     data: {
       prokerId: proker.id,
       jenis: JenisAgenda.rapat_besar,
@@ -160,28 +207,107 @@ async function main() {
       urutan: 2,
       tglPelaksanaan: new Date("2026-11-15"),
       waktuPelaksanaan: new Date("1970-01-01T16:30:00Z"),
-      lokasiNama: "Gedung Serbaguna Polines",
+      lokasiNama: lokasiGedung.nama,
+      lokasiId: lokasiGedung.id,
+      lat: lokasiGedung.lat,
+      lng: lokasiGedung.lng,
+      radiusM: lokasiGedung.radiusM,
       targetPeserta: TargetPeserta.semua_panitia,
       dibuatOleh: sekumUser.id,
     },
   });
 
-  // Agenda 3: Hari H Pelaksanaan (semua_panitia_sto)
-  await prisma.agenda.create({
+  // Agenda 3: Hari H multi-hari (20–21 Nov 2026), semua_panitia_sto
+  const agenda3 = await prisma.agenda.create({
     data: {
       prokerId: proker.id,
       jenis: JenisAgenda.hari_h,
       judul: "Hari-H National IT Festival",
       urutan: 3,
       tglPelaksanaan: new Date("2026-11-20"),
+      tglSelesai: new Date("2026-11-21"),
       waktuPelaksanaan: new Date("1970-01-01T08:00:00Z"),
-      lokasiNama: "Auditorium Polines",
+      lokasiNama: lokasiAuditorium.nama,
+      lokasiId: lokasiAuditorium.id,
+      lat: lokasiAuditorium.lat,
+      lng: lokasiAuditorium.lng,
+      radiusM: lokasiAuditorium.radiusM,
       targetPeserta: TargetPeserta.semua_panitia_sto,
       dibuatOleh: adminUser.id,
     },
   });
 
-  console.log("✅ 3 Agenda dibuat dengan target_peserta berbeda");
+  console.log("✅ 3 Agenda dibuat (1 agenda multi-hari)");
+
+  // 9. Sesi presensi per agenda (boleh lebih dari satu per agenda).
+  // Jam disimpan UTC: 15:00 WIB = 08:00Z.
+  const sesiAgenda1 = await prisma.sesiPresensi.create({
+    data: {
+      agendaId: agenda1.id,
+      dibuatOleh: sekumUser.id,
+      bukaAt: new Date("2026-11-10T08:00:00Z"),
+      tutupAt: new Date("2026-11-10T09:00:00Z"),
+      qrSecret: qrSecret(),
+    },
+  });
+
+  const sesiAgenda2 = await prisma.sesiPresensi.create({
+    data: {
+      agendaId: agenda2.id,
+      dibuatOleh: sekumUser.id,
+      bukaAt: new Date("2026-11-15T09:30:00Z"),
+      tutupAt: new Date("2026-11-15T10:30:00Z"),
+      qrSecret: qrSecret(),
+    },
+  });
+
+  // Dua sesi pada agenda hari H (dua hari berbeda).
+  await prisma.sesiPresensi.create({
+    data: {
+      agendaId: agenda3.id,
+      dibuatOleh: adminUser.id,
+      bukaAt: new Date("2026-11-20T01:00:00Z"),
+      tutupAt: new Date("2026-11-20T02:00:00Z"),
+      qrSecret: qrSecret(),
+    },
+  });
+
+  await prisma.sesiPresensi.create({
+    data: {
+      agendaId: agenda3.id,
+      dibuatOleh: adminUser.id,
+      bukaAt: new Date("2026-11-21T01:00:00Z"),
+      tutupAt: new Date("2026-11-21T02:00:00Z"),
+      qrSecret: qrSecret(),
+    },
+  });
+
+  console.log("✅ 4 Sesi presensi dibuat (agenda hari H punya 2 sesi)");
+
+  // 10. Contoh izin: diajukan per sesi presensi.
+  await prisma.izin.create({
+    data: {
+      sesiId: sesiAgenda1.id,
+      stoId: sto1.id,
+      jenis: JenisIzin.sakit,
+      alasan: "Demam tinggi, ada surat keterangan dokter.",
+      status: StatusIzin.menunggu,
+    },
+  });
+
+  await prisma.izin.create({
+    data: {
+      sesiId: sesiAgenda2.id,
+      stoId: sto3.id,
+      jenis: JenisIzin.izin,
+      alasan: "Ada kelas praktikum wajib di kampus.",
+      status: StatusIzin.disetujui,
+      ditinjauOleh: sekumUser.id,
+      ditinjauAt: new Date(),
+    },
+  });
+
+  console.log("✅ 2 Contoh izin per sesi dibuat");
   console.log("🎉 Seeding selesai dengan sukses!");
 }
 

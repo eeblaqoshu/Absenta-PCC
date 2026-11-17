@@ -21,3 +21,23 @@ body {
   color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
 }
+
+/* Sembunyikan scrollbar tapi tetap bisa di-scroll (dipakai modal). */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Peta Leaflet di dalam modal/halaman: jangan telan gerakan vertikal.
+ * Leaflet menulis `touch-action: none` pada container (`.leaflet-touch-drag...`),
+ * sehingga modal tidak bisa di-scroll di perangkat sentuh. Izinkan pan vertikal
+ * (halaman/modal tetap bisa di-scroll) — peta tetap bisa di-klik untuk pindah titik.
+ */
+.peta-leaflet {
+  touch-action: pan-y !important;
+}

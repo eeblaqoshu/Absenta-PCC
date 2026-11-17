@@ -31,6 +31,28 @@ export function generateQrToken(
     .digest("hex");
 }
 
+/** Awalan payload QR yang dipindai klien: "PRESENSI:<sesiId>:<token>" */
+export const PAYLOAD_QR_PREFIX = "PRESENSI";
+
+/** Menyusun string yang ditampilkan sebagai QR code. */
+export function susunPayloadQr(sesiId: number, token: string): string {
+  return `${PAYLOAD_QR_PREFIX}:${sesiId}:${token}`;
+}
+
+/**
+ * Membaca string hasil scan QR.
+ * @returns { sesiId, token } atau null kalau formatnya tidak dikenal.
+ */
+export function parsePayloadQr(payload: string): { sesiId: number; token: string } | null {
+  const cocok = /^PRESENSI:(\d+):([a-f0-9]{64})$/.exec(payload.trim());
+  if (!cocok) return null;
+
+  const sesiId = Number(cocok[1]);
+  if (!Number.isInteger(sesiId) || sesiId <= 0) return null;
+
+  return { sesiId, token: cocok[2] };
+}
+
 /**
  * Memverifikasi token QR.
  * Mengizinkan token dari jendela saat ini atau 1 jendela sebelumnya (toleransi 30 detik).
