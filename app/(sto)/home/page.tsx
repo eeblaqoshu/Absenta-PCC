@@ -152,7 +152,7 @@ export default async function StoHomePage() {
             </div>
             <div>
               <h1 className="text-sm font-bold tracking-tight text-primary">
-                Presensi STO
+                Absenta PCC
               </h1>
               <p className="text-[11px] text-slate-muted font-normal">
                 Polytechnic Computer Club • Polines

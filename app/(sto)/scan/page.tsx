@@ -95,14 +95,18 @@ export default async function ScanPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
-        <div>
-          <h1 className="text-lg font-bold inline-flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-secondary" />
+        <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <QrCode className="w-4 h-4 text-secondary" />
+            <span className="text-xs font-semibold text-slate-muted">
+              Portal Kehadiran Pengurus STO
+            </span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-primary flex items-center gap-2">
             Scan Presensi
           </h1>
-          <p className="text-xs text-slate-muted mt-1">
-            Presensi di luar radius tetap tercatat dan akan diverifikasi adsek. Waktu sesi tetap
-            harus masih dibuka.
+          <p className="text-xs text-slate-muted mt-1 leading-relaxed">
+            Presensi di luar radius tetap tercatat dan akan diverifikasi adsek. Pastikan sesi presensi masih berstatus dibuka.
           </p>
         </div>
 

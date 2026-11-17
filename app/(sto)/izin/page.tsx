@@ -79,14 +79,17 @@ export default async function IzinPage() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
-        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
-          <h1 className="inline-flex items-center gap-2 text-lg font-bold text-primary">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
-              <FileText className="h-4 w-4 text-secondary" />
+        <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="w-4 h-4 text-secondary" />
+            <span className="text-xs font-semibold text-slate-muted">
+              Pengajuan Perizinan STO
             </span>
+          </div>
+          <h1 className="inline-flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
             Izin Tidak Hadir
           </h1>
-          <p className="mt-2 text-xs text-slate-muted">
+          <p className="mt-1.5 text-xs text-slate-muted leading-relaxed">
             Ajukan izin per <strong className="font-semibold text-navy">sesi presensi</strong>. Izin
             yang disetujui adsek membuat poin sesi itu menjadi 0 (tidak mengurangi poin) walau Anda
             tidak hadir atau datang terlambat.

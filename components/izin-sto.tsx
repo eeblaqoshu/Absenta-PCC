@@ -107,7 +107,7 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
 
   if (daftar.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-10 text-center">
+      <div className="rounded-3xl border border-dashed border-[#CBD5E1] bg-white p-10 text-center">
         <FileText className="mx-auto mb-3 h-10 w-10 text-slate-muted" />
         <p className="text-sm font-semibold text-navy">
           Belum ada sesi presensi yang bisa diajukan izin
@@ -146,7 +146,7 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
         return (
           <div
             key={item.sesiId}
-            className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+            className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-all hover:border-secondary hover:shadow-md"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

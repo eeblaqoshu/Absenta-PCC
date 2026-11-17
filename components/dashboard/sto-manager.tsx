@@ -274,20 +274,29 @@ export function StoManager({
 
   return (
     <div className="space-y-6">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header Banner Card */}
+      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
+            <span className="text-xs font-semibold text-secondary">
+              Periode Aktif
+            </span>
+            <span className="text-xs text-slate-muted">•</span>
+            <span className="text-xs font-medium text-slate-muted">
+              {namaPeriode}
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
             <Users className="w-6 h-6 text-secondary" />
             Data Pengurus STO
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Terikat pada periode aktif:{" "}
-            <span className="font-semibold text-primary">{namaPeriode}</span>
+            Kelola master data pengurus organisasi terdaftar, divisi, jabatan, serta impor massal file CSV.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
           <button
             onClick={() => {
               setCsvPreview([]);
@@ -295,7 +304,7 @@ export function StoManager({
               setCsvFileName("");
               setModalCsvBuka(true);
             }}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-navy text-xs font-semibold hover:bg-surface shadow-sm transition-all"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-navy text-xs font-semibold hover:bg-surface shadow-sm transition-all cursor-pointer"
           >
             <Upload className="w-4 h-4 text-secondary" />
             Impor CSV
@@ -306,7 +315,7 @@ export function StoManager({
               resetForm();
               setModalTambahBuka(true);
             }}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah STO
