@@ -7,19 +7,16 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   FolderKanban,
-  Calendar,
-  Users,
   FileText,
   Trophy,
-  MapPin,
 } from "lucide-react";
 
 interface DashboardNavProps {
-  isAdmin: boolean;
+  isAdmin?: boolean;
   mobile?: boolean;
 }
 
-export function DashboardNav({ isAdmin, mobile = false }: DashboardNavProps) {
+export function DashboardNav({ mobile = false }: DashboardNavProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -47,28 +44,6 @@ export function DashboardNav({ isAdmin, mobile = false }: DashboardNavProps) {
       icon: Trophy,
       isActive: pathname.startsWith("/dashboard/leaderboard"),
     },
-    ...(isAdmin
-      ? [
-          {
-            href: "/dashboard/periode",
-            label: "Periode",
-            icon: Calendar,
-            isActive: pathname.startsWith("/dashboard/periode"),
-          },
-          {
-            href: "/dashboard/sto",
-            label: "Data STO",
-            icon: Users,
-            isActive: pathname.startsWith("/dashboard/sto"),
-          },
-          {
-            href: "/dashboard/lokasi",
-            label: "Lokasi",
-            icon: MapPin,
-            isActive: pathname.startsWith("/dashboard/lokasi"),
-          },
-        ]
-      : []),
   ];
 
   if (mobile) {

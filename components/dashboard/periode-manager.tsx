@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   buatPeriodeAction,
   tutupPeriodeAction,
@@ -22,7 +23,6 @@ import {
   Users,
   FolderKanban,
 } from "lucide-react";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 
 interface PeriodeItem {
   id: number;
@@ -190,7 +190,7 @@ export function PeriodeManager({
       {/* Grid of Periods */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {initialPeriode.length === 0 ? (
-          <div className="col-span-full p-12 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-white">
+          <div className="col-span-full p-12 text-center rounded-3xl border border-dashed border-[#CBD5E1] bg-white">
             <Calendar className="w-10 h-10 text-slate-muted mx-auto mb-3" />
             <p className="text-sm font-semibold text-navy">
               Belum ada periode kepengurusan
@@ -205,10 +205,10 @@ export function PeriodeManager({
             return (
               <div
                 key={item.id}
-                className={`p-5 rounded-2xl border transition-all ${
+                className={`p-5 rounded-3xl border transition-all ${
                   isAktif
                     ? "bg-white border-secondary shadow-[0_4px_16px_rgba(30,111,224,0.08)] ring-1 ring-secondary/30"
-                    : "bg-surface border-[#E2E8F0]"
+                    : "bg-white border-[#E2E8F0] shadow-sm hover:border-secondary"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
@@ -299,94 +299,124 @@ export function PeriodeManager({
         )}
       </div>
 
-      {/* Modal Tambah Periode */}
-      {modalBuka && (
-        <Modal
-          onClose={() => setModalBuka(false)}
-          ariaLabel="Buka periode kepengurusan baru"
-          size="md"
-        >
-          <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-            <ModalHeader
-              title="Buka Periode Kepengurusan Baru"
-              description="Hanya satu periode yang boleh berstatus aktif."
-              icon={Calendar}
-              onClose={() => setModalBuka(false)}
+      {/* Modal Tambah Periode dengan Animasi Opening & Closing */}
+      <AnimatePresence>
+        {modalBuka && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop dengan Fade In / Fade Out */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              onClick={() => setModalBuka(false)}
+              className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
             />
 
-            <ModalBody>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-navy">Nama Periode</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Kepengurusan 2026/2027"
-                  value={nama}
-                  onChange={(e) => setNama(e.target.value)}
-                  className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-navy">
-                    Tanggal Mulai
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={tglMulai}
-                    onChange={(e) => setTglMulai(e.target.value)}
-                    className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-semibold text-navy">
-                    Tanggal Selesai
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={tglSelesai}
-                    onChange={(e) => setTglSelesai(e.target.value)}
-                    className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-navy">Status Awal</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as "aktif" | "selesai")}
-                  className="w-full rounded-xl border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
+            {/* Modal Dialog Card dengan Spring Pop In & Pop Out */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ type: "spring", damping: 28, stiffness: 360 }}
+              className="relative w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl overflow-hidden z-10"
+            >
+              <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+                <h3 className="text-sm font-bold text-primary">
+                  Buka Periode Kepengurusan Baru
+                </h3>
+                <button
+                  onClick={() => setModalBuka(false)}
+                  className="text-slate-muted hover:text-navy"
                 >
-                  <option value="aktif">Aktif (menutup periode aktif sebelumnya)</option>
-                  <option value="selesai">Selesai (read-only)</option>
-                </select>
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </ModalBody>
 
-            <ModalFooter>
-              <button
-                type="button"
-                onClick={() => setModalBuka(false)}
-                className="rounded-xl px-4 py-2 text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary disabled:opacity-60"
-              >
-                {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Simpan Periode
-              </button>
-            </ModalFooter>
-          </form>
-        </Modal>
-      )}
+              <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Nama Periode
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Kepengurusan 2026/2027"
+                    value={nama}
+                    onChange={(e) => setNama(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-navy mb-1">
+                      Tanggal Mulai
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={tglMulai}
+                      onChange={(e) => setTglMulai(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-navy mb-1">
+                      Tanggal Selesai
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={tglSelesai}
+                      onChange={(e) => setTglSelesai(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Status Awal
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) =>
+                      setStatus(e.target.value as "aktif" | "selesai")
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+                  >
+                    <option value="aktif">
+                      Aktif (Akan menutup periode aktif sebelumnya)
+                    </option>
+                    <option value="selesai">Selesai (Read-only)</option>
+                  </select>
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalBuka(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
+                  >
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
+                    Simpan Periode
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

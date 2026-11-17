@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useTransition, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   tambahStoAction,
   ubahStoAction,
@@ -24,7 +25,6 @@ import {
   FileSpreadsheet,
   Download,
 } from "lucide-react";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 
 interface StoItem {
   id: number;
@@ -368,8 +368,8 @@ export function StoManager({
       </div>
 
       {/* Table STO */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
+      <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
               <tr>
@@ -411,7 +411,7 @@ export function StoManager({
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-muted font-mono text-[11px]">
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-muted text-[11px]">
                       {item.emailGoogle}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-navy font-medium">
@@ -449,33 +449,56 @@ export function StoManager({
         </div>
       </div>
 
-      {/* Modal Tambah / Edit STO */}
-      {(modalTambahBuka || modalEditBuka) && (
-        <Modal
-          onClose={() => {
-            setModalTambahBuka(false);
-            setModalEditBuka(false);
-            resetForm();
-          }}
-          ariaLabel={modalTambahBuka ? "Tambah pengurus STO" : "Edit pengurus STO"}
-          size="md"
-        >
-          <form
-            onSubmit={modalTambahBuka ? handleSubmitTambah : handleSubmitEdit}
-            className="flex min-h-0 flex-1 flex-col"
-          >
-            <ModalHeader
-              title={modalTambahBuka ? "Tambah Pengurus STO" : "Edit Pengurus STO"}
-              description="Email Google dipakai STO untuk login."
-              icon={Users}
-              onClose={() => {
+      {/* Modal Tambah / Edit STO dengan Animasi Opening & Closing */}
+      <AnimatePresence>
+        {(modalTambahBuka || modalEditBuka) && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              onClick={() => {
                 setModalTambahBuka(false);
                 setModalEditBuka(false);
                 resetForm();
               }}
+              className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
             />
 
-            <ModalBody>
+            {/* Modal Dialog Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ type: "spring", damping: 28, stiffness: 360 }}
+              className="relative w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl overflow-hidden z-10"
+            >
+              <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+                <h3 className="text-sm font-bold text-primary">
+                  {modalTambahBuka
+                    ? "Tambah Pengurus STO"
+                    : "Edit Pengurus STO"}
+                </h3>
+                <button
+                  onClick={() => {
+                    setModalTambahBuka(false);
+                    setModalEditBuka(false);
+                    resetForm();
+                  }}
+                  className="text-slate-muted hover:text-navy"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form
+                onSubmit={
+                  modalTambahBuka ? handleSubmitTambah : handleSubmitEdit
+                }
+                className="p-6 space-y-4"
+              >
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1">
                     Nama Lengkap
@@ -548,51 +571,80 @@ export function StoManager({
                   </div>
                 </div>
 
-            </ModalBody>
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalTambahBuka(false);
+                      setModalEditBuka(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
+                  >
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
+                    Simpan
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
-            <ModalFooter>
-              <button
-                type="button"
-                onClick={() => {
-                  setModalTambahBuka(false);
-                  setModalEditBuka(false);
-                  resetForm();
-                }}
-                className="rounded-xl px-4 py-2 text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary disabled:opacity-60"
-              >
-                {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Simpan
-              </button>
-            </ModalFooter>
-          </form>
-        </Modal>
-      )}
+      {/* Modal Impor CSV dengan Animasi Opening & Closing */}
+      <AnimatePresence>
+        {modalCsvBuka && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              onClick={() => setModalCsvBuka(false)}
+              className="absolute inset-0 bg-navy/50 backdrop-blur-sm"
+            />
 
-      {/* Modal Impor CSV */}
-      {modalCsvBuka && (
-        <Modal onClose={() => setModalCsvBuka(false)} ariaLabel="Impor pengurus STO dari CSV" size="xl">
-          <ModalHeader
-            title="Impor Pengurus STO dari CSV"
-            description="Mendukung pemisah koma (,) atau titik koma (;)."
-            icon={FileSpreadsheet}
-            onClose={() => setModalCsvBuka(false)}
-          />
+            {/* Modal Dialog Card */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ type: "spring", damping: 28, stiffness: 360 }}
+              className="relative w-full max-w-xl bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] z-10"
+            >
+              <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5 text-secondary" />
+                  <h3 className="text-sm font-bold text-primary">
+                    Impor Pengurus STO dari CSV
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setModalCsvBuka(false)}
+                  className="text-slate-muted hover:text-navy"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-          <ModalBody className="space-y-4">
+              <div className="p-6 overflow-y-auto space-y-4">
                 {/* Petunjuk & Download Template */}
                 <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                   <div>
                     <p className="font-semibold text-primary">
                       Format Kolom CSV:
                     </p>
-                    <p className="text-secondary font-mono text-[11px] mt-0.5">
+                    <p className="text-secondary text-[11px] mt-0.5">
                       Nama, NIM, Email, Jabatan, Divisi
                     </p>
                   </div>
@@ -680,7 +732,7 @@ export function StoManager({
                               <td className="px-3 py-1.5 text-slate-muted">
                                 {row.nim}
                               </td>
-                              <td className="px-3 py-1.5 font-mono text-slate-muted">
+                              <td className="px-3 py-1.5 text-slate-muted">
                                 {row.email}
                               </td>
                               <td className="px-3 py-1.5 text-navy">
@@ -702,30 +754,34 @@ export function StoManager({
                     )}
                   </div>
                 )}
-          </ModalBody>
+              </div>
 
-          <ModalFooter>
-            <button
-              type="button"
-              onClick={() => setModalCsvBuka(false)}
-              className="rounded-xl px-4 py-2 text-xs font-medium text-slate-muted hover:bg-surface hover:text-navy"
-            >
-              Tutup
-            </button>
-            {csvPreview.length > 0 && !csvHasil && (
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={handleProsesImporCsv}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-4 py-2 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary disabled:opacity-60"
-              >
-                {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                Mulai Impor ({csvPreview.length} Data)
-              </button>
-            )}
-          </ModalFooter>
-        </Modal>
-      )}
+              <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-end gap-2 bg-surface">
+                <button
+                  type="button"
+                  onClick={() => setModalCsvBuka(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-slate-muted hover:bg-white hover:text-navy"
+                >
+                  Tutup
+                </button>
+                {csvPreview.length > 0 && !csvHasil && (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={handleProsesImporCsv}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
+                  >
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
+                    Mulai Impor ({csvPreview.length} Data)
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -221,7 +221,7 @@ export default async function StoHomePage() {
                 <h2 className="text-lg font-bold text-primary tracking-tight">
                   {sto.nama}
                 </h2>
-                <p className="text-xs text-slate-muted mt-0.5 font-mono">{sto.nim}</p>
+                <p className="text-xs text-slate-muted mt-0.5">{sto.nim}</p>
               </div>
 
               <div className="pt-3.5 border-t border-[#E2E8F0] grid grid-cols-2 gap-3 text-xs">

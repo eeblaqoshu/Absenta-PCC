@@ -119,13 +119,13 @@ function KontrolWaktu({
             required
             value={jam}
             onChange={(e) => setJam(e.target.value)}
-            className="rounded-lg border border-[#CBD5E1] bg-white px-3 py-1.5 text-xs text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
+            className="rounded-xl border border-[#CBD5E1] bg-white px-3 py-1.5 text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary transition-all"
           />
         </label>
         <button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-primary disabled:opacity-60 text-white text-[11px] font-semibold shadow-md shadow-secondary/25 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-secondary hover:bg-primary disabled:opacity-60 text-white text-xs font-semibold shadow-md shadow-secondary/25 cursor-pointer transition-all"
         >
           <Save className="w-3.5 h-3.5" />
           Simpan
@@ -134,7 +134,7 @@ function KontrolWaktu({
           type="button"
           onClick={tutupSekarang}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-highlight/15 hover:bg-highlight/25 text-[#8a6500] text-[11px] font-semibold disabled:opacity-60 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-highlight/15 hover:bg-highlight/25 text-[#8a6500] text-xs font-semibold disabled:opacity-60 cursor-pointer transition-colors"
         >
           <PowerOff className="w-3.5 h-3.5" />
           Tutup sekarang
@@ -247,7 +247,7 @@ export function LayarQr({ sesiId, judulAgenda, namaProker, lokasiNama, isReadonl
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Kolom QR */}
-      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm flex flex-col items-center">
+      <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm flex flex-col items-center">
         <div className="w-full text-center mb-4">
           <p className="text-[11px] uppercase tracking-wider text-slate-muted font-semibold">
             {namaProker}
@@ -327,7 +327,7 @@ export function LayarQr({ sesiId, judulAgenda, namaProker, lokasiNama, isReadonl
       </div>
 
       {/* Kolom daftar hadir */}
-      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm flex flex-col">
+      <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-primary inline-flex items-center gap-2">
             <Users className="w-4 h-4 text-secondary" />
@@ -338,31 +338,31 @@ export function LayarQr({ sesiId, judulAgenda, namaProker, lokasiNama, isReadonl
               ambilQr();
               ambilHadir();
             }}
-            className="text-slate-muted hover:text-navy"
+            className="text-slate-muted hover:text-navy cursor-pointer"
             title="Muat ulang"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div className="rounded-xl bg-surface p-3 text-center">
+        <div className="grid grid-cols-3 gap-2.5 mb-4">
+          <div className="rounded-2xl bg-surface border border-[#E2E8F0] p-3 text-center">
             <p className="text-xl font-bold text-primary">{ringkasan.total}</p>
-            <p className="text-[10px] text-slate-muted uppercase tracking-wide">Total</p>
+            <p className="text-[10px] text-slate-muted uppercase tracking-wide font-medium">Total</p>
           </div>
-          <div className="rounded-xl bg-emerald-50 p-3 text-center">
+          <div className="rounded-2xl bg-emerald-50 border border-emerald-200/60 p-3 text-center">
             <p className="text-xl font-bold text-emerald-700">
               {ringkasan.hadir}
             </p>
-            <p className="text-[10px] text-emerald-600 uppercase tracking-wide">
+            <p className="text-[10px] text-emerald-600 uppercase tracking-wide font-medium">
               Hadir
             </p>
           </div>
-          <div className="rounded-xl bg-amber-50 p-3 text-center">
+          <div className="rounded-2xl bg-amber-50 border border-amber-200/60 p-3 text-center">
             <p className="text-xl font-bold text-amber-700">
               {ringkasan.terlambat}
             </p>
-            <p className="text-[10px] text-amber-600 uppercase tracking-wide">
+            <p className="text-[10px] text-amber-600 uppercase tracking-wide font-medium">
               Terlambat
             </p>
           </div>

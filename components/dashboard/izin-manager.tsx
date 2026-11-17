@@ -105,11 +105,11 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
   ];
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
-        <h1 className="inline-flex items-center gap-2 text-lg font-bold text-primary">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
-            <FileText className="h-4 w-4 text-secondary" />
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+        <h1 className="inline-flex items-center gap-2 text-xl font-bold text-primary tracking-tight">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/10">
+            <FileText className="h-5 w-5 text-secondary" />
           </span>
           Peninjauan Izin
         </h1>
@@ -127,7 +127,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
           <button
             key={t.nilai}
             onClick={() => setFilter(t.nilai)}
-            className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-all ${
+            className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-all cursor-pointer ${
               filter === t.nilai
                 ? "border border-[#CBD5E1] bg-white text-primary shadow-sm"
                 : "text-slate-muted hover:text-navy"
@@ -163,7 +163,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
       )}
 
       {terlihat.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-12 text-center">
+        <div className="rounded-3xl border border-dashed border-[#CBD5E1] bg-white p-12 text-center">
           <FileText className="mx-auto mb-3 h-10 w-10 text-slate-muted" />
           <p className="text-sm font-semibold text-navy">Tidak ada izin pada filter ini</p>
         </div>
@@ -172,7 +172,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
           {terlihat.map((item) => (
             <div
               key={item.id}
-              className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-all hover:border-secondary hover:shadow-md"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -224,21 +224,21 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
                     <button
                       onClick={() => tinjau(item.id, "disetujui")}
                       disabled={isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all cursor-pointer disabled:opacity-60"
                     >
                       {isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                       )}
                       Setujui
                     </button>
                     <button
                       onClick={() => tinjau(item.id, "ditolak")}
                       disabled={isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-1.5 text-[11px] font-semibold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 px-3.5 py-1.5 text-xs font-semibold text-rose-700 border border-rose-200 transition-all cursor-pointer disabled:opacity-60"
                     >
-                      <XCircle className="h-3.5 w-3.5" />
+                      <XCircle className="w-3.5 h-3.5" />
                       Tolak
                     </button>
                   </div>

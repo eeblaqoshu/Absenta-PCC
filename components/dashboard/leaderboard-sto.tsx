@@ -23,10 +23,10 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
   const top3 = baris.slice(0, 3);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Podium 3 teratas */}
       {top3.length > 0 && (
-        <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+        <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
           <h3 className="inline-flex items-center gap-2 text-sm font-bold text-primary">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-highlight/15">
               <Trophy className="h-4 w-4 text-[#B45309]" />
@@ -37,14 +37,14 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
             {top3.map((b) => (
               <div
                 key={b.stoId}
-                className={`rounded-xl border p-3.5 ${PODIUM[b.peringkat - 1] ?? "border-[#E2E8F0] bg-white"}`}
+                className={`rounded-2xl border p-4 ${PODIUM[b.peringkat - 1] ?? "border-[#E2E8F0] bg-white"}`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-lg leading-none">
                     {MEDALI[b.peringkat - 1] ?? `#${b.peringkat}`}
                   </span>
                   <span
-                    className={`rounded-lg px-2 py-0.5 text-xs font-bold ${
+                    className={`rounded-lg px-2.5 py-1 text-xs font-bold ${
                       b.poin > 0
                         ? "bg-emerald-100 text-emerald-700"
                         : b.poin < 0
@@ -55,7 +55,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
                     {b.poin} poin
                   </span>
                 </div>
-                <p className="mt-2 truncate text-xs font-bold text-primary">{b.nama}</p>
+                <p className="mt-2.5 truncate text-xs font-bold text-primary">{b.nama}</p>
                 <p className="truncate text-[11px] text-slate-muted">
                   {b.divisi ?? "Umum"} • {b.tepatWaktu} tepat waktu
                 </p>
@@ -66,7 +66,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
       )}
 
       {/* Tabel lengkap */}
-      <div className="space-y-4 rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+      <div className="space-y-4 rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="inline-flex items-center gap-2 text-sm font-bold text-primary">

@@ -2,6 +2,7 @@
 
 @theme {
   --font-sans: var(--font-poppins), sans-serif;
+  --font-mono: var(--font-poppins), sans-serif;
   --color-primary: #0B2A5B;
   --color-secondary: #1E6FE0;
   --color-accent: #22C4E8;
@@ -14,12 +15,21 @@
 :root {
   --background: #FFFFFF;
   --foreground: #0F172A;
+  font-family: var(--font-poppins), sans-serif;
 }
 
+html,
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-poppins), sans-serif;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
 }
 
 /* Sembunyikan scrollbar tapi tetap bisa di-scroll (dipakai modal). */

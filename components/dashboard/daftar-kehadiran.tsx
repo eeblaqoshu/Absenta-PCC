@@ -60,7 +60,7 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm space-y-4">
+    <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold text-primary">
@@ -74,14 +74,14 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => router.refresh()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-[11px] font-semibold text-navy hover:bg-surface transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] text-[11px] font-semibold text-navy hover:bg-surface cursor-pointer transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Muat ulang
           </button>
           <a
             href={`/api/presensi/export?sesiId=${sesiId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-primary text-white text-[11px] font-semibold shadow-md shadow-secondary/25 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-[11px] font-semibold shadow-md shadow-secondary/25 cursor-pointer transition-all"
           >
             <Download className="w-3.5 h-3.5" />
             Ekspor CSV
@@ -175,7 +175,7 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
                                 verifikasiPresensiAction(b.presensiId as number, "diterima")
                               )
                             }
-                            className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold disabled:opacity-60"
+                            className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-60"
                           >
                             Terima
                           </button>
@@ -186,7 +186,7 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
                                 verifikasiPresensiAction(b.presensiId as number, "ditolak")
                               )
                             }
-                            className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold disabled:opacity-60"
+                            className="px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-60"
                           >
                             Tolak
                           </button>
@@ -212,7 +212,7 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
                                 tinjauIzinAction(b.izin!.id, "disetujui")
                               )
                             }
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold disabled:opacity-60"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-60"
                           >
                             <Check className="w-3 h-3" />
                             Setujui
@@ -224,7 +224,7 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
                                 tinjauIzinAction(b.izin!.id, "ditolak")
                               )
                             }
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold disabled:opacity-60"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-60"
                           >
                             <X className="w-3 h-3" />
                             Tolak

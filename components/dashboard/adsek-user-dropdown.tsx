@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { RoleAdsek } from "@prisma/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -10,11 +11,11 @@ import {
   LogOut,
   ChevronDown,
   Shield,
-  Mail,
-  CheckCircle2,
   Loader2,
+  Calendar,
+  Users,
+  MapPin,
 } from "lucide-react";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 
 interface AdsekUserDropdownProps {
   adsek: {
@@ -27,11 +28,12 @@ interface AdsekUserDropdownProps {
 
 export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [loadingLogout, setLoadingLogout] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const isAdmin = adsek.role === "admin";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -54,7 +56,6 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setDropdownOpen(false);
-        setProfileModalOpen(false);
       }
     }
     document.addEventListener("keydown", handleKeyDown);
@@ -144,16 +145,67 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
             </div>
 
             {/* Menu: Profil */}
-            <button
-              onClick={() => {
-                setDropdownOpen(false);
-                setProfileModalOpen(true);
-              }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-navy hover:bg-surface hover:text-secondary transition-colors text-left cursor-pointer"
+            <Link
+              href="/dashboard/profil"
+              onClick={() => setDropdownOpen(false)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                pathname === "/dashboard/profil"
+                  ? "bg-secondary/10 text-secondary font-bold"
+                  : "text-navy hover:bg-surface hover:text-secondary"
+              }`}
             >
               <User className="w-4 h-4 text-slate-muted" />
-              <span>Profil</span>
-            </button>
+              <span>Profil Akun</span>
+            </Link>
+
+            {/* Master Data Menu (Admin Only) */}
+            {isAdmin && (
+              <>
+                <div className="h-px bg-[#E2E8F0] my-1" />
+                <div className="px-3 py-1 text-[10px] font-bold text-slate-muted uppercase tracking-wider">
+                  Master Data
+                </div>
+
+                <Link
+                  href="/dashboard/periode"
+                  onClick={() => setDropdownOpen(false)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    pathname.startsWith("/dashboard/periode")
+                      ? "text-primary bg-primary/10 font-bold"
+                      : "text-navy hover:bg-surface hover:text-primary"
+                  }`}
+                >
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span>Periode</span>
+                </Link>
+
+                <Link
+                  href="/dashboard/sto"
+                  onClick={() => setDropdownOpen(false)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    pathname.startsWith("/dashboard/sto")
+                      ? "text-secondary bg-secondary/10 font-bold"
+                      : "text-navy hover:bg-surface hover:text-secondary"
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-secondary" />
+                  <span>Data STO</span>
+                </Link>
+
+                <Link
+                  href="/dashboard/lokasi"
+                  onClick={() => setDropdownOpen(false)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                    pathname.startsWith("/dashboard/lokasi")
+                      ? "text-[#0284C7] bg-[#0284C7]/10 font-bold"
+                      : "text-navy hover:bg-surface hover:text-[#0284C7]"
+                  }`}
+                >
+                  <MapPin className="w-4 h-4 text-[#0284C7]" />
+                  <span>Lokasi</span>
+                </Link>
+              </>
+            )}
 
             {/* Divider */}
             <div className="h-px bg-[#E2E8F0] my-1" />
@@ -174,69 +226,6 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Profile Modal */}
-      {profileModalOpen && (
-        <Modal onClose={() => setProfileModalOpen(false)} ariaLabel="Profil akun adsek" size="md">
-          <ModalHeader
-            title="Profil Akun Adsek"
-            description="Informasi akun yang sedang login."
-            icon={User}
-            onClose={() => setProfileModalOpen(false)}
-          />
-
-          <ModalBody>
-            <div className="flex items-center gap-4 rounded-xl border border-[#E2E8F0] bg-surface p-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-white shadow-md shadow-primary/20">
-                {initials || "A"}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="truncate text-sm font-bold text-navy">{adsek.nama}</h4>
-                <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-muted">
-                  <Mail className="h-3.5 w-3.5 shrink-0" />
-                  {email}
-                </p>
-                <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-secondary/25 bg-secondary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary">
-                  <Shield className="h-3 w-3" />
-                  {roleLabel}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between border-b border-[#E2E8F0] py-2">
-                <span className="text-slate-muted">Tipe Akun</span>
-                <span className="font-semibold text-navy">Adsek (Admin / Sekretaris)</span>
-              </div>
-              <div className="flex items-center justify-between border-b border-[#E2E8F0] py-2">
-                <span className="text-slate-muted">Hak Akses</span>
-                <span className="text-right font-semibold text-navy">
-                  {adsek.role === "admin"
-                    ? "Penuh (Periode, STO, Proker & Agenda)"
-                    : "Operasional (Proker & Agenda)"}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b border-[#E2E8F0] py-2">
-                <span className="text-slate-muted">Status Akun</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Aktif (Firebase Auth)
-                </span>
-              </div>
-            </div>
-          </ModalBody>
-
-          <ModalFooter>
-            <button
-              type="button"
-              onClick={() => setProfileModalOpen(false)}
-              className="w-full rounded-xl bg-primary px-5 py-2.5 text-center text-xs font-semibold text-white shadow-md shadow-primary/20 transition-colors hover:bg-secondary sm:w-auto"
-            >
-              Tutup
-            </button>
-          </ModalFooter>
-        </Modal>
-      )}
     </div>
   );
 }

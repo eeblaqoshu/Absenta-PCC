@@ -39,7 +39,7 @@ export default async function AdsekDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Banner Periode Aktif */}
-      <div className="p-6 rounded-2xl bg-white border border-[#E2E8F0] shadow-[0_2px_8px_rgba(11,42,91,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span
@@ -57,7 +57,7 @@ export default async function AdsekDashboardPage() {
               {periodeAktif ? "Periode Aktif Berjalan" : "Tidak Ada Periode Aktif"}
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-primary">
+          <h2 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
             {periodeAktif?.nama || "Sistem Belum Memiliki Periode Aktif"}
           </h2>
           <p className="text-xs text-slate-muted mt-1">
@@ -70,7 +70,7 @@ export default async function AdsekDashboardPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-semibold border border-primary/20 flex items-center gap-1.5">
+          <span className="text-xs px-3.5 py-1.5 rounded-xl bg-primary/10 text-primary font-semibold border border-primary/20 flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-secondary" />
             {adsek.role.replace("_", " ").toUpperCase()}
           </span>
@@ -82,38 +82,38 @@ export default async function AdsekDashboardPage() {
         <div className="space-y-6 lg:col-span-8">
       {/* Ringkasan Angka Statistik */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-muted">Total Pengurus STO</p>
             <p className="text-2xl font-bold text-primary mt-1">
               {totalSto}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
             <Users className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-muted">Program Kerja (Proker)</p>
             <p className="text-2xl font-bold text-primary mt-1">
               {totalProker}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-accent/15 text-primary flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-accent/15 text-primary flex items-center justify-center">
             <FolderKanban className="w-5 h-5 text-secondary" />
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-sm flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-muted">Total Agenda Kegiatan</p>
             <p className="text-2xl font-bold text-primary mt-1">
               {totalAgenda}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-highlight/15 text-[#B45309] flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-highlight/15 text-[#B45309] flex items-center justify-center">
             <Clock className="w-5 h-5 text-[#B45309]" />
           </div>
         </div>
@@ -127,10 +127,10 @@ export default async function AdsekDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
             href="/dashboard/proker"
-            className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+            className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
           >
             <div>
-              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+              <div className="w-11 h-11 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                 <FolderKanban className="w-5 h-5" />
               </div>
               <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
@@ -149,10 +149,10 @@ export default async function AdsekDashboardPage() {
             <>
               <Link
                 href="/dashboard/sto"
-                className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+                className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-accent/20 text-primary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-2xl bg-accent/20 text-primary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                     <Users className="w-5 h-5 text-secondary" />
                   </div>
                   <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
@@ -169,10 +169,10 @@ export default async function AdsekDashboardPage() {
 
               <Link
                 href="/dashboard/periode"
-                className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+                className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-highlight/20 text-[#B45309] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                  <div className="w-11 h-11 rounded-2xl bg-highlight/20 text-[#B45309] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
                     <Calendar className="w-5 h-5 text-primary" />
                   </div>
                   <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
@@ -194,7 +194,7 @@ export default async function AdsekDashboardPage() {
 
         <aside className="lg:col-span-4">
       {/* Top 3 Poin Kehadiran */}
-      <div className="flex h-full flex-col rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
+      <div className="flex h-full flex-col rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
         <div className="mb-4">
           <h3 className="inline-flex items-center gap-2 text-sm font-bold text-primary">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-highlight/15">

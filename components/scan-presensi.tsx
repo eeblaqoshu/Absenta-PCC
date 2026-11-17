@@ -782,7 +782,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
             <button
               type="button"
               onClick={() => setModalSukses(false)}
-              className="w-full rounded-xl bg-secondary py-2.5 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-colors hover:bg-primary"
+              className="w-full rounded-xl bg-secondary hover:bg-primary py-2.5 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-all cursor-pointer"
             >
               Selesai
             </button>

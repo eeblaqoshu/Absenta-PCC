@@ -1,6 +1,7 @@
+// components/ui/modal.tsx
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, type LucideIcon } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
@@ -18,20 +19,15 @@ interface ModalProps {
   children: ReactNode;
   onClose: () => void;
   ariaLabel: string;
-  /** Lebar maksimum panel. Default `md`. */
   size?: ModalSize;
   closeOnBackdrop?: boolean;
 }
 
 /**
- * Satu-satunya shell modal aplikasi.
- *
- * Panel selalu putih (`bg-white`, border `#E2E8F0`), beranimasi masuk, terkunci
- * setinggi viewport (`max-h-[calc(100dvh-2rem)]`), dan memakai kontrak flex:
- * header/footer `shrink-0`, body `flex-1 min-h-0 overflow-y-auto`.
- * Gunakan `ModalHeader`, `ModalBody`, dan `ModalFooter` agar tidak ada duplikasi.
- *
- * Escape menutup modal dan scroll halaman dikunci selama modal terbuka.
+ * Shell modal aplikasi bergaya Albi:
+ * - Backdrop dengan animasi fade in / out (`bg-navy/50 backdrop-blur-sm`).
+ * - Card putih beranimasi spring pop in / out (`damping: 28, stiffness: 360`, scale & y).
+ * - Border halus `#E2E8F0` dengan sudut membulat `rounded-2xl` & shadow `shadow-2xl`.
  */
 export function Modal({
   children,
@@ -56,22 +52,31 @@ export function Modal({
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-navy/50 p-4 backdrop-blur-sm"
-      onMouseDown={(event) => {
-        if (closeOnBackdrop && event.target === event.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => {
+          if (closeOnBackdrop) onClose();
+        }}
+        className="fixed inset-0 bg-navy/50 backdrop-blur-sm"
+      />
+
+      {/* Modal Dialog Card */}
       <motion.div
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
         tabIndex={-1}
         data-lenis-prevent
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
+        initial={{ opacity: 0, scale: 0.94, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 16 }}
         transition={{ type: "spring", damping: 28, stiffness: 360 }}
-        className={`relative flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl`}
+        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl`}
       >
         {children}
       </motion.div>
@@ -84,11 +89,10 @@ interface ModalHeaderProps {
   description?: ReactNode;
   icon?: LucideIcon;
   onClose?: () => void;
-  /** Elemen tambahan di sisi kanan (sebelum tombol tutup). */
   children?: ReactNode;
 }
 
-/** Header modal putih yang konsisten: judul, deskripsi opsional, ikon, tombol tutup. */
+/** Header modal Albi: judul tebal primary, deskripsi muted kecil, tombol close X dengan cursor-pointer */
 export function ModalHeader({
   title,
   description,
@@ -97,14 +101,14 @@ export function ModalHeader({
   children,
 }: ModalHeaderProps) {
   return (
-    <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E2E8F0] px-6 py-4">
-      <div className="min-w-0">
+    <div className="flex shrink-0 items-center justify-between border-b border-[#E2E8F0] px-6 py-4">
+      <div className="min-w-0 pr-2">
         <h3 className="flex items-center gap-2 text-sm font-bold text-primary">
           {Icon && <Icon className="h-4 w-4 shrink-0 text-secondary" />}
           <span className="truncate">{title}</span>
         </h3>
         {description && (
-          <p className="mt-0.5 text-xs text-slate-muted">{description}</p>
+          <p className="mt-0.5 text-[11px] text-slate-muted">{description}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -114,7 +118,7 @@ export function ModalHeader({
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="rounded-lg p-1.5 text-slate-muted transition-colors hover:bg-surface hover:text-navy"
+            className="cursor-pointer rounded-lg p-1 text-slate-muted transition-colors hover:bg-surface hover:text-navy"
           >
             <X className="h-4 w-4" />
           </button>
@@ -129,11 +133,11 @@ interface ModalBodyProps {
   className?: string;
 }
 
-/** Body modal: satu-satunya area yang boleh scroll. */
+/** Body modal scrollable dengan padding konsisten */
 export function ModalBody({ children, className = "" }: ModalBodyProps) {
   return (
     <div
-      className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scrollbar-none p-6 ${className}`}
+      className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 ${className}`}
     >
       {children}
     </div>
@@ -145,11 +149,11 @@ interface ModalFooterProps {
   className?: string;
 }
 
-/** Footer modal: aksi di kanan, selalu terlihat di bawah. */
+/** Footer modal aksi di kanan dengan border dan background Albi */
 export function ModalFooter({ children, className = "" }: ModalFooterProps) {
   return (
     <div
-      className={`flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-[#E2E8F0] bg-surface/40 px-6 py-4 ${className}`}
+      className={`flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-[#E2E8F0] bg-surface/50 px-6 py-4 ${className}`}
     >
       {children}
     </div>
