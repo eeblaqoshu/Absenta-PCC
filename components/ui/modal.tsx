@@ -1,7 +1,7 @@
 // components/ui/modal.tsx
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { X, type LucideIcon } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
@@ -76,7 +76,7 @@ export function Modal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 16 }}
         transition={{ type: "spring", damping: 28, stiffness: 360 }}
-        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl`}
+        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl scrollbar-none`}
       >
         {children}
       </motion.div>
@@ -137,7 +137,8 @@ interface ModalBodyProps {
 export function ModalBody({ children, className = "" }: ModalBodyProps) {
   return (
     <div
-      className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 ${className}`}
+      data-lenis-prevent
+      className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 scrollbar-none ${className}`}
     >
       {children}
     </div>

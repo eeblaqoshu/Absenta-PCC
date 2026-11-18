@@ -271,16 +271,9 @@ export function ProkerDetail({
     [agendaBerstatus],
   );
 
-  const tabEfektif: StatusAgendaDihitung =
-    kelompokAgenda[tabStatus].length > 0
-      ? tabStatus
-      : ((
-          [
-            "sedang_berlangsung",
-            "akan_datang",
-            "selesai",
-          ] as StatusAgendaDihitung[]
-        ).find((k) => kelompokAgenda[k].length > 0) ?? tabStatus);
+  // Pertahankan pilihan tab walau kategorinya kosong agar admin bisa melihat
+  // empty state kategori tersebut seperti pada dashboard STO.
+  const tabEfektif: StatusAgendaDihitung = tabStatus;
 
   const agendaTerlihat = kelompokAgenda[tabEfektif];
 

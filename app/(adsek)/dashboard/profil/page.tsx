@@ -14,7 +14,6 @@ import {
   Calendar,
   Clock,
   FileText,
-  MapPin,
   KeyRound,
   ShieldCheck,
 } from "lucide-react";

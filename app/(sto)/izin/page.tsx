@@ -6,9 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { formatJamIndo, tanggalWib } from "@/lib/waktu";
 import { IzinSto, type SesiIzin } from "@/components/izin-sto";
-import { LogoutButton } from "@/components/logout-button";
-import Link from "next/link";
-import { ArrowLeft, FileText } from "lucide-react";
 
 export default async function IzinPage() {
   const sto = await requireSto();
@@ -61,47 +58,15 @@ export default async function IzinPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface font-sans text-navy">
-      <header className="sticky top-0 z-40 border-b border-[#E2E8F0] bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
-          <Link
-            href="/home"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted transition-colors hover:text-secondary"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Home
-          </Link>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-xs font-bold text-navy sm:block">{sto.nama}</span>
-            <LogoutButton />
-          </div>
-        </div>
+    <section className="mx-auto max-w-3xl space-y-5">
+      <header>
+        <p className="text-xs font-medium text-slate-muted">Pengurus STO</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy">Pengajuan izin</h1>
+        <p className="mt-2 text-xs text-slate-muted">
+          Pilih sesi yang belum ditutup untuk mengajukan izin.
+        </p>
       </header>
-
-      <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
-        <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <FileText className="w-4 h-4 text-secondary" />
-            <span className="text-xs font-semibold text-slate-muted">
-              Pengajuan Perizinan STO
-            </span>
-          </div>
-          <h1 className="inline-flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
-            Izin Tidak Hadir
-          </h1>
-          <p className="mt-1.5 text-xs text-slate-muted leading-relaxed">
-            Ajukan izin per <strong className="font-semibold text-navy">sesi presensi</strong>. Izin
-            yang disetujui adsek membuat poin sesi itu menjadi 0 (tidak mengurangi poin) walau Anda
-            tidak hadir atau datang terlambat.
-          </p>
-          <p className="mt-1 text-xs text-slate-muted">
-            Hanya sesi yang <strong className="font-semibold text-navy">belum ditutup</strong> yang
-            tampil di sini; sesi yang sudah lewat tidak bisa diajukan izin.
-          </p>
-        </div>
-
-        <IzinSto daftar={daftar} />
-      </main>
-    </div>
+      <IzinSto daftar={daftar} />
+    </section>
   );
 }
