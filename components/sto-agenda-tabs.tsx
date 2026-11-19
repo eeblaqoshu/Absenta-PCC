@@ -94,7 +94,7 @@ export function StoAgendaTabs({
                     <span className="text-xs font-semibold text-secondary">
                       {agenda.prokerNama}
                     </span>
-                    {agenda.statusDihitung === "sedang_berlangsung" ? (
+                    {/* {agenda.statusDihitung === "sedang_berlangsung" ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Sedang berlangsung
@@ -107,7 +107,7 @@ export function StoAgendaTabs({
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-highlight/15 text-[#8a6500]">
                         Belum mulai
                       </span>
-                    )}
+                    )} */}
                   </div>
 
                   <h4 className="text-base font-bold text-primary tracking-tight">

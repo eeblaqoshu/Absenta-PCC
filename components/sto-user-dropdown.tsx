@@ -2,23 +2,37 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  User,
   LogOut,
   ChevronDown,
   Loader2,
-  QrCode,
-  Home,
-  FileText,
-  BarChart3,
-  Shield,
 } from "lucide-react";
 import type { StoNavbarUser } from "./sto-navbar";
 
 interface StoUserDropdownProps {
   sto: StoNavbarUser;
+}
+
+function formatLabelDivisi(divisi?: string | null): string {
+  if (!divisi) return "Pengurus STO";
+  const trim = divisi.trim();
+  // Jika sudah memiliki prefix Div. atau Dep.
+  if (/^(Div\.|Dep\.)/i.test(trim)) {
+    return trim;
+  }
+  if (/^Divisi\s+/i.test(trim)) {
+    return trim.replace(/^Divisi\s+/i, "Div. ");
+  }
+  if (/^Departemen\s+/i.test(trim)) {
+    return trim.replace(/^Departemen\s+/i, "Dep. ");
+  }
+  if (/^Pengurus\s+Harian$/i.test(trim)) {
+    return "Pengurus Harian";
+  }
+  return `Div. ${trim}`;
 }
 
 export function StoUserDropdown({ sto }: StoUserDropdownProps) {
@@ -27,7 +41,6 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -70,18 +83,6 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
     }
   };
 
-  // Format initials
-  const initials = sto.nama
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
-
-  const subLabel = sto.jabatan
-    ? `${sto.divisi || "STO"} • ${sto.jabatan}`
-    : sto.divisi || "Pengurus STO";
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button - Sesuai style Adsek */}
@@ -90,21 +91,26 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
         className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-xl border border-transparent hover:border-[#E2E8F0] hover:bg-surface transition-all group cursor-pointer"
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
+        aria-label="Menu Pengguna STO"
       >
+        {/* User Icon untuk Mobile (Menggantikan icon panah bawah di layar kecil) */}
+        <div className="flex sm:hidden items-center justify-center w-8 h-8 rounded-xl bg-surface border border-[#CBD5E1] text-navy group-hover:text-primary group-hover:border-secondary transition-colors">
+          <User className="w-4 h-4" />
+        </div>
 
-        {/* Name and Subtitle */}
+        {/* Name and Subtitle (Desktop Only) */}
         <div className="hidden sm:flex flex-col text-left max-w-[150px] lg:max-w-[200px]">
           <span className="text-xs font-bold text-navy truncate leading-tight group-hover:text-primary transition-colors">
             {sto.nama}
           </span>
           <span className="text-[10px] text-slate-muted truncate leading-tight mt-0.5">
-            {sto.nim ? `NIM ${sto.nim}` : subLabel}
+            {formatLabelDivisi(sto.divisi)}
           </span>
         </div>
 
-        {/* Chevron Icon */}
+        {/* Chevron Icon (Desktop Only) */}
         <ChevronDown
-          className={`w-4 h-4 text-slate-muted transition-transform duration-200 ${
+          className={`hidden sm:block w-4 h-4 text-slate-muted transition-transform duration-200 ${
             dropdownOpen ? "rotate-180 text-primary" : "group-hover:text-navy"
           }`}
         />

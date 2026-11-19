@@ -223,7 +223,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
           <Link
             key={item.href}
             href={item.href}
-            className={`relative flex items-center gap-2 h-16 px-3 text-xs font-medium tracking-wide transition-colors group ${
+            className={`relative flex items-center gap-2 h-16 px-3.5 text-xs font-medium tracking-wide transition-colors group ${
               item.isActive
                 ? "text-primary font-bold"
                 : "text-slate-muted hover:text-primary font-medium"
@@ -257,7 +257,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
         <button
           type="button"
           onClick={() => setMasterDataOpen((prev) => !prev)}
-          className={`relative flex items-center gap-1.5 h-16 px-3 text-xs font-medium tracking-wide transition-colors group cursor-pointer ${
+          className={`relative flex items-center gap-1.5 h-16 px-3.5 text-xs font-medium tracking-wide transition-colors group cursor-pointer ${
             isMasterDataActive
               ? "text-primary font-bold"
               : "text-slate-muted hover:text-primary font-medium"

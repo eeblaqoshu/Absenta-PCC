@@ -94,7 +94,12 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
         className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-xl border border-transparent hover:border-[#E2E8F0] hover:bg-surface transition-all group cursor-pointer"
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
+        aria-label="Menu Pengguna Adsek"
       >
+        {/* User Icon untuk Mobile (Menggantikan icon panah bawah di layar kecil) */}
+        <div className="flex sm:hidden items-center justify-center w-8 h-8 rounded-xl bg-surface border border-[#CBD5E1] text-navy group-hover:text-primary group-hover:border-secondary transition-colors">
+          <User className="w-4 h-4" />
+        </div>
 
         {/* Name and Email */}
         <div className="hidden sm:flex flex-col text-left max-w-[150px] lg:max-w-[200px]">
@@ -106,9 +111,9 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
           </span>
         </div>
 
-        {/* Chevron Icon */}
+        {/* Chevron Icon (Desktop Only) */}
         <ChevronDown
-          className={`w-4 h-4 text-slate-muted transition-transform duration-200 ${
+          className={`hidden sm:block w-4 h-4 text-slate-muted transition-transform duration-200 ${
             dropdownOpen ? "rotate-180 text-primary" : "group-hover:text-navy"
           }`}
         />

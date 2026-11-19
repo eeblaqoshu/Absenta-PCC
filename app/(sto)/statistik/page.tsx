@@ -32,8 +32,7 @@ export default async function StoStatistikPage() {
         {/* Banner Header Halaman */}
         <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-secondary">
-              <Award className="w-4 h-4" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-muted">
               Rekap Kehadiran Pribadi
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">

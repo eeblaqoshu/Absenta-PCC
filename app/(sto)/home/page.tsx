@@ -171,10 +171,9 @@ export default async function StoHomePage() {
 
               <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
                 <span className="text-[11px] text-slate-muted flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-secondary" />
                   Periode
                 </span>
-                <span className="font-semibold text-primary font-mono text-[11px] py-0.5 rounded-lg">
+                <span className="font-semibold text-primary font-mono text-[11px] bg-surface px-2.5 py-0.5 rounded-lg border border-[#E2E8F0]">
                   {periode?.nama || "Periode Aktif"}
                 </span>
               </div>
@@ -361,94 +360,6 @@ export default async function StoHomePage() {
               selesai={selesai}
             />
 
-            {/* Bagian Riwayat Data Absensi yang Telah Berakhir */}
-            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-secondary" />
-                  <h3 className="text-sm font-bold text-primary">
-                    Data Absensi Sesi Selesai / Telah Berakhir
-                  </h3>
-                </div>
-                <Link
-                  href="/statistik"
-                  className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
-                >
-                  Lihat Semua
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-
-              {statistik.riwayat.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-muted">
-                  Belum ada sesi presensi yang telah berakhir pada periode ini.
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {statistik.riwayat.slice(0, 3).map((item) => {
-                    const isTepatWaktu = item.statusKategori === "tepat_waktu";
-                    const isTerlambat =
-                      item.statusKategori === "terlambat_tanpa_izin" ||
-                      item.statusKategori === "terlambat_dengan_izin";
-                    const isIzin = item.statusKategori === "alpa_dengan_izin";
-                    const isAlpa = item.statusKategori === "alpa_tanpa_izin";
-
-                    return (
-                      <div
-                        key={item.sesiId}
-                        className="p-3.5 rounded-2xl border border-[#E2E8F0] bg-surface/40 hover:bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-all"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-navy text-sm">
-                              {item.judulAgenda}
-                            </span>
-                            <span className="text-[10px] bg-secondary/10 text-secondary font-bold px-2 py-0.2 rounded-full">
-                              {item.namaProker}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 text-slate-muted text-[11px]">
-                            <span>{item.tanggalFormatted}</span>
-                            <span>•</span>
-                            <span>{item.jamLabel}</span>
-                            {item.lokasiNama && (
-                              <>
-                                <span>•</span>
-                                <span>{item.lokasiNama}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
-                          {isTepatWaktu && (
-                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Hadir (+2)
-                            </span>
-                          )}
-                          {isTerlambat && (
-                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-amber-50 text-amber-700 border border-amber-200">
-                              Terlambat (
-                              {item.poin > 0 ? `+${item.poin}` : item.poin})
-                            </span>
-                          )}
-                          {isIzin && (
-                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-blue-50 text-blue-700 border border-blue-200">
-                              {item.statusLabel} (0)
-                            </span>
-                          )}
-                          {isAlpa && (
-                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-rose-50 text-rose-700 border border-rose-200">
-                              Alpa (-2)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </section>
         </div>
       </main>
