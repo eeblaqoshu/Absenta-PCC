@@ -11,8 +11,15 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Presensi STO - Polytechnic Computer Club",
+  title: "Absenta PCC",
   description: "Sistem Presensi Pengurus Organisasi STO dan Panitia PCC Polines",
+  icons: {
+    icon: [
+      { url: "/logo-pcc.png", type: "image/png" },
+    ],
+    shortcut: ["/logo-pcc.png"],
+    apple: ["/logo-pcc.png"],
+  },
 };
 
 export default function RootLayout({

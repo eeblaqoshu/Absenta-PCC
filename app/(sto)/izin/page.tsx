@@ -65,7 +65,7 @@ export default async function IzinPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-navy">
-      <StoNavbar periodeNama={periode?.nama} />
+      <StoNavbar sto={sto} periodeNama={periode?.nama} />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">

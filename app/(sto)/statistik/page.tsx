@@ -26,7 +26,7 @@ export default async function StoStatistikPage() {
   return (
     <div className="min-h-screen bg-surface font-sans text-navy antialiased pb-20">
       {/* Top Navbar Terpusat */}
-      <StoNavbar periodeNama={periode?.nama} />
+      <StoNavbar sto={sto} periodeNama={periode?.nama} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6">
         {/* Banner Header Halaman */}

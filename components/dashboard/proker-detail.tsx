@@ -363,7 +363,9 @@ export function ProkerDetail({
   // MODAL KELOLA PANITIA (STRUKTUR BANYAK & IMPOR CSV)
   // ─────────────────────────────────────────────
   const [modalPanitiaBuka, setModalPanitiaBuka] = useState(false);
-  const [tabModalPanitia, setTabModalPanitia] = useState<"struktur" | "csv">("struktur");
+  const [tabModalPanitia, setTabModalPanitia] = useState<"struktur" | "csv">(
+    "struktur",
+  );
 
   interface BarisFormPanitia {
     tempId: string;
@@ -473,11 +475,11 @@ export function ProkerDetail({
       ...prev,
       {
         tempId: Math.random().toString(36).substring(2, 9),
-        stoId: preset?.stoId || (firstAvailable ? String(firstAvailable.id) : ""),
+        stoId:
+          preset?.stoId || (firstAvailable ? String(firstAvailable.id) : ""),
         roleKey,
         divisiPanitia:
-          preset?.divisiPanitia ??
-          (firstAvailable?.divisi || "Umum"),
+          preset?.divisiPanitia ?? (firstAvailable?.divisi || "Umum"),
       },
     ]);
   };
@@ -643,7 +645,8 @@ export function ProkerDetail({
 
       const nimIdx = headers.findIndex((h) => h.includes("nim"));
       const peranIdx = headers.findIndex(
-        (h) => h.includes("peran") || h.includes("role") || h.includes("posisi"),
+        (h) =>
+          h.includes("peran") || h.includes("role") || h.includes("posisi"),
       );
       const divisiIdx = headers.findIndex(
         (h) =>
@@ -659,7 +662,9 @@ export function ProkerDetail({
       const effDivisi = divisiIdx >= 0 ? divisiIdx : 2;
 
       const nimMap = new Map(availableStos.map((s) => [s.nim.trim(), s]));
-      const existingPanitiaIds = new Set(proker.kepanitiaan.map((k) => k.sto.id));
+      const existingPanitiaIds = new Set(
+        proker.kepanitiaan.map((k) => k.sto.id),
+      );
 
       const parsed: typeof csvPreview = [];
       const raw: CsvBarisPanitia[] = [];
@@ -976,7 +981,11 @@ export function ProkerDetail({
         bg: "bg-highlight/20 text-[#B45309] border-highlight/40",
       };
     }
-    if (l.includes("penanggung jawab") || l.includes("pj") || l.includes("koordinator")) {
+    if (
+      l.includes("penanggung jawab") ||
+      l.includes("pj") ||
+      l.includes("koordinator")
+    ) {
       return { label, bg: "bg-accent/20 text-primary border-accent/40" };
     }
     return { label, bg: "bg-surface text-slate-muted border-[#CBD5E1]" };
@@ -1192,7 +1201,7 @@ export function ProkerDetail({
                     <tr>
                       <th className="px-6 py-3.5">Nama & NIM Pengurus</th>
                       <th className="px-6 py-3.5">Peran Kepanitiaan</th>
-                      <th className="px-6 py-3.5">Divisi / Jabatan Pengurus</th>
+                      <th className="px-6 py-3.5">Divisi / Departemen</th>
                       {!isReadonly && (
                         <th className="px-6 py-3.5 text-right">Aksi</th>
                       )}
@@ -1549,7 +1558,7 @@ export function ProkerDetail({
         <Modal
           onClose={() => setModalPanitiaBuka(false)}
           ariaLabel="Kelola susunan kepanitiaan proker"
-          size="3xl"
+          size="4xl"
         >
           <div className="flex min-h-0 flex-1 flex-col">
             <ModalHeader
@@ -1604,7 +1613,10 @@ export function ProkerDetail({
                   {/* Top Toolbar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
                     <div className="text-xs text-navy">
-                      <span className="font-semibold">Tambahkan panitia sekaligus</span> tanpa perlu membuka-tutup form berulang kali.
+                      <span className="font-semibold">
+                        Tambahkan panitia sekaligus
+                      </span>{" "}
+                      tanpa perlu membuka-tutup form berulang kali.
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -1614,17 +1626,7 @@ export function ProkerDetail({
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
                         title="Tambahkan 3 baris: Ketua, Sekretaris, dan Bendahara Pelaksana"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
                         Preset Pimpinan Inti
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => tambahBaris()}
-                        disabled={stoBelumMasuk.length <= barisStruktur.length}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        Tambah Baris
                       </button>
                     </div>
                   </div>
@@ -1660,7 +1662,8 @@ export function ProkerDetail({
                         );
                         const isDuplikat =
                           baris.stoId &&
-                          barisStruktur.filter((b) => b.stoId === baris.stoId).length > 1;
+                          barisStruktur.filter((b) => b.stoId === baris.stoId)
+                            .length > 1;
 
                         return (
                           <div
@@ -1673,24 +1676,35 @@ export function ProkerDetail({
                           >
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
                               {/* Kolom STO */}
-                              <div className="md:col-span-5">
+                              <div className="md:col-span-4">
                                 <label className="block text-[10px] font-semibold text-slate-muted mb-1">
                                   Pengurus STO #{idx + 1}
                                 </label>
                                 <select
                                   value={baris.stoId}
                                   onChange={(e) =>
-                                    ubahBaris(baris.tempId, { stoId: e.target.value })
+                                    ubahBaris(baris.tempId, {
+                                      stoId: e.target.value,
+                                    })
                                   }
                                   className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
                                 >
-                                  <option value="">-- Pilih Pengurus STO --</option>
+                                  <option value="">
+                                    -- Pilih Pengurus STO --
+                                  </option>
                                   {availableStos
                                     .filter((s) => {
-                                      const sudahDiProker = panitiaStoIdSet.has(s.id);
-                                      const sudahDiBarisLain = selectedInOtherRows.has(s.id);
-                                      const isRowIni = String(s.id) === String(baris.stoId);
-                                      return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
+                                      const sudahDiProker = panitiaStoIdSet.has(
+                                        s.id,
+                                      );
+                                      const sudahDiBarisLain =
+                                        selectedInOtherRows.has(s.id);
+                                      const isRowIni =
+                                        String(s.id) === String(baris.stoId);
+                                      return (
+                                        (!sudahDiProker && !sudahDiBarisLain) ||
+                                        isRowIni
+                                      );
                                     })
                                     .map((s) => (
                                       <option key={s.id} value={s.id}>
@@ -1708,7 +1722,9 @@ export function ProkerDetail({
                                 <select
                                   value={baris.roleKey}
                                   onChange={(e) =>
-                                    ubahBaris(baris.tempId, { roleKey: e.target.value })
+                                    ubahBaris(baris.tempId, {
+                                      roleKey: e.target.value,
+                                    })
                                   }
                                   className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
                                 >
@@ -1742,17 +1758,18 @@ export function ProkerDetail({
                                 </select>
                               </div>
 
-                              {/* Kolom Divisi / Jabatan Pengurus */}
-                              <div className="md:col-span-2">
+                              {/* Kolom Divisi / Departemen */}
+                              <div className="md:col-span-3">
                                 <label className="block text-[10px] font-semibold text-slate-muted mb-1">
-                                  Divisi / Jabatan Pengurus
+                                  Divisi / Departemen
                                 </label>
                                 <input
                                   type="text"
                                   readOnly
                                   value={baris.divisiPanitia}
+                                  title={baris.divisiPanitia}
                                   placeholder="Divisi pengurus"
-                                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-slate-50 text-xs text-navy focus:outline-none cursor-default"
+                                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-slate-50 text-xs text-navy focus:outline-none cursor-default truncate"
                                 />
                               </div>
 
@@ -1782,7 +1799,8 @@ export function ProkerDetail({
                   {/* Ringkasan status */}
                   <div className="flex items-center justify-between text-[11px] text-slate-muted pt-1">
                     <span>
-                      Total baris: <strong>{barisStruktur.length}</strong> orang • STO tersedia: <strong>{stoBelumMasuk.length}</strong>
+                      Total baris: <strong>{barisStruktur.length}</strong> orang
+                      • STO tersedia: <strong>{stoBelumMasuk.length}</strong>
                     </span>
                     <button
                       type="button"
@@ -1790,7 +1808,7 @@ export function ProkerDetail({
                       disabled={stoBelumMasuk.length <= barisStruktur.length}
                       className="text-secondary font-semibold hover:underline inline-flex items-center gap-1 disabled:opacity-50 cursor-pointer"
                     >
-                      <Plus className="w-3 h-3" /> Tambah baris lagi
+                      <Plus className="w-3 h-3" /> Tambah baris
                     </button>
                   </div>
                 </div>
@@ -1805,7 +1823,11 @@ export function ProkerDetail({
                         Template File CSV Kepanitiaan
                       </div>
                       <p className="text-[11px] text-slate-muted">
-                        Format kolom: <code className="px-1.5 py-0.5 bg-white rounded border border-[#CBD5E1] text-[10px] font-mono text-navy">NIM,Peran,Divisi_Panitia</code> (contoh: 223141001, ketua, Divisi Workshop)
+                        Format kolom:{" "}
+                        <code className="px-1.5 py-0.5 bg-white rounded border border-[#CBD5E1] text-[10px] font-mono text-navy">
+                          NIM,Peran,Divisi_Panitia
+                        </code>{" "}
+                        (contoh: 223141001, ketua, Divisi Workshop)
                       </p>
                     </div>
                     <button
@@ -1825,7 +1847,8 @@ export function ProkerDetail({
                       Pilih berkas CSV untuk diimpor
                     </p>
                     <p className="text-[11px] text-slate-muted mb-3">
-                      Sistem akan mencocokkan NIM dengan pengurus STO periode aktif secara otomatis.
+                      Sistem akan mencocokkan NIM dengan pengurus STO periode
+                      aktif secara otomatis.
                     </p>
                     <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/20 cursor-pointer transition-all">
                       <Upload className="w-3.5 h-3.5" />
@@ -1857,7 +1880,8 @@ export function ProkerDetail({
                           </span>
                           {csvPreview.filter((p) => !p.valid).length > 0 && (
                             <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-semibold">
-                              {csvPreview.filter((p) => !p.valid).length} Bermasalah
+                              {csvPreview.filter((p) => !p.valid).length}{" "}
+                              Bermasalah
                             </span>
                           )}
                         </div>
@@ -1878,7 +1902,11 @@ export function ProkerDetail({
                             {csvPreview.map((item, idx) => (
                               <tr
                                 key={idx}
-                                className={item.valid ? "hover:bg-surface/50" : "bg-rose-50/50"}
+                                className={
+                                  item.valid
+                                    ? "hover:bg-surface/50"
+                                    : "bg-rose-50/50"
+                                }
                               >
                                 <td className="px-3 py-2 font-mono text-slate-muted">
                                   {idx + 1}
@@ -1894,7 +1922,9 @@ export function ProkerDetail({
                                   )}
                                 </td>
                                 <td className="px-3 py-2 text-slate-muted">
-                                  <span className="font-medium text-navy">{item.peran}</span>
+                                  <span className="font-medium text-navy">
+                                    {item.peran}
+                                  </span>
                                   {item.divisi && ` • ${item.divisi}`}
                                 </td>
                                 <td className="px-3 py-2 text-right whitespace-nowrap">
@@ -1903,7 +1933,10 @@ export function ProkerDetail({
                                       Siap Impor
                                     </span>
                                   ) : (
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200" title={item.pesanError}>
+                                    <span
+                                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200"
+                                      title={item.pesanError}
+                                    >
                                       {item.pesanError || "Tidak Valid"}
                                     </span>
                                   )}
@@ -1935,8 +1968,10 @@ export function ProkerDetail({
                   disabled={isPending || barisStruktur.length === 0}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-secondary/25 cursor-pointer"
                 >
-                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Simpan Susunan Panitia ({barisStruktur.length})
+                  {isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  Simpan Susunan Panitia
                 </button>
               ) : (
                 <button
@@ -1949,8 +1984,11 @@ export function ProkerDetail({
                   }
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-secondary/25 cursor-pointer"
                 >
-                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Mulai Impor Panitia ({csvPreview.filter((p) => p.valid).length} Valid)
+                  {isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  Mulai Impor Panitia (
+                  {csvPreview.filter((p) => p.valid).length} Valid)
                 </button>
               )}
             </ModalFooter>
@@ -2016,7 +2054,7 @@ export function ProkerDetail({
 
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1">
-                    Divisi / Jabatan Pengurus
+                    Divisi / Departemen
                   </label>
                   <input
                     type="text"

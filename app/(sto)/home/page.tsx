@@ -132,7 +132,7 @@ export default async function StoHomePage() {
   return (
     <div className="min-h-screen bg-surface font-sans text-navy antialiased pb-20">
       {/* Top Navbar Terpusat (Home, Izin, Statistik) */}
-      <StoNavbar periodeNama={periode?.nama} />
+      <StoNavbar sto={sto} periodeNama={periode?.nama} />
 
       {/* Main Responsive Grid Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">

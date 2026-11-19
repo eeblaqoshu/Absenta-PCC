@@ -28,7 +28,7 @@ export default async function DashboardLayout({
             {/* Left: Brand */}
             <div className="flex items-center shrink-0">
               <Link href="/dashboard" className="flex items-center gap-3 group">
-                <div className="relative w-9 h-9 rounded-xl overflow-hidden border border-[#E2E8F0] bg-white p-0.5 shadow-sm group-hover:scale-105 transition-transform">
+                <div className="relative w-9 h-9 rounded-xl overflow-hidden p-0.5 group-hover:scale-105 transition-transform">
                   <Image
                     src="/logo-pcc.png"
                     alt="Logo UKM PCC"
