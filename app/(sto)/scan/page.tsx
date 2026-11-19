@@ -4,7 +4,7 @@ import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { ScanPresensi, type SesiTersedia } from "@/components/scan-presensi";
-import { LogoutButton } from "@/components/logout-button";
+import { LogoutButton } from "@/components/ui/logout-button";
 import Link from "next/link";
 import { ArrowLeft, QrCode } from "lucide-react";
 

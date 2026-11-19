@@ -5,8 +5,8 @@ import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { formatJamIndo, tanggalWib } from "@/lib/waktu";
-import { IzinSto, type SesiIzin } from "@/components/izin-sto";
-import { StoNavbar } from "@/components/sto-navbar";
+import { IzinSto, type SesiIzin } from "@/components/sto/izin-sto";
+import { StoNavbar } from "@/components/sto/sto-navbar";
 import { FileText } from "lucide-react";
 
 export default async function IzinPage() {

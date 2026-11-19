@@ -29,8 +29,8 @@ import {
   type LokasiOption,
   type SesiItem,
 } from "@/components/dashboard/sesi-modal";
-import { AgendaStatusTabs } from "@/components/agenda-status-tabs";
-import { EmptyAgenda } from "@/components/empty-agenda";
+import { AgendaStatusTabs } from "@/components/ui/agenda-status-tabs";
+import { EmptyAgenda } from "@/components/ui/empty-agenda";
 import {
   Modal,
   ModalBody,

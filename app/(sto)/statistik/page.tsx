@@ -2,7 +2,7 @@
 import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ambilStatistikSto } from "@/lib/statistik-sto";
-import { StoNavbar } from "@/components/sto-navbar";
+import { StoNavbar } from "@/components/sto/sto-navbar";
 import {
   CheckCircle2,
   Clock,

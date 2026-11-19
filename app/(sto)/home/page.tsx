@@ -8,8 +8,8 @@ import {
   jamDariWaktuAgenda,
 } from "@/lib/waktu";
 import { ambilStatistikSto } from "@/lib/statistik-sto";
-import { StoNavbar } from "@/components/sto-navbar";
-import { StoAgendaTabs, type AgendaItem } from "@/components/sto-agenda-tabs";
+import { StoNavbar } from "@/components/sto/sto-navbar";
+import { StoAgendaTabs, type AgendaItem } from "@/components/sto/sto-agenda-tabs";
 import {
   QrCode,
   CheckCircle2,
