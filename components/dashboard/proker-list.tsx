@@ -142,7 +142,6 @@ export function ProkerList({
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-secondary" />
             Program Kerja (Proker)
           </h2>
           <p className="text-xs text-slate-muted mt-1">

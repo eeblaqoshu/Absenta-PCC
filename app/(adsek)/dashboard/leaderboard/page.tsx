@@ -21,9 +21,6 @@ export default async function LeaderboardPage() {
     <div className="py-2 space-y-5">
       <div className="rounded-2xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
         <h1 className="inline-flex items-center gap-2 text-base font-bold text-primary">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-highlight/15">
-            <Trophy className="h-4 w-4 text-[#B45309]" />
-          </span>
           Leaderboard Poin Kehadiran
         </h1>
         <p className="mt-1 text-xs text-slate-muted">

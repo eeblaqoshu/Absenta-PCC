@@ -443,13 +443,28 @@ export function ProkerDetail({
     return Array.from(set).sort();
   }, [availableStos]);
 
+  // Helper validator: Sekretaris Umum tidak boleh dimasukkan ke dalam preset / sekretaris inti
+  const isSekretarisUmum = (sto: StoOption | null | undefined): boolean => {
+    if (!sto) return false;
+    const jab = (sto.jabatan || "").toLowerCase();
+    const div = (sto.divisi || "").toLowerCase();
+    return (
+      jab.includes("sekretaris umum") ||
+      div.includes("sekretaris umum") ||
+      jab.includes("sekum") ||
+      div.includes("sekum")
+    );
+  };
+
   // Handler Buka Modal Panitia (Tab Struktur atau CSV)
   const bukaModalKelolaPanitia = (tab: "struktur" | "csv" = "struktur") => {
     setTabModalPanitia(tab);
     setPesan(null);
     if (tab === "struktur" && barisStruktur.length === 0) {
       const usedIds = new Set(proker.kepanitiaan.map((k) => k.sto.id));
-      const firstAvailable = availableStos.find((s) => !usedIds.has(s.id));
+      const firstAvailable = availableStos.find(
+        (s) => !usedIds.has(s.id) && !isSekretarisUmum(s),
+      );
       setBarisStruktur([
         {
           tempId: Math.random().toString(36).substring(2, 9),
@@ -468,8 +483,23 @@ export function ProkerDetail({
       ...panitiaStoIdSet,
       ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
     ]);
-    const firstAvailable = availableStos.find((s) => !usedIds.has(s.id));
-    const roleKey = preset?.roleKey || OPSI_PERAN_PANITIA[0].key;
+    const firstAvailable = availableStos.find(
+      (s) => !usedIds.has(s.id) && !isSekretarisUmum(s),
+    );
+    
+    // Tentukan default roleKey: jangan menduplikasi peran pimpinan inti jika sudah ada di form
+    let roleKey = preset?.roleKey;
+    if (!roleKey) {
+      const existingRoles = new Set(barisStruktur.map((b) => b.roleKey));
+      if (existingRoles.has("ketua_pelaksana")) {
+        const nextAvailableRole = OPSI_PERAN_PANITIA.find(
+          (o) => !existingRoles.has(o.key) && !o.kategori.includes("PI"),
+        );
+        roleKey = nextAvailableRole ? nextAvailableRole.key : "anggota_sie_acara";
+      } else {
+        roleKey = OPSI_PERAN_PANITIA[0].key;
+      }
+    }
 
     setBarisStruktur((prev) => [
       ...prev,
@@ -485,29 +515,183 @@ export function ProkerDetail({
   };
 
   const terapkanPresetInti = () => {
-    const usedIds = new Set([
-      ...panitiaStoIdSet,
-      ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
-    ]);
-    const available = availableStos.filter((s) => !usedIds.has(s.id));
+    // 1. Kumpulkan roleKey pimpinan inti yang sudah terisi di form (dengan STO yang dipilih)
+    const validRows = barisStruktur.filter((b) => Boolean(b.stoId));
+    const existingRolesInForm = new Set(validRows.map((b) => b.roleKey));
 
-    const presets = [
+    // 2. Kumpulkan roleKey pimpinan inti yang sudah ada di database kepanitiaan proker ini
+    const existingRolesInKepanitiaan = new Set<string>();
+    for (const k of proker.kepanitiaan) {
+      const match = OPSI_PERAN_PANITIA.find(
+        (o) =>
+          o.label.toLowerCase() === (k.divisiPanitia || "").toLowerCase() ||
+          (o.key === "ketua_pelaksana" && k.peran === PeranPanitia.ketua) ||
+          (o.key === "wakil_ketua_pelaksana" &&
+            (k.divisiPanitia || "").toLowerCase().includes("wakil")) ||
+          (o.key === "sekretaris_inti" &&
+            (k.divisiPanitia || "").toLowerCase().includes("sekretaris inti")) ||
+          (o.key === "sekretaris_pelaksana" &&
+            (k.peran === PeranPanitia.sekretaris ||
+              (k.divisiPanitia || "").toLowerCase().includes("sekretaris pelaksana"))) ||
+          (o.key === "bendahara_inti" &&
+            (k.divisiPanitia || "").toLowerCase().includes("bendahara inti")) ||
+          (o.key === "bendahara_pelaksana" &&
+            (k.peran === PeranPanitia.bendahara ||
+              (k.divisiPanitia || "").toLowerCase().includes("bendahara pelaksana"))) ||
+          (o.key === "litbang_pengawas" &&
+            (k.divisiPanitia || "").toLowerCase().includes("litbang")),
+      );
+      if (match) {
+        existingRolesInKepanitiaan.add(match.key);
+      }
+    }
+
+    // 3. Tujuh peran kepanitiaan inti & pengawas:
+    //    1. Ketua Pelaksana
+    //    2. Wakil Ketua Pelaksana
+    //    3. Sekretaris Inti (dari STO kepengurusan Sekretaris)
+    //    4. Sekretaris Pelaksana
+    //    5. Bendahara Inti (dari STO kepengurusan Bendahara)
+    //    6. Bendahara Pelaksana
+    //    7. Litbang Pengawas (dari STO kepengurusan Litbang)
+    const presets: {
+      roleKey: string;
+      kriteria?: "sekretaris" | "bendahara" | "litbang";
+    }[] = [
       { roleKey: "ketua_pelaksana" },
+      { roleKey: "wakil_ketua_pelaksana" },
+      { roleKey: "sekretaris_inti", kriteria: "sekretaris" },
       { roleKey: "sekretaris_pelaksana" },
+      { roleKey: "bendahara_inti", kriteria: "bendahara" },
       { roleKey: "bendahara_pelaksana" },
+      { roleKey: "litbang_pengawas", kriteria: "litbang" },
     ];
 
-    const newRows: BarisFormPanitia[] = presets.map((p, idx) => {
-      const sto = available[idx];
-      return {
+    // Filter hanya preset yang BELUM ADA di form maupun di kepanitiaan tersimpan
+    const presetsNeeded = presets.filter(
+      (p) =>
+        !existingRolesInForm.has(p.roleKey) &&
+        !existingRolesInKepanitiaan.has(p.roleKey),
+    );
+
+    if (presetsNeeded.length === 0) {
+      setPesan({
+        tipe: "sukses",
+        teks: "Semua peran Kepanitiaan Inti (Ketua, Wakil, Sekretaris, Bendahara, dan Litbang Pengawas) sudah terisi lengkap tanpa duplikasi.",
+      });
+      return;
+    }
+
+    // 4. Set pelacak STO yang sudah digunakan
+    const currentUsedIds = new Set([
+      ...panitiaStoIdSet,
+      ...validRows.map((b) => Number(b.stoId)),
+    ]);
+
+    // Helper cek kecocokan kriteria kepengurusan STO
+    const isMatchKriteria = (
+      sto: StoOption,
+      kriteria?: "sekretaris" | "bendahara" | "litbang",
+    ) => {
+      if (!kriteria) return true;
+      // Jangan pernah pilih Sekretaris Umum untuk preset (termasuk peran sekretaris inti)
+      if (isSekretarisUmum(sto)) return false;
+      const jab = (sto.jabatan || "").toLowerCase();
+      const div = (sto.divisi || "").toLowerCase();
+      return jab.includes(kriteria) || div.includes(kriteria);
+    };
+
+    // Helper cek apakah STO punya kepengurusan khusus (Sekretaris, Bendahara, Litbang)
+    const isSpecializedSto = (sto: StoOption) => {
+      if (isSekretarisUmum(sto)) return true; // Anggap Sekum khusus agar tidak terpilih ke peran umum
+      const jab = (sto.jabatan || "").toLowerCase();
+      const div = (sto.divisi || "").toLowerCase();
+      return (
+        jab.includes("sekretaris") ||
+        div.includes("sekretaris") ||
+        jab.includes("bendahara") ||
+        div.includes("bendahara") ||
+        jab.includes("litbang") ||
+        div.includes("litbang")
+      );
+    };
+
+    // Fungsi pemilih STO cerdas berdasarkan peran
+    const pilihStoUntukPreset = (
+      kriteria?: "sekretaris" | "bendahara" | "litbang",
+    ): StoOption | null => {
+      if (kriteria) {
+        // Cari STO yang belum terpakai, bukan Sekum, dan kepengurusannya sesuai kriteria
+        const match = availableStos.find(
+          (s) =>
+            !currentUsedIds.has(s.id) &&
+            !isSekretarisUmum(s) &&
+            isMatchKriteria(s, kriteria),
+        );
+        if (match) {
+          currentUsedIds.add(match.id);
+          return match;
+        }
+      } else {
+        // Untuk peran umum (Ketua, Wakil, Sekpel, Benpel), dahulukan STO yang bukan Sekum dan bukan kepengurusan khusus
+        const generalMatch = availableStos.find(
+          (s) =>
+            !currentUsedIds.has(s.id) &&
+            !isSekretarisUmum(s) &&
+            !isSpecializedSto(s),
+        );
+        if (generalMatch) {
+          currentUsedIds.add(generalMatch.id);
+          return generalMatch;
+        }
+      }
+
+      // Fallback jika tidak ditemukan yang spesifik/umum: pilih STO apa saja yang masih tersisa (tetap kecualikan Sekum)
+      const fallbackMatch = availableStos.find(
+        (s) => !currentUsedIds.has(s.id) && !isSekretarisUmum(s),
+      );
+      if (fallbackMatch) {
+        currentUsedIds.add(fallbackMatch.id);
+        return fallbackMatch;
+      }
+
+      return null;
+    };
+
+    // 5. Cek jika ada baris kosong di form (misal baris pertama yang belum dipilih pengurusnya)
+    const emptyRowIndices = barisStruktur
+      .map((b, idx) => (!b.stoId ? idx : -1))
+      .filter((idx) => idx !== -1);
+
+    const updatedBaris = [...barisStruktur];
+    const presetsToCreate = [...presetsNeeded];
+
+    // Isi baris yang masih kosong terlebih dahulu
+    for (const emptyIdx of emptyRowIndices) {
+      if (presetsToCreate.length === 0) break;
+      const preset = presetsToCreate.shift()!;
+      const sto = pilihStoUntukPreset(preset.kriteria);
+      updatedBaris[emptyIdx] = {
+        ...updatedBaris[emptyIdx],
+        stoId: sto ? String(sto.id) : "",
+        roleKey: preset.roleKey,
+        divisiPanitia: sto?.divisi || "Pengurus STO",
+      };
+    }
+
+    // Buat baris baru hanya untuk sisa preset yang belum terpenuhi
+    const newRows: BarisFormPanitia[] = [];
+    for (const preset of presetsToCreate) {
+      const sto = pilihStoUntukPreset(preset.kriteria);
+      newRows.push({
         tempId: Math.random().toString(36).substring(2, 9),
         stoId: sto ? String(sto.id) : "",
-        roleKey: p.roleKey,
-        divisiPanitia: sto?.divisi || "Umum",
-      };
-    });
+        roleKey: preset.roleKey,
+        divisiPanitia: sto?.divisi || "Pengurus STO",
+      });
+    }
 
-    setBarisStruktur((prev) => [...prev, ...newRows]);
+    setBarisStruktur([...updatedBaris, ...newRows]);
   };
 
   const ubahBaris = (tempId: string, patch: Partial<BarisFormPanitia>) => {
@@ -556,6 +740,46 @@ export function ProkerDetail({
         teks: "Terdapat duplikasi pengurus STO pada form. Pastikan tiap pengurus hanya dipilih satu kali.",
       });
       return;
+    }
+
+    // Validasi tidak boleh ada peran pimpinan inti & pengawas yang duplikat
+    const peranIntiTunggal = [
+      "ketua_pelaksana",
+      "wakil_ketua_pelaksana",
+      "sekretaris_inti",
+      "sekretaris_pelaksana",
+      "bendahara_inti",
+      "bendahara_pelaksana",
+      "litbang_pengawas",
+    ];
+    for (const roleKey of peranIntiTunggal) {
+      const duplikat = barisStruktur.filter((b) => b.roleKey === roleKey);
+      if (duplikat.length > 1) {
+        const labelPeran =
+          OPSI_PERAN_PANITIA.find((o) => o.key === roleKey)?.label || roleKey;
+        setPesan({
+          tipe: "error",
+          teks: `Terdapat ${duplikat.length} baris dengan peran "${labelPeran}". Peran pimpinan inti & pengawas hanya boleh diisi oleh 1 orang.`,
+        });
+        return;
+      }
+    }
+
+    // Validasi Sekretaris Umum tidak boleh ditugaskan sebagai Sekretaris Inti
+    const barisSekretarisInti = barisStruktur.find(
+      (b) => b.roleKey === "sekretaris_inti",
+    );
+    if (barisSekretarisInti && barisSekretarisInti.stoId) {
+      const stoDipilih = availableStos.find(
+        (s) => String(s.id) === String(barisSekretarisInti.stoId),
+      );
+      if (stoDipilih && isSekretarisUmum(stoDipilih)) {
+        setPesan({
+          tipe: "error",
+          teks: `Pengurus "${stoDipilih.nama}" menjabat sebagai Sekretaris Umum dan tidak dapat ditugaskan sebagai Sekretaris Inti kepanitiaan.`,
+        });
+        return;
+      }
     }
 
     const payload: BarisPanitiaInput[] = barisStruktur.map((b) => {
@@ -1622,9 +1846,9 @@ export function ProkerDetail({
                       <button
                         type="button"
                         onClick={terapkanPresetInti}
-                        disabled={stoBelumMasuk.length < 3}
+                        disabled={stoBelumMasuk.length === 0}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
-                        title="Tambahkan 3 baris: Ketua, Sekretaris, dan Bendahara Pelaksana"
+                        title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
                       >
                         Preset Pimpinan Inti
                       </button>
@@ -1665,11 +1889,31 @@ export function ProkerDetail({
                           barisStruktur.filter((b) => b.stoId === baris.stoId)
                             .length > 1;
 
+                        const isDuplikatPeran =
+                          [
+                            "ketua_pelaksana",
+                            "wakil_ketua_pelaksana",
+                            "sekretaris_inti",
+                            "sekretaris_pelaksana",
+                            "bendahara_inti",
+                            "bendahara_pelaksana",
+                            "litbang_pengawas",
+                          ].includes(baris.roleKey) &&
+                          barisStruktur.filter((b) => b.roleKey === baris.roleKey)
+                            .length > 1;
+
+                        const stoDipilih = availableStos.find(
+                          (s) => String(s.id) === String(baris.stoId),
+                        );
+                        const isSekumSebagaiSekretarisInti =
+                          baris.roleKey === "sekretaris_inti" &&
+                          isSekretarisUmum(stoDipilih);
+
                         return (
                           <div
                             key={baris.tempId}
                             className={`p-3 rounded-2xl border transition-all ${
-                              isDuplikat
+                              isDuplikat || isDuplikatPeran || isSekumSebagaiSekretarisInti
                                 ? "border-rose-300 bg-rose-50/40"
                                 : "border-[#E2E8F0] bg-white hover:border-secondary/40"
                             }`}
@@ -1712,6 +1956,11 @@ export function ProkerDetail({
                                       </option>
                                     ))}
                                 </select>
+                                {isDuplikat && (
+                                  <p className="text-[10px] text-rose-500 font-semibold mt-1">
+                                    Pengurus STO ini sudah dipilih di baris lain
+                                  </p>
+                                )}
                               </div>
 
                               {/* Kolom Peran */}
@@ -1756,6 +2005,16 @@ export function ProkerDetail({
                                     ))}
                                   </optgroup>
                                 </select>
+                                {isDuplikatPeran && (
+                                  <p className="text-[10px] text-rose-500 font-semibold mt-1">
+                                    Peran pimpinan inti tidak boleh duplikat
+                                  </p>
+                                )}
+                                {isSekumSebagaiSekretarisInti && (
+                                  <p className="text-[10px] text-rose-500 font-semibold mt-1">
+                                    Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris Inti
+                                  </p>
+                                )}
                               </div>
 
                               {/* Kolom Divisi / Departemen */}

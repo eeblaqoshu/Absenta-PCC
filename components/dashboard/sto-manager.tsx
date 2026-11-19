@@ -288,11 +288,11 @@ export function StoManager({
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            <Users className="w-6 h-6 text-secondary" />
-            Data Pengurus STO
+            Data Kepengerusan STO
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Kelola master data pengurus organisasi terdaftar, divisi, jabatan, serta impor massal file CSV.
+            Kelola master data pengurus organisasi terdaftar, divisi, jabatan,
+            serta impor massal file CSV.
           </p>
         </div>
 
@@ -366,7 +366,7 @@ export function StoManager({
             onChange={(e) => setFilterDivisi(e.target.value)}
             className="w-full sm:w-48 px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
           >
-            <option value="all">Semua Divisi ({initialSto.length})</option>
+            <option value="all">Semua Divisi</option>
             {divisiList.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -382,6 +382,7 @@ export function StoManager({
           <table className="w-full text-left text-xs">
             <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
               <tr>
+                <th className="px-6 py-3.5">No</th>
                 <th className="px-6 py-3.5">Nama & NIM</th>
                 <th className="px-6 py-3.5">Email Google</th>
                 <th className="px-6 py-3.5">Jabatan</th>
@@ -393,23 +394,23 @@ export function StoManager({
               {filteredSto.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-6 py-12 text-center text-slate-muted"
                   >
                     Tidak ada data pengurus STO yang sesuai.
                   </td>
                 </tr>
               ) : (
-                filteredSto.map((item) => (
+                filteredSto.map((item, index) => (
                   <tr
                     key={item.id}
                     className="hover:bg-surface/70 transition-colors"
                   >
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-muted font-medium">
+                      {index + 1}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shrink-0">
-                          {item.nama.charAt(0).toUpperCase()}
-                        </div>
                         <div>
                           <div className="font-semibold text-navy">
                             {item.nama}
