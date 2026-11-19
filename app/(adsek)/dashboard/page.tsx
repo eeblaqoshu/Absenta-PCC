@@ -68,13 +68,6 @@ export default async function AdsekDashboardPage() {
               : "Silakan buka periode baru melalui menu Kelola Periode (Admin)."}
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs px-3.5 py-1.5 rounded-xl bg-primary/10 text-primary font-semibold border border-primary/20 flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-secondary" />
-            {adsek.role.replace("_", " ").toUpperCase()}
-          </span>
-        </div>
       </div>
 
       {/* Statistik & Modul (kiri) berdampingan dengan Top 3 (kanan) */}

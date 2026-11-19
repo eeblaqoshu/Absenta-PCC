@@ -95,10 +95,6 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
         aria-expanded={dropdownOpen}
         aria-haspopup="true"
       >
-        {/* Avatar Initials */}
-        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center border border-primary/20 shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-          {initials || "A"}
-        </div>
 
         {/* Name and Email */}
         <div className="hidden sm:flex flex-col text-left max-w-[150px] lg:max-w-[200px]">
@@ -157,56 +153,7 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
               <User className="w-4 h-4 text-slate-muted" />
               <span>Profil Akun</span>
             </Link>
-
-            {/* Master Data Menu (Admin Only) */}
-            {isAdmin && (
-              <>
-                <div className="h-px bg-[#E2E8F0] my-1" />
-                <div className="px-3 py-1 text-[10px] font-bold text-slate-muted uppercase tracking-wider">
-                  Master Data
-                </div>
-
-                <Link
-                  href="/dashboard/periode"
-                  onClick={() => setDropdownOpen(false)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    pathname.startsWith("/dashboard/periode")
-                      ? "text-primary bg-primary/10 font-bold"
-                      : "text-navy hover:bg-surface hover:text-primary"
-                  }`}
-                >
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <span>Periode</span>
-                </Link>
-
-                <Link
-                  href="/dashboard/sto"
-                  onClick={() => setDropdownOpen(false)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    pathname.startsWith("/dashboard/sto")
-                      ? "text-secondary bg-secondary/10 font-bold"
-                      : "text-navy hover:bg-surface hover:text-secondary"
-                  }`}
-                >
-                  <Users className="w-4 h-4 text-secondary" />
-                  <span>Data STO</span>
-                </Link>
-
-                <Link
-                  href="/dashboard/lokasi"
-                  onClick={() => setDropdownOpen(false)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                    pathname.startsWith("/dashboard/lokasi")
-                      ? "text-[#0284C7] bg-[#0284C7]/10 font-bold"
-                      : "text-navy hover:bg-surface hover:text-[#0284C7]"
-                  }`}
-                >
-                  <MapPin className="w-4 h-4 text-[#0284C7]" />
-                  <span>Lokasi</span>
-                </Link>
-              </>
-            )}
-
+            
             {/* Divider */}
             <div className="h-px bg-[#E2E8F0] my-1" />
 

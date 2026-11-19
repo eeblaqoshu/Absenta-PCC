@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, type LucideIcon } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
-type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
+type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 
 const UKURAN: Record<ModalSize, string> = {
   sm: "max-w-sm",
@@ -13,6 +13,8 @@ const UKURAN: Record<ModalSize, string> = {
   lg: "max-w-lg",
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
 };
 
 interface ModalProps {

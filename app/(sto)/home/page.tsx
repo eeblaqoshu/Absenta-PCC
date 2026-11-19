@@ -7,11 +7,20 @@ import {
   hitungStatusAgenda,
   jamDariWaktuAgenda,
 } from "@/lib/waktu";
-import { LogoutButton } from "@/components/logout-button";
+import { ambilStatistikSto } from "@/lib/statistik-sto";
+import { StoNavbar } from "@/components/sto-navbar";
 import { StoAgendaTabs, type AgendaItem } from "@/components/sto-agenda-tabs";
-import { QrCode, Sparkles, CheckCircle2, Clock, Shield, Camera, FileText } from "lucide-react";
+import {
+  QrCode,
+  CheckCircle2,
+  Clock,
+  FileText,
+  XCircle,
+  ArrowRight,
+  History,
+  Calendar,
+} from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default async function StoHomePage() {
   const sto = await requireSto();
@@ -31,7 +40,7 @@ export default async function StoHomePage() {
     },
     include: {
       proker: { select: { nama: true } },
-      // Sesi yang sedang dibuka sekarang (satu agenda boleh punya banyak sesi).
+      // Sesi yang sedang dibuka sekarang
       sesi: {
         where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
         orderBy: { bukaAt: "asc" },
@@ -55,7 +64,6 @@ export default async function StoHomePage() {
   const sedangBerlangsung: AgendaItem[] = [];
   const selesai: AgendaItem[] = [];
 
-  // Presensi STO pada sesi-sesi agenda tersebut (untuk status "sudah presensi").
   const sesiIdsSemua = agendaAkses.flatMap((ag) => ag.sesi.map((s) => s.id));
   const presensiSto =
     sesiIdsSemua.length > 0
@@ -76,14 +84,14 @@ export default async function StoHomePage() {
       ag.tglPelaksanaan,
       ag.waktuPelaksanaan,
       ag.tglSelesai,
-      now
+      now,
     );
 
-    // Sesi yang sedang dibuka sekarang (bisa lebih dari satu).
     const sesiAktif = ag.sesi[0] ?? null;
     const adaSesiAktif = Boolean(sesiAktif);
-
-    const presensiSesi = sesiAktif ? presensiBySesi.get(sesiAktif.id) ?? null : null;
+    const presensiSesi = sesiAktif
+      ? (presensiBySesi.get(sesiAktif.id) ?? null)
+      : null;
 
     const item: AgendaItem = {
       id: ag.id,
@@ -115,118 +123,40 @@ export default async function StoHomePage() {
 
   // Semua sesi yang sedang berlangsung sudah diabsen STO ini?
   const sudahPresensiSemuaBerlangsung =
-    sedangBerlangsung.length > 0 && sedangBerlangsung.every((a) => a.sudahPresensi);
+    sedangBerlangsung.length > 0 &&
+    sedangBerlangsung.every((a) => a.sudahPresensi);
 
-  // 5. Hitung Riwayat Kehadiran STO
-  const riwayat = await prisma.presensi.findMany({
-    where: { stoId: sto.id },
-    select: { status: true },
-  });
-  const hadirCount = riwayat.filter((r) => r.status === "hadir").length;
-  const telatCount = riwayat.filter((r) => r.status === "terlambat").length;
-
-  // Inisial Nama untuk Avatar Placeholder jika foto belum ada
-  const inisialNama = sto.nama
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
+  // 5. Ambil Statistik Kehadiran & Sesi Selesai STO
+  const statistik = await ambilStatistikSto(sto.id, sto.periodeId, now);
 
   return (
-    <div className="min-h-screen bg-surface font-sans text-navy antialiased pb-16">
-      {/* Top Navbar Desktop & Mobile */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(11,42,91,0.04)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-[#E2E8F0] bg-white p-0.5 shrink-0 shadow-sm">
-              <Image
-                src="/logo-pcc.png"
-                alt="Logo UKM PCC"
-                width={40}
-                height={40}
-                className="w-full h-full object-contain"
-                priority
-              />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold tracking-tight text-primary">
-                Absenta PCC
-              </h1>
-              <p className="text-[11px] text-slate-muted font-normal">
-                Polytechnic Computer Club • Polines
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-primary border border-accent/40">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
-              {periode?.nama || "Periode Aktif"}
-            </span>
-            <Link
-              href="/izin"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-muted hover:text-primary hover:bg-surface transition-colors"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              Izin
-            </Link>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-surface font-sans text-navy antialiased pb-20">
+      {/* Top Navbar Terpusat (Home, Izin, Statistik) */}
+      <StoNavbar periodeNama={periode?.nama} />
 
       {/* Main Responsive Grid Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Kolom Kiri: Profil & Quick Action (Desktop 4/12, Mobile Full) */}
+          {/* Kolom Kiri: Profil, Quick Actions & Statistik (Desktop 4/12, Mobile Full) */}
           <aside className="lg:col-span-4 space-y-5">
-            {/* Kartu Profil STO dengan Tempat Foto Resmi */}
-            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-5">
-              <div className="flex items-start justify-between gap-4">
-                {/* Tempat Foto STO (Photo Slot) */}
-                <div className="relative group">
-                  <div className="w-20 h-20 rounded-2xl border-2 border-[#CBD5E1] bg-surface shadow-sm overflow-hidden flex items-center justify-center relative">
-                    {sto.foto ? (
-                      <Image
-                        src={sto.foto}
-                        alt={`Foto ${sto.nama}`}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary to-secondary text-white font-bold text-xl tracking-wider select-none">
-                        <span>{inisialNama || "STO"}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Icon Indikator Foto */}
-                  <div
-                    title="Foto Pengurus STO"
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-secondary text-white flex items-center justify-center shadow-md border-2 border-white"
-                  >
-                    <Camera className="w-3 h-3" />
-                  </div>
+            {/* Kartu Profil STO */}
+            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-primary tracking-tight">
+                    {sto.nama}
+                  </h2>
+                  <p className="text-xs text-slate-muted mt-0.5 font-mono">
+                    {sto.nim}
+                  </p>
                 </div>
-
-                <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-accent/20 text-primary border border-accent/40 shrink-0">
-                  Pengurus Aktif
-                </span>
-              </div>
-
-              <div>
-                <h2 className="text-lg font-bold text-primary tracking-tight">
-                  {sto.nama}
-                </h2>
-                <p className="text-xs text-slate-muted mt-0.5">{sto.nim}</p>
               </div>
 
               <div className="pt-3.5 border-t border-[#E2E8F0] grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <p className="text-[11px] text-slate-muted">Divisi</p>
+                  <p className="text-[11px] text-slate-muted">
+                    Divisi / Departemen
+                  </p>
                   <p className="font-semibold text-navy mt-0.5 truncate">
                     {sto.divisi || "Pengurus Harian"}
                   </p>
@@ -238,9 +168,19 @@ export default async function StoHomePage() {
                   </p>
                 </div>
               </div>
+
+              <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+                <span className="text-[11px] text-slate-muted flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-secondary" />
+                  Periode
+                </span>
+                <span className="font-semibold text-primary font-mono text-[11px] py-0.5 rounded-lg">
+                  {periode?.nama || "Periode Aktif"}
+                </span>
+              </div>
             </div>
 
-            {/* Quick Action: Sudah presensi atau scan QR */}
+            {/* Quick Action 1: Scan QR Presensi */}
             {sudahPresensiSemuaBerlangsung ? (
               <div className="p-5 rounded-3xl bg-accent/15 border border-accent/40 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
@@ -291,41 +231,105 @@ export default async function StoHomePage() {
               </Link>
             )}
 
-            {/* Ringkasan Kehadiran */}
-            <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-3">
-              <h4 className="text-xs font-bold text-slate-muted uppercase tracking-wider">
-                Statistik Kehadiran
-              </h4>
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="p-3.5 rounded-2xl bg-accent/15 border border-accent/30">
-                  <div className="flex items-center gap-1.5 text-secondary text-xs mb-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-secondary" />
-                    <span className="font-bold">Tepat Waktu</span>
+            {/* Quick Action 2: Pengajuan Izin (Card Serupa di Bawah Presensi) */}
+            <Link
+              href="/izin"
+              className="group block p-5 rounded-3xl bg-white hover:bg-surface border border-[#E2E8F0] hover:border-secondary shadow-sm hover:shadow-md transition-all text-navy"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
+                    <FileText className="w-5 h-5" />
                   </div>
-                  <p className="text-xl font-bold text-primary">
-                    {hadirCount}
+                  <div>
+                    <h3 className="text-sm font-bold tracking-tight text-primary">
+                      Pengajuan Izin
+                    </h3>
+                    <p className="text-[11px] text-slate-muted mt-0.5">
+                      Ajukan izin tidak hadir atau sakit
+                    </p>
+                  </div>
+                </div>
+                <span className="w-7 h-7 rounded-full bg-surface border border-[#E2E8F0] flex items-center justify-center text-xs font-semibold text-slate-muted group-hover:text-secondary group-hover:translate-x-1 transition-all">
+                  →
+                </span>
+              </div>
+            </Link>
+
+            {/* Ringkasan Statistik Presensi (4 Kategori) */}
+            <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-muted uppercase tracking-wider">
+                  Statistik Kehadiran
+                </h4>
+              </div>
+
+              {/* 4 Kategori Grid */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                {/* 1. Tepat Waktu */}
+                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100">
+                  <div className="flex items-center gap-1 text-emerald-700 text-[11px] mb-0.5 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tepat Waktu</span>
+                  </div>
+                  <p className="text-xl font-black text-emerald-800">
+                    {statistik.tepatWaktu}
                   </p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-highlight/15 border border-highlight/30">
-                  <div className="flex items-center gap-1.5 text-[#B45309] text-xs mb-1">
-                    <Clock className="w-3.5 h-3.5 text-[#B45309]" />
-                    <span className="font-bold">Terlambat</span>
+
+                {/* 2. Terlambat */}
+                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-100">
+                  <div className="flex items-center gap-1 text-amber-700 text-[11px] mb-0.5 font-bold">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Terlambat</span>
                   </div>
-                  <p className="text-xl font-bold text-[#B45309]">
-                    {telatCount}
+                  <p className="text-xl font-black text-amber-800">
+                    {statistik.terlambat}
+                  </p>
+                </div>
+
+                {/* 3. Jumlah Izin */}
+                <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-100">
+                  <div className="flex items-center gap-1 text-blue-700 text-[11px] mb-0.5 font-bold">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Izin</span>
+                  </div>
+                  <p className="text-xl font-black text-blue-800">
+                    {statistik.izin}
+                  </p>
+                </div>
+
+                {/* 4. Tanpa Keterangan */}
+                <div className="p-3 rounded-2xl bg-rose-50/70 border border-rose-100">
+                  <div className="flex items-center gap-1 text-rose-700 text-[11px] mb-0.5 font-bold">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Tanpa Ket.</span>
+                  </div>
+                  <p className="text-xl font-black text-rose-800">
+                    {statistik.alpa}
                   </p>
                 </div>
               </div>
+
+              {/* Tautan ke Riwayat Sesi Berakhir */}
+              <Link
+                href="/statistik"
+                className="pt-2 border-t border-[#E2E8F0] flex items-center justify-start gap-2 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
+              >
+                <span>
+                  Lihat Data Sesi Selesai
+                </span>
+                <span>→</span>
+              </Link>
             </div>
           </aside>
 
           {/* Kolom Kanan: Daftar Agenda Kegiatan (Desktop 8/12, Mobile Full) */}
-          <section className="lg:col-span-8 space-y-5">
+          <section className="lg:col-span-8 space-y-6">
             {/* Banner Salam & Status Periode */}
             <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-4 h-4 text-highlight" />
                   <span className="text-xs font-semibold text-slate-muted">
                     Portal Kehadiran Pengurus
                   </span>
@@ -334,15 +338,19 @@ export default async function StoHomePage() {
                   Agenda Kepengurusan PCC
                 </h2>
                 <p className="text-xs text-slate-muted mt-1">
-                  Daftar agenda kegiatan yang disesuaikan dengan divisi dan kepanitiaan Anda.
+                  Daftar agenda kegiatan yang disesuaikan dengan divisi dan
+                  kepanitiaan Anda.
                 </p>
               </div>
 
               <div className="shrink-0 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
-                  <Shield className="w-3.5 h-3.5 text-secondary" />
-                  STO Terverifikasi
-                </span>
+                <Link
+                  href="/statistik"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-surface border border-[#E2E8F0] text-navy text-xs font-bold hover:border-secondary hover:text-secondary transition-colors"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Statistik & Riwayat
+                </Link>
               </div>
             </div>
 
@@ -352,6 +360,95 @@ export default async function StoHomePage() {
               sedangBerlangsung={sedangBerlangsung}
               selesai={selesai}
             />
+
+            {/* Bagian Riwayat Data Absensi yang Telah Berakhir */}
+            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-secondary" />
+                  <h3 className="text-sm font-bold text-primary">
+                    Data Absensi Sesi Selesai / Telah Berakhir
+                  </h3>
+                </div>
+                <Link
+                  href="/statistik"
+                  className="text-xs font-semibold text-secondary hover:underline flex items-center gap-1"
+                >
+                  Lihat Semua
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+
+              {statistik.riwayat.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-muted">
+                  Belum ada sesi presensi yang telah berakhir pada periode ini.
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {statistik.riwayat.slice(0, 3).map((item) => {
+                    const isTepatWaktu = item.statusKategori === "tepat_waktu";
+                    const isTerlambat =
+                      item.statusKategori === "terlambat_tanpa_izin" ||
+                      item.statusKategori === "terlambat_dengan_izin";
+                    const isIzin = item.statusKategori === "alpa_dengan_izin";
+                    const isAlpa = item.statusKategori === "alpa_tanpa_izin";
+
+                    return (
+                      <div
+                        key={item.sesiId}
+                        className="p-3.5 rounded-2xl border border-[#E2E8F0] bg-surface/40 hover:bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs transition-all"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-navy text-sm">
+                              {item.judulAgenda}
+                            </span>
+                            <span className="text-[10px] bg-secondary/10 text-secondary font-bold px-2 py-0.2 rounded-full">
+                              {item.namaProker}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-slate-muted text-[11px]">
+                            <span>{item.tanggalFormatted}</span>
+                            <span>•</span>
+                            <span>{item.jamLabel}</span>
+                            {item.lokasiNama && (
+                              <>
+                                <span>•</span>
+                                <span>{item.lokasiNama}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                          {isTepatWaktu && (
+                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Hadir (+2)
+                            </span>
+                          )}
+                          {isTerlambat && (
+                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-amber-50 text-amber-700 border border-amber-200">
+                              Terlambat (
+                              {item.poin > 0 ? `+${item.poin}` : item.poin})
+                            </span>
+                          )}
+                          {isIzin && (
+                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-blue-50 text-blue-700 border border-blue-200">
+                              {item.statusLabel} (0)
+                            </span>
+                          )}
+                          {isAlpa && (
+                            <span className="px-2.5 py-1 rounded-full font-bold text-[11px] bg-rose-50 text-rose-700 border border-rose-200">
+                              Alpa (-2)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </section>
         </div>
       </main>

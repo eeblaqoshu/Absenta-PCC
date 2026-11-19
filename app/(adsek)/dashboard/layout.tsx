@@ -40,7 +40,7 @@ export default async function DashboardLayout({
                 </div>
                 <div>
                   <h1 className="text-sm font-bold tracking-tight text-primary leading-tight">
-                    Absenta PCC
+                    Absenta
                   </h1>
                   <p className="text-[10px] text-secondary uppercase tracking-wider font-semibold">
                     {adsek.role.replace("_", " ")}

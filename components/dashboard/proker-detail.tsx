@@ -4,8 +4,12 @@
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import {
   tambahPanitiaAction,
+  tambahBanyakPanitiaAction,
+  imporCsvPanitiaAction,
   ubahPanitiaAction,
   hapusPanitiaAction,
+  type BarisPanitiaInput,
+  type CsvBarisPanitia,
 } from "@/lib/actions/proker";
 import {
   buatAgendaAction,
@@ -58,6 +62,11 @@ import {
   Edit2,
   QrCode,
   Pencil,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  Sparkles,
+  PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -67,70 +76,126 @@ export const OPSI_PERAN_PANITIA = [
     label: "Ketua Pelaksana",
     peran: PeranPanitia.ketua,
     kategori: "Pimpinan Inti (PI)",
-    divisi: "Pimpinan Inti",
   },
   {
     key: "wakil_ketua_pelaksana",
     label: "Wakil Ketua Pelaksana",
     peran: PeranPanitia.ketua,
     kategori: "Pimpinan Inti (PI)",
-    divisi: "Pimpinan Inti",
   },
   {
     key: "sekretaris_inti",
     label: "Sekretaris Inti",
     peran: PeranPanitia.sekretaris,
     kategori: "Pimpinan Inti (PI)",
-    divisi: "Pimpinan Inti",
   },
   {
     key: "sekretaris_pelaksana",
     label: "Sekretaris Pelaksana",
     peran: PeranPanitia.sekretaris,
     kategori: "Pimpinan Inti (PI)",
-    divisi: "Pimpinan Inti",
   },
   {
     key: "bendahara_inti",
     label: "Bendahara Inti",
     peran: PeranPanitia.bendahara,
     kategori: "Pimpinan Inti (PI)",
-    divisi: "Pimpinan Inti",
   },
   {
     key: "bendahara_pelaksana",
     label: "Bendahara Pelaksana",
     peran: PeranPanitia.bendahara,
     kategori: "Pimpinan Inti (PI)",
-    divisi: "Pimpinan Inti",
+  },
+  {
+    key: "litbang_pengawas",
+    label: "Litbang Pengawas",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
   },
   {
     key: "pj_sie_acara",
     label: "Penanggung Jawab Sie Acara",
     peran: PeranPanitia.pj_divisi,
-    kategori: "Penanggung Jawab (PJ)",
-    divisi: "Sie Acara",
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
   },
   {
     key: "anggota_sie_acara",
     label: "Anggota Sie Acara",
     peran: PeranPanitia.anggota,
-    kategori: "Anggota",
-    divisi: "Sie Acara",
+    kategori: "Anggota Panitia",
   },
   {
-    key: "pj_dekdok",
-    label: "Penanggung Jawab Dekdok",
+    key: "pj_sie_dekdok",
+    label: "Penanggung Jawab Sie Dekdok",
     peran: PeranPanitia.pj_divisi,
-    kategori: "Penanggung Jawab (PJ)",
-    divisi: "Sie Dekdok",
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
   },
   {
     key: "anggota_sie_dekdok",
     label: "Anggota Sie Dekdok",
     peran: PeranPanitia.anggota,
-    kategori: "Anggota",
-    divisi: "Sie Dekdok",
+    kategori: "Anggota Panitia",
+  },
+  {
+    key: "pj_sie_humas",
+    label: "Penanggung Jawab Sie Humas",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
+  },
+  {
+    key: "anggota_sie_humas",
+    label: "Anggota Sie Humas",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota Panitia",
+  },
+  {
+    key: "pj_sie_kreatif",
+    label: "Penanggung Jawab Sie Kreatif",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
+  },
+  {
+    key: "anggota_sie_kreatif",
+    label: "Anggota Sie Kreatif",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota Panitia",
+  },
+  {
+    key: "pj_sie_perkap",
+    label: "Penanggung Jawab Sie Perkap",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
+  },
+  {
+    key: "anggota_sie_perkap",
+    label: "Anggota Sie Perkap",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota Panitia",
+  },
+  {
+    key: "pj_sie_konsumsi",
+    label: "Penanggung Jawab Sie Konsumsi",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
+  },
+  {
+    key: "anggota_sie_konsumsi",
+    label: "Anggota Sie Konsumsi",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota Panitia",
+  },
+  {
+    key: "pj_sie_dekdokre",
+    label: "Penanggung Jawab Sie Dekdokre",
+    peran: PeranPanitia.pj_divisi,
+    kategori: "Penanggung Jawab & Pengawas (PJ)",
+  },
+  {
+    key: "anggota_sie_dekdokre",
+    label: "Anggota Sie Dekdokre",
+    peran: PeranPanitia.anggota,
+    kategori: "Anggota Panitia",
   },
 ] as const;
 
@@ -176,6 +241,8 @@ interface StoOption {
   id: number;
   nama: string;
   nim: string;
+  emailGoogle?: string;
+  jabatan?: string | null;
   divisi: string | null;
 }
 
@@ -293,15 +360,39 @@ export function ProkerDetail({
   } | null>(null);
 
   // ─────────────────────────────────────────────
-  // MODAL PANITIA STATE
+  // MODAL KELOLA PANITIA (STRUKTUR BANYAK & IMPOR CSV)
   // ─────────────────────────────────────────────
   const [modalPanitiaBuka, setModalPanitiaBuka] = useState(false);
+  const [tabModalPanitia, setTabModalPanitia] = useState<"struktur" | "csv">("struktur");
+
+  interface BarisFormPanitia {
+    tempId: string;
+    stoId: string;
+    roleKey: string;
+    divisiPanitia: string;
+  }
+  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>([]);
+
+  // CSV Import state
+  const [csvFileName, setCsvFileName] = useState("");
+  const [csvPreview, setCsvPreview] = useState<
+    Array<{
+      nim: string;
+      stoNama?: string;
+      peran: string;
+      divisi: string;
+      valid: boolean;
+      pesanError?: string;
+    }>
+  >([]);
+  const [csvRawList, setCsvRawList] = useState<CsvBarisPanitia[]>([]);
+
+  // Modal Edit Panitia Tunggal (via tombol edit baris tabel)
   const [modalEditPanitiaBuka, setModalEditPanitiaBuka] = useState(false);
   const [panitiaDiedit, setPanitiaDiedit] = useState<PanitiaItem | null>(null);
-
-  const [selectedRoleKey, setSelectedRoleKey] =
+  const [selectedRoleKeyEdit, setSelectedRoleKeyEdit] =
     useState<string>("ketua_pelaksana");
-  const [pilihanStoId, setPilihanStoId] = useState<string>("");
+  const [divisiPanitiaEdit, setDivisiPanitiaEdit] = useState<string>("");
 
   // ─────────────────────────────────────────────
   // MODAL AGENDA STATE
@@ -337,46 +428,340 @@ export function ProkerDetail({
   const panitiaStoIdSet = new Set(proker.kepanitiaan.map((k) => k.sto.id));
   const stoBelumMasuk = availableStos.filter((s) => !panitiaStoIdSet.has(s.id));
 
-  // Handler Panitia
-  const handleSubmitTambahPanitia = (e: React.FormEvent) => {
+  // Daftar opsi divisi unik dari data pengurus STO
+  const daftarDivisiSto = useMemo(() => {
+    const set = new Set<string>();
+    availableStos.forEach((s) => {
+      if (s.divisi) set.add(s.divisi);
+    });
+    if (set.size === 0) {
+      set.add("Divisi Workshop");
+      set.add("Departemen Software");
+    }
+    return Array.from(set).sort();
+  }, [availableStos]);
+
+  // Handler Buka Modal Panitia (Tab Struktur atau CSV)
+  const bukaModalKelolaPanitia = (tab: "struktur" | "csv" = "struktur") => {
+    setTabModalPanitia(tab);
+    setPesan(null);
+    if (tab === "struktur" && barisStruktur.length === 0) {
+      const usedIds = new Set(proker.kepanitiaan.map((k) => k.sto.id));
+      const firstAvailable = availableStos.find((s) => !usedIds.has(s.id));
+      setBarisStruktur([
+        {
+          tempId: Math.random().toString(36).substring(2, 9),
+          stoId: firstAvailable ? String(firstAvailable.id) : "",
+          roleKey: "ketua_pelaksana",
+          divisiPanitia: firstAvailable?.divisi || "Pengurus Inti",
+        },
+      ]);
+    }
+    setModalPanitiaBuka(true);
+  };
+
+  // Helper Baris Form Panitia
+  const tambahBaris = (preset?: Partial<BarisFormPanitia>) => {
+    const usedIds = new Set([
+      ...panitiaStoIdSet,
+      ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
+    ]);
+    const firstAvailable = availableStos.find((s) => !usedIds.has(s.id));
+    const roleKey = preset?.roleKey || OPSI_PERAN_PANITIA[0].key;
+
+    setBarisStruktur((prev) => [
+      ...prev,
+      {
+        tempId: Math.random().toString(36).substring(2, 9),
+        stoId: preset?.stoId || (firstAvailable ? String(firstAvailable.id) : ""),
+        roleKey,
+        divisiPanitia:
+          preset?.divisiPanitia ??
+          (firstAvailable?.divisi || "Umum"),
+      },
+    ]);
+  };
+
+  const terapkanPresetInti = () => {
+    const usedIds = new Set([
+      ...panitiaStoIdSet,
+      ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
+    ]);
+    const available = availableStos.filter((s) => !usedIds.has(s.id));
+
+    const presets = [
+      { roleKey: "ketua_pelaksana" },
+      { roleKey: "sekretaris_pelaksana" },
+      { roleKey: "bendahara_pelaksana" },
+    ];
+
+    const newRows: BarisFormPanitia[] = presets.map((p, idx) => {
+      const sto = available[idx];
+      return {
+        tempId: Math.random().toString(36).substring(2, 9),
+        stoId: sto ? String(sto.id) : "",
+        roleKey: p.roleKey,
+        divisiPanitia: sto?.divisi || "Umum",
+      };
+    });
+
+    setBarisStruktur((prev) => [...prev, ...newRows]);
+  };
+
+  const ubahBaris = (tempId: string, patch: Partial<BarisFormPanitia>) => {
+    setBarisStruktur((prev) =>
+      prev.map((item) => {
+        if (item.tempId !== tempId) return item;
+        const updated = { ...item, ...patch };
+
+        // Saat STO dipilih, otomatis isi divisiPanitia dengan divisi STO pengurus tersebut
+        if (patch.stoId) {
+          const stoDipilih = availableStos.find(
+            (s) => String(s.id) === String(patch.stoId),
+          );
+          if (stoDipilih) {
+            updated.divisiPanitia = stoDipilih.divisi || "Umum";
+          }
+        }
+
+        return updated;
+      }),
+    );
+  };
+
+  const hapusBaris = (tempId: string) => {
+    setBarisStruktur((prev) => prev.filter((item) => item.tempId !== tempId));
+  };
+
+  const handleSubmitBanyakPanitia = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pilihanStoId) return;
+    if (barisStruktur.length === 0) return;
     setPesan(null);
 
-    const roleDef =
-      OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKey) ||
-      OPSI_PERAN_PANITIA[0];
+    const invalidRow = barisStruktur.find((b) => !b.stoId);
+    if (invalidRow) {
+      setPesan({
+        tipe: "error",
+        teks: "Harap pilih pengurus STO pada setiap baris panitia.",
+      });
+      return;
+    }
 
-    const formData = new FormData();
-    formData.append("prokerId", proker.id.toString());
-    formData.append("stoId", pilihanStoId);
-    formData.append("peran", roleDef.peran);
-    formData.append("divisiPanitia", roleDef.label);
+    const stoIds = barisStruktur.map((b) => Number(b.stoId));
+    if (new Set(stoIds).size !== stoIds.length) {
+      setPesan({
+        tipe: "error",
+        teks: "Terdapat duplikasi pengurus STO pada form. Pastikan tiap pengurus hanya dipilih satu kali.",
+      });
+      return;
+    }
+
+    const payload: BarisPanitiaInput[] = barisStruktur.map((b) => {
+      const roleDef =
+        OPSI_PERAN_PANITIA.find((r) => r.key === b.roleKey) ||
+        OPSI_PERAN_PANITIA[0];
+      return {
+        stoId: Number(b.stoId),
+        peran: roleDef.peran,
+        divisiPanitia: roleDef.label,
+      };
+    });
 
     startTransition(async () => {
-      const res = await tambahPanitiaAction(formData);
+      const res = await tambahBanyakPanitiaAction(proker.id, payload);
       if (res.error) {
         setPesan({ tipe: "error", teks: res.error.pesan });
       } else {
-        setPesan({ tipe: "sukses", teks: res.pesan });
+        setPesan({
+          tipe: "sukses",
+          teks:
+            res.pesan ||
+            `${res.totalBerhasil} panitia berhasil ditambahkan ke susunan kepanitiaan.`,
+        });
         setModalPanitiaBuka(false);
-        setPilihanStoId("");
-        setSelectedRoleKey("ketua_pelaksana");
+        setBarisStruktur([]);
       }
     });
   };
 
+  // Unduh Template CSV Kepanitiaan
+  const unduhTemplateCsv = () => {
+    const s1 = availableStos[0];
+    const s2 = availableStos[1];
+    const s3 = availableStos[2];
+    const s4 = availableStos[3];
+
+    const csvContent = [
+      "NIM,Peran,Divisi_Panitia",
+      `${s1?.nim || "223141001"},ketua,${s1?.divisi || "Pengurus Inti"}`,
+      `${s2?.nim || "223141002"},sekretaris,${s2?.divisi || "Pengurus Inti"}`,
+      `${s3?.nim || "223141003"},bendahara,${s3?.divisi || "Pengurus Inti"}`,
+      `${s4?.nim || "223141004"},pj_divisi,${s4?.divisi || "Divisi Workshop"}`,
+    ].join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const safeName = proker.nama.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    link.setAttribute("download", `template_panitia_${safeName}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Handler Unggah & Parse File CSV
+  const handleCsvChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvFileName(file.name);
+    setPesan(null);
+
+    try {
+      const text = await file.text();
+      const lines = text
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      if (lines.length <= 1) {
+        setPesan({
+          tipe: "error",
+          teks: "File CSV kosong atau hanya berisi baris header.",
+        });
+        setCsvPreview([]);
+        setCsvRawList([]);
+        return;
+      }
+
+      const headerLine = lines[0].toLowerCase();
+      const delimiter = headerLine.includes(";") ? ";" : ",";
+      const headers = headerLine
+        .split(delimiter)
+        .map((h) => h.trim().replace(/^["']|["']$/g, ""));
+
+      const nimIdx = headers.findIndex((h) => h.includes("nim"));
+      const peranIdx = headers.findIndex(
+        (h) => h.includes("peran") || h.includes("role") || h.includes("posisi"),
+      );
+      const divisiIdx = headers.findIndex(
+        (h) =>
+          h.includes("divisi") ||
+          h.includes("sie") ||
+          h.includes("bidang") ||
+          h.includes("seksi") ||
+          h.includes("jabatan"),
+      );
+
+      const effNim = nimIdx >= 0 ? nimIdx : 0;
+      const effPeran = peranIdx >= 0 ? peranIdx : 1;
+      const effDivisi = divisiIdx >= 0 ? divisiIdx : 2;
+
+      const nimMap = new Map(availableStos.map((s) => [s.nim.trim(), s]));
+      const existingPanitiaIds = new Set(proker.kepanitiaan.map((k) => k.sto.id));
+
+      const parsed: typeof csvPreview = [];
+      const raw: CsvBarisPanitia[] = [];
+      const seenNims = new Set<string>();
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i];
+        const cols = row
+          .split(delimiter)
+          .map((c) => c.trim().replace(/^["']|["']$/g, ""));
+        const nim = cols[effNim] || "";
+        const peran = cols[effPeran] || "";
+        const divisi = cols[effDivisi] || "";
+
+        if (!nim) continue;
+
+        const matchedSto = nimMap.get(nim);
+        let valid = true;
+        let pesanError = "";
+
+        if (!matchedSto) {
+          valid = false;
+          pesanError = "NIM tidak terdaftar di periode ini";
+        } else if (existingPanitiaIds.has(matchedSto.id)) {
+          valid = false;
+          pesanError = `${matchedSto.nama} sudah terdaftar`;
+        } else if (seenNims.has(nim)) {
+          valid = false;
+          pesanError = "Duplikasi NIM di dalam file";
+        }
+
+        seenNims.add(nim);
+
+        const effDivisiVal = divisi || matchedSto?.divisi || "Divisi Workshop";
+
+        parsed.push({
+          nim,
+          stoNama: matchedSto?.nama,
+          peran: peran || "anggota",
+          divisi: effDivisiVal,
+          valid,
+          pesanError,
+        });
+
+        raw.push({
+          nim,
+          peran,
+          divisiPanitia: effDivisiVal,
+        });
+      }
+
+      setCsvPreview(parsed);
+      setCsvRawList(raw);
+    } catch {
+      setPesan({
+        tipe: "error",
+        teks: "Gagal membaca file CSV. Pastikan format file teks valid.",
+      });
+    }
+  };
+
+  const handleProsesImporCsv = () => {
+    if (csvRawList.length === 0) return;
+    const validCount = csvPreview.filter((p) => p.valid).length;
+    if (validCount === 0) {
+      setPesan({
+        tipe: "error",
+        teks: "Tidak ada baris panitia valid dalam file CSV untuk diimpor.",
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      const res = await imporCsvPanitiaAction(proker.id, csvRawList);
+      if (res.error) {
+        setPesan({ tipe: "error", teks: res.error.pesan });
+      } else {
+        setPesan({
+          tipe: "sukses",
+          teks:
+            res.pesan ||
+            `${res.totalBerhasil} panitia berhasil diimpor dari file CSV.`,
+        });
+        setModalPanitiaBuka(false);
+        setCsvFileName("");
+        setCsvPreview([]);
+        setCsvRawList([]);
+      }
+    });
+  };
+
+  // Handler Edit Panitia Tunggal
   const handleOpenEditPanitia = (item: PanitiaItem) => {
     setPanitiaDiedit(item);
-    const matched = OPSI_PERAN_PANITIA.find(
-      (o) => o.label.toLowerCase() === (item.divisiPanitia || "").toLowerCase(),
+    const byLabelOrPeran =
+      OPSI_PERAN_PANITIA.find(
+        (o) => o.label.toLowerCase() === item.divisiPanitia?.toLowerCase(),
+      ) || OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
+    setSelectedRoleKeyEdit(
+      byLabelOrPeran ? byLabelOrPeran.key : OPSI_PERAN_PANITIA[0].key,
     );
-    if (matched) {
-      setSelectedRoleKey(matched.key);
-    } else {
-      const byPeran = OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
-      setSelectedRoleKey(byPeran ? byPeran.key : OPSI_PERAN_PANITIA[0].key);
-    }
+    setDivisiPanitiaEdit(item.sto.divisi || "Umum");
     setModalEditPanitiaBuka(true);
   };
 
@@ -386,7 +771,7 @@ export function ProkerDetail({
     setPesan(null);
 
     const roleDef =
-      OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKey) ||
+      OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKeyEdit) ||
       OPSI_PERAN_PANITIA[0];
 
     const formData = new FormData();
@@ -556,17 +941,25 @@ export function ProkerDetail({
 
   // Label Helper
   const getPeranBadge = (peran: PeranPanitia, roleName?: string | null) => {
+    const isNamaDivisi =
+      roleName &&
+      (roleName.toLowerCase().startsWith("divisi") ||
+        roleName.toLowerCase().startsWith("departemen") ||
+        roleName.toLowerCase().includes("workshop") ||
+        roleName.toLowerCase().includes("software"));
+
     const label =
-      roleName ||
-      (peran === PeranPanitia.ketua
-        ? "Ketua Pelaksana"
-        : peran === PeranPanitia.sekretaris
-          ? "Sekretaris"
-          : peran === PeranPanitia.bendahara
-            ? "Bendahara"
-            : peran === PeranPanitia.pj_divisi
-              ? "PJ Divisi"
-              : "Anggota");
+      roleName && !isNamaDivisi
+        ? roleName
+        : peran === PeranPanitia.ketua
+          ? "Ketua Pelaksana"
+          : peran === PeranPanitia.sekretaris
+            ? "Sekretaris Pelaksana"
+            : peran === PeranPanitia.bendahara
+              ? "Bendahara Pelaksana"
+              : peran === PeranPanitia.pj_divisi
+                ? "PJ Divisi"
+                : "Anggota";
     const l = label.toLowerCase();
     if (l.includes("ketua")) {
       return { label, bg: "bg-primary text-white border-primary shadow-xs" };
@@ -583,7 +976,7 @@ export function ProkerDetail({
         bg: "bg-highlight/20 text-[#B45309] border-highlight/40",
       };
     }
-    if (l.includes("penanggung jawab") || l.includes("pj")) {
+    if (l.includes("penanggung jawab") || l.includes("pj") || l.includes("koordinator")) {
       return { label, bg: "bg-accent/20 text-primary border-accent/40" };
     }
     return { label, bg: "bg-surface text-slate-muted border-[#CBD5E1]" };
@@ -735,18 +1128,27 @@ export function ProkerDetail({
         {!isReadonly && (
           <div>
             {tabAktif === "panitia" ? (
-              <button
-                onClick={() => {
-                  setPilihanStoId("");
-                  setSelectedRoleKey(OPSI_PERAN_PANITIA[0].key);
-                  setModalPanitiaBuka(true);
-                }}
-                disabled={stoBelumMasuk.length === 0}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-secondary hover:bg-primary disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Tambah Panitia
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => bukaModalKelolaPanitia("csv")}
+                  disabled={stoBelumMasuk.length === 0}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-surface text-secondary hover:bg-secondary/10 disabled:opacity-50 text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                  title="Impor susunan kepanitiaan melalui file CSV"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Impor CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => bukaModalKelolaPanitia("struktur")}
+                  disabled={stoBelumMasuk.length === 0}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-secondary hover:bg-primary disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Susun Panitia
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => {
@@ -790,8 +1192,7 @@ export function ProkerDetail({
                     <tr>
                       <th className="px-6 py-3.5">Nama & NIM Pengurus</th>
                       <th className="px-6 py-3.5">Peran Kepanitiaan</th>
-                      <th className="px-6 py-3.5">Divisi Panitia</th>
-                      <th className="px-6 py-3.5">Asal Divisi STO</th>
+                      <th className="px-6 py-3.5">Divisi / Jabatan Pengurus</th>
                       {!isReadonly && (
                         <th className="px-6 py-3.5 text-right">Aksi</th>
                       )}
@@ -803,14 +1204,7 @@ export function ProkerDetail({
                         item.peran,
                         item.divisiPanitia,
                       );
-                      const roleMatch = OPSI_PERAN_PANITIA.find(
-                        (o) =>
-                          o.label.toLowerCase() ===
-                          (item.divisiPanitia || "").toLowerCase(),
-                      );
-                      const divisiLabel = roleMatch
-                        ? roleMatch.divisi
-                        : item.divisiPanitia || "-";
+                      const divisiLabel = item.sto.divisi || "Umum";
 
                       return (
                         <tr
@@ -841,9 +1235,6 @@ export function ProkerDetail({
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap font-medium text-navy">
                             {divisiLabel}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-slate-muted">
-                            {item.sto.divisi || "Umum"}
                           </td>
                           {!isReadonly && (
                             <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -1152,105 +1543,382 @@ export function ProkerDetail({
       )}
 
       {/* ─────────────────────────────────────────────
-          MODAL TAMBAH PANITIA
+          MODAL KELOLA PANITIA (BATCH STRUKTUR & IMPOR CSV)
       ───────────────────────────────────────────── */}
       {modalPanitiaBuka && (
         <Modal
           onClose={() => setModalPanitiaBuka(false)}
-          ariaLabel="Tambah panitia ke proker"
-          size="md"
+          ariaLabel="Kelola susunan kepanitiaan proker"
+          size="3xl"
         >
-          <form
-            onSubmit={handleSubmitTambahPanitia}
-            className="flex min-h-0 flex-1 flex-col"
-          >
+          <div className="flex min-h-0 flex-1 flex-col">
             <ModalHeader
-              title="Tambah Panitia ke Proker"
+              title="Kelola Susunan Kepanitiaan"
+              description={`Atur panitia untuk "${proker.nama}" sekaligus atau gunakan berkas CSV.`}
               icon={Users}
               onClose={() => setModalPanitiaBuka(false)}
             />
+
+            {/* Navigasi Tab dalam Modal */}
+            <div className="px-6 pt-2 pb-0 border-b border-[#E2E8F0] flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setTabModalPanitia("struktur")}
+                className={`flex items-center gap-2 pb-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                  tabModalPanitia === "struktur"
+                    ? "border-secondary text-secondary"
+                    : "border-transparent text-slate-muted hover:text-navy"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                Susun Struktur Langsung
+                {barisStruktur.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-secondary/15 text-secondary">
+                    {barisStruktur.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTabModalPanitia("csv")}
+                className={`flex items-center gap-2 pb-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                  tabModalPanitia === "csv"
+                    ? "border-secondary text-secondary"
+                    : "border-transparent text-slate-muted hover:text-navy"
+                }`}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                Impor dari File CSV
+                {csvPreview.length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-secondary/15 text-secondary">
+                    {csvPreview.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
             <ModalBody>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1">
-                    Peran / Posisi Panitia
-                  </label>
-                  <select
-                    value={selectedRoleKey}
-                    onChange={(e) => setSelectedRoleKey(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-                  >
-                    <optgroup label="Pimpinan Inti (PI)">
-                      {OPSI_PERAN_PANITIA.filter((o) =>
-                        o.kategori.includes("PI"),
-                      ).map((opsi) => (
-                        <option key={opsi.key} value={opsi.key}>
-                          {opsi.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Penanggung Jawab (PJ)">
-                      {OPSI_PERAN_PANITIA.filter((o) =>
-                        o.kategori.includes("PJ"),
-                      ).map((opsi) => (
-                        <option key={opsi.key} value={opsi.key}>
-                          {opsi.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Anggota">
-                      {OPSI_PERAN_PANITIA.filter(
-                        (o) => o.kategori === "Anggota",
-                      ).map((opsi) => (
-                        <option key={opsi.key} value={opsi.key}>
-                          {opsi.label}
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </div>
+              {tabModalPanitia === "struktur" ? (
+                <div className="space-y-4">
+                  {/* Top Toolbar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
+                    <div className="text-xs text-navy">
+                      <span className="font-semibold">Tambahkan panitia sekaligus</span> tanpa perlu membuka-tutup form berulang kali.
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={terapkanPresetInti}
+                        disabled={stoBelumMasuk.length < 3}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                        title="Tambahkan 3 baris: Ketua, Sekretaris, dan Bendahara Pelaksana"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Preset Pimpinan Inti
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => tambahBaris()}
+                        disabled={stoBelumMasuk.length <= barisStruktur.length}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Tambah Baris
+                      </button>
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1">
-                    Pilih Pengurus STO
-                  </label>
-                  <select
-                    required
-                    value={pilihanStoId}
-                    onChange={(e) => setPilihanStoId(e.target.value)}
-                    disabled={stoBelumMasuk.length === 0}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:bg-surface disabled:text-slate-muted"
-                  >
-                    <option value="">
-                      {stoBelumMasuk.length === 0
-                        ? "-- Semua pengurus STO telah terpilih --"
-                        : "-- Pilih Pengurus STO --"}
-                    </option>
-                    {stoBelumMasuk.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nama} ({s.nim}) - {s.divisi || "Umum"}
-                      </option>
-                    ))}
-                  </select>
-
-                  {stoBelumMasuk.length === 0 ? (
-                    <div className="mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-                      <span>
-                        Semua pengurus STO pada periode ini sudah terpilih dalam
-                        kepanitiaan proker ini.
-                      </span>
+                  {barisStruktur.length === 0 ? (
+                    <div className="p-8 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-surface/50">
+                      <Users className="w-8 h-8 text-slate-muted mx-auto mb-2" />
+                      <p className="text-xs font-semibold text-navy">
+                        Belum ada baris panitia yang ditambahkan
+                      </p>
+                      <p className="text-[11px] text-slate-muted mt-0.5 mb-3">
+                        Klik tombol di bawah untuk mulai menyusun kepanitiaan.
+                      </p>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => tambahBaris()}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-white text-xs font-semibold"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Tambah Baris Pertama
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-muted mt-1">
-                      Pengurus yang telah terpilih di salah satu peran tidak
-                      akan muncul dalam pilihan ({stoBelumMasuk.length} pengurus
-                      tersedia).
+                    <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                      {barisStruktur.map((baris, idx) => {
+                        const selectedInOtherRows = new Set(
+                          barisStruktur
+                            .filter((b) => b.tempId !== baris.tempId)
+                            .map((b) => Number(b.stoId))
+                            .filter(Boolean),
+                        );
+                        const isDuplikat =
+                          baris.stoId &&
+                          barisStruktur.filter((b) => b.stoId === baris.stoId).length > 1;
+
+                        return (
+                          <div
+                            key={baris.tempId}
+                            className={`p-3 rounded-2xl border transition-all ${
+                              isDuplikat
+                                ? "border-rose-300 bg-rose-50/40"
+                                : "border-[#E2E8F0] bg-white hover:border-secondary/40"
+                            }`}
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                              {/* Kolom STO */}
+                              <div className="md:col-span-5">
+                                <label className="block text-[10px] font-semibold text-slate-muted mb-1">
+                                  Pengurus STO #{idx + 1}
+                                </label>
+                                <select
+                                  value={baris.stoId}
+                                  onChange={(e) =>
+                                    ubahBaris(baris.tempId, { stoId: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
+                                >
+                                  <option value="">-- Pilih Pengurus STO --</option>
+                                  {availableStos
+                                    .filter((s) => {
+                                      const sudahDiProker = panitiaStoIdSet.has(s.id);
+                                      const sudahDiBarisLain = selectedInOtherRows.has(s.id);
+                                      const isRowIni = String(s.id) === String(baris.stoId);
+                                      return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
+                                    })
+                                    .map((s) => (
+                                      <option key={s.id} value={s.id}>
+                                        {s.nama}
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+
+                              {/* Kolom Peran */}
+                              <div className="md:col-span-4">
+                                <label className="block text-[10px] font-semibold text-slate-muted mb-1">
+                                  Peran Panitia
+                                </label>
+                                <select
+                                  value={baris.roleKey}
+                                  onChange={(e) =>
+                                    ubahBaris(baris.tempId, { roleKey: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
+                                >
+                                  <optgroup label="Pimpinan Inti (PI)">
+                                    {OPSI_PERAN_PANITIA.filter((o) =>
+                                      o.kategori.includes("PI"),
+                                    ).map((opsi) => (
+                                      <option key={opsi.key} value={opsi.key}>
+                                        {opsi.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                  <optgroup label="Penanggung Jawab (PJ) & Pengawas">
+                                    {OPSI_PERAN_PANITIA.filter((o) =>
+                                      o.kategori.includes("PJ"),
+                                    ).map((opsi) => (
+                                      <option key={opsi.key} value={opsi.key}>
+                                        {opsi.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                  <optgroup label="Anggota Panitia">
+                                    {OPSI_PERAN_PANITIA.filter((o) =>
+                                      o.kategori.includes("Anggota"),
+                                    ).map((opsi) => (
+                                      <option key={opsi.key} value={opsi.key}>
+                                        {opsi.label}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                </select>
+                              </div>
+
+                              {/* Kolom Divisi / Jabatan Pengurus */}
+                              <div className="md:col-span-2">
+                                <label className="block text-[10px] font-semibold text-slate-muted mb-1">
+                                  Divisi / Jabatan Pengurus
+                                </label>
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={baris.divisiPanitia}
+                                  placeholder="Divisi pengurus"
+                                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-slate-50 text-xs text-navy focus:outline-none cursor-default"
+                                />
+                              </div>
+
+                              {/* Tombol Hapus Baris */}
+                              <div className="md:col-span-1 flex items-end justify-center pt-3 md:pt-4">
+                                <button
+                                  type="button"
+                                  onClick={() => hapusBaris(baris.tempId)}
+                                  className="p-2 rounded-xl text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                  title="Hapus baris ini"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <datalist id="list-divisi-sto">
+                        {daftarDivisiSto.map((d) => (
+                          <option key={d} value={d} />
+                        ))}
+                      </datalist>
+                    </div>
+                  )}
+
+                  {/* Ringkasan status */}
+                  <div className="flex items-center justify-between text-[11px] text-slate-muted pt-1">
+                    <span>
+                      Total baris: <strong>{barisStruktur.length}</strong> orang • STO tersedia: <strong>{stoBelumMasuk.length}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => tambahBaris()}
+                      disabled={stoBelumMasuk.length <= barisStruktur.length}
+                      className="text-secondary font-semibold hover:underline inline-flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" /> Tambah baris lagi
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Tab CSV Import */
+                <div className="space-y-4">
+                  {/* Banner Unduh Template */}
+                  <div className="p-4 rounded-2xl bg-surface border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-bold text-navy flex items-center gap-1.5">
+                        <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                        Template File CSV Kepanitiaan
+                      </div>
+                      <p className="text-[11px] text-slate-muted">
+                        Format kolom: <code className="px-1.5 py-0.5 bg-white rounded border border-[#CBD5E1] text-[10px] font-mono text-navy">NIM,Peran,Divisi_Panitia</code> (contoh: 223141001, ketua, Divisi Workshop)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={unduhTemplateCsv}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-secondary/10 border border-secondary/30 text-secondary text-xs font-semibold shadow-sm transition-all shrink-0 cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Unduh Template (.CSV)
+                    </button>
+                  </div>
+
+                  {/* Upload Box */}
+                  <div className="p-5 rounded-2xl border-2 border-dashed border-[#CBD5E1] hover:border-secondary transition-colors text-center bg-white">
+                    <Upload className="w-8 h-8 text-secondary mx-auto mb-2" />
+                    <p className="text-xs font-bold text-navy mb-0.5">
+                      Pilih berkas CSV untuk diimpor
                     </p>
+                    <p className="text-[11px] text-slate-muted mb-3">
+                      Sistem akan mencocokkan NIM dengan pengurus STO periode aktif secara otomatis.
+                    </p>
+                    <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/20 cursor-pointer transition-all">
+                      <Upload className="w-3.5 h-3.5" />
+                      {csvFileName ? "Ganti Berkas CSV" : "Pilih Berkas CSV"}
+                      <input
+                        type="file"
+                        accept=".csv,text/csv"
+                        onChange={handleCsvChange}
+                        className="hidden"
+                      />
+                    </label>
+                    {csvFileName && (
+                      <div className="mt-2 text-xs font-medium text-emerald-700 bg-emerald-50 py-1 px-3 rounded-lg inline-block border border-emerald-200">
+                        📄 {csvFileName} ({csvPreview.length} baris terdeteksi)
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preview CSV */}
+                  {csvPreview.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-navy">
+                          Pratinjau Data Impor ({csvPreview.length} Baris)
+                        </span>
+                        <div className="flex items-center gap-2 text-[11px]">
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold">
+                            {csvPreview.filter((p) => p.valid).length} Valid
+                          </span>
+                          {csvPreview.filter((p) => !p.valid).length > 0 && (
+                            <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 font-semibold">
+                              {csvPreview.filter((p) => !p.valid).length} Bermasalah
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="border border-[#E2E8F0] rounded-xl overflow-hidden max-h-[220px] overflow-y-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-surface text-slate-muted font-semibold sticky top-0 border-b border-[#E2E8F0]">
+                            <tr>
+                              <th className="px-3 py-2">No</th>
+                              <th className="px-3 py-2">NIM</th>
+                              <th className="px-3 py-2">Nama STO</th>
+                              <th className="px-3 py-2">Peran & Divisi</th>
+                              <th className="px-3 py-2 text-right">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#E2E8F0]">
+                            {csvPreview.map((item, idx) => (
+                              <tr
+                                key={idx}
+                                className={item.valid ? "hover:bg-surface/50" : "bg-rose-50/50"}
+                              >
+                                <td className="px-3 py-2 font-mono text-slate-muted">
+                                  {idx + 1}
+                                </td>
+                                <td className="px-3 py-2 font-mono font-medium text-navy">
+                                  {item.nim}
+                                </td>
+                                <td className="px-3 py-2 font-semibold text-navy">
+                                  {item.stoNama || (
+                                    <span className="text-rose-600 italic">
+                                      Tidak Ditemukan
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-slate-muted">
+                                  <span className="font-medium text-navy">{item.peran}</span>
+                                  {item.divisi && ` • ${item.divisi}`}
+                                </td>
+                                <td className="px-3 py-2 text-right whitespace-nowrap">
+                                  {item.valid ? (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                      Siap Impor
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800 border border-rose-200" title={item.pesanError}>
+                                      {item.pesanError || "Tidak Valid"}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
+              )}
             </ModalBody>
+
             <ModalFooter>
               <button
                 type="button"
@@ -1259,18 +1927,34 @@ export function ProkerDetail({
               >
                 Batal
               </button>
-              <button
-                type="submit"
-                disabled={
-                  isPending || !pilihanStoId || stoBelumMasuk.length === 0
-                }
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-secondary/25 cursor-pointer"
-              >
-                {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                Simpan Panitia
-              </button>
+
+              {tabModalPanitia === "struktur" ? (
+                <button
+                  type="button"
+                  onClick={handleSubmitBanyakPanitia}
+                  disabled={isPending || barisStruktur.length === 0}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-secondary/25 cursor-pointer"
+                >
+                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Simpan Susunan Panitia ({barisStruktur.length})
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleProsesImporCsv}
+                  disabled={
+                    isPending ||
+                    csvRawList.length === 0 ||
+                    csvPreview.filter((p) => p.valid).length === 0
+                  }
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-secondary/25 cursor-pointer"
+                >
+                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Mulai Impor Panitia ({csvPreview.filter((p) => p.valid).length} Valid)
+                </button>
+              )}
             </ModalFooter>
-          </form>
+          </div>
         </Modal>
       )}
 
@@ -1296,8 +1980,8 @@ export function ProkerDetail({
                     Peran / Posisi Panitia Baru
                   </label>
                   <select
-                    value={selectedRoleKey}
-                    onChange={(e) => setSelectedRoleKey(e.target.value)}
+                    value={selectedRoleKeyEdit}
+                    onChange={(e) => setSelectedRoleKeyEdit(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
                   >
                     <optgroup label="Pimpinan Inti (PI)">
@@ -1309,7 +1993,7 @@ export function ProkerDetail({
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="Penanggung Jawab (PJ)">
+                    <optgroup label="Penanggung Jawab (PJ) & Pengawas">
                       {OPSI_PERAN_PANITIA.filter((o) =>
                         o.kategori.includes("PJ"),
                       ).map((opsi) => (
@@ -1318,9 +2002,9 @@ export function ProkerDetail({
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="Anggota">
-                      {OPSI_PERAN_PANITIA.filter(
-                        (o) => o.kategori === "Anggota",
+                    <optgroup label="Anggota Panitia">
+                      {OPSI_PERAN_PANITIA.filter((o) =>
+                        o.kategori.includes("Anggota"),
                       ).map((opsi) => (
                         <option key={opsi.key} value={opsi.key}>
                           {opsi.label}
@@ -1328,6 +2012,19 @@ export function ProkerDetail({
                       ))}
                     </optgroup>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Divisi / Jabatan Pengurus
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={divisiPanitiaEdit}
+                    placeholder="Divisi pengurus"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-slate-50 text-xs text-navy focus:outline-none cursor-default"
+                  />
                 </div>
 
                 <div>
