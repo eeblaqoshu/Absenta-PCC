@@ -45,7 +45,7 @@ interface Props {
   tabEfektif: StatusAgendaDihitung;
   kelompokAgenda: Record<StatusAgendaDihitung, AgendaWithLive[]>;
   agendaTerlihat: AgendaWithLive[];
-  now: Date;
+  now: Date | null;
   rekap: Record<number, RekapKehadiranSesi>;
   setTabStatus: (v: StatusAgendaDihitung) => void;
   onHapusAgenda: (id: number, judul: string) => void;
@@ -176,7 +176,7 @@ export function AgendaSection({
                         </div>
                       </div>
 
-                      {!adaTitik && (
+                      {!adaTitik && !sudahSelesai && (
                         <p className="text-[11px] text-amber-600 inline-flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
                           Titik presensi belum diatur — atur di tombol edit kegiatan sebelum membuat sesi.
@@ -185,7 +185,7 @@ export function AgendaSection({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 sm:self-start">
-                      {!isReadonly && (
+                      {!isReadonly && !sudahSelesai && (
                         <div className="flex items-center gap-1">
                           <Link
                             href={`/dashboard/proker/${proker.id}/agenda/${item.id}/edit`}

@@ -24,7 +24,7 @@ export interface BarisIzin {
   ditinjauAt: string | null;
   namaPeninjau: string | null;
   sto: { nama: string; nim: string; divisi: string | null };
-  sesi: { judul: string; namaProker: string; jadwal: string };
+  agenda: { judul: string; namaProker: string; jadwal: string };
 }
 
 const GAYA_STATUS: Record<StatusIzin, string> = {
@@ -78,7 +78,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
       judul: keputusan === "disetujui" ? "Setujui izin ini?" : "Tolak izin ini?",
       pesan:
         keputusan === "disetujui"
-          ? "Poin STO untuk sesi tersebut menjadi 0."
+          ? "Izin berlaku untuk seluruh sesi pada agenda tersebut dan poinnya menjadi 0."
           : "STO akan dihitung alpa bila tidak hadir.",
       icon: keputusan === "disetujui" ? "question" : "warning",
       tombolYa: keputusan === "disetujui" ? "Ya, Setujui" : "Ya, Tolak",
@@ -111,7 +111,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
           Peninjauan Izin
         </h1>
         <p className="mt-1 text-xs text-slate-muted">
-          Setujui izin STO per sesi presensi. Izin disetujui = poin sesi itu 0.
+          Setujui pengajuan STO untuk agenda; statusnya akan tercermin di semua sesi agenda tersebut.
         </p>
       </div>
 
@@ -179,7 +179,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
                     </span>
                   </h3>
                   <p className="mt-1 text-xs text-slate-muted">
-                    {item.sesi.judul} — {item.sesi.namaProker} • {item.sesi.jadwal}
+                    {item.agenda.judul} — {item.agenda.namaProker} • {item.agenda.jadwal}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -202,6 +202,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
                 <p className="text-[11px] text-slate-muted">
                   Diajukan{" "}
                   {new Date(item.createdAt).toLocaleString("id-ID", {
+                    timeZone: "Asia/Jakarta",
                     day: "numeric",
                     month: "short",
                     hour: "2-digit",

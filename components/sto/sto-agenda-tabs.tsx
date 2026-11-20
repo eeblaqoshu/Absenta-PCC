@@ -22,6 +22,11 @@ export interface AgendaItem {
   statusPresensi: "hadir" | "terlambat" | null;
   diLuarRadius: boolean;
   statusVerifikasi: "menunggu" | "diterima" | "ditolak" | null;
+  izin: {
+    jenis: "terlambat" | "sakit" | "izin" | "lainnya";
+    status: "menunggu" | "disetujui" | "ditolak";
+    alasan: string;
+  } | null;
 }
 
 export function StoAgendaTabs({
@@ -94,7 +99,7 @@ export function StoAgendaTabs({
                     <span className="text-xs font-semibold text-secondary">
                       {agenda.prokerNama}
                     </span>
-                    {/* {agenda.statusDihitung === "sedang_berlangsung" ? (
+                    {agenda.statusDihitung === "sedang_berlangsung" ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Sedang berlangsung
@@ -107,7 +112,21 @@ export function StoAgendaTabs({
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-highlight/15 text-[#8a6500]">
                         Belum mulai
                       </span>
-                    )} */}
+                    )}
+                    {agenda.izin && (
+                      <span
+                        title={agenda.izin.alasan}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          agenda.izin.status === "disetujui"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : agenda.izin.status === "menunggu"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-rose-50 text-rose-700"
+                        }`}
+                      >
+                        Izin {agenda.izin.status}
+                      </span>
+                    )}
                   </div>
 
                   <h4 className="text-base font-bold text-primary tracking-tight">

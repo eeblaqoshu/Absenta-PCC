@@ -10,6 +10,7 @@ import {
 import { ambilStatistikSto } from "@/lib/statistik-sto";
 import { StoNavbar } from "@/components/sto/sto-navbar";
 import { StoAgendaTabs, type AgendaItem } from "@/components/sto/sto-agenda-tabs";
+import { StoLocationPanel, type TitikAgendaSto } from "@/components/sto-location-panel";
 import {
   QrCode,
   CheckCircle2,
@@ -41,7 +42,11 @@ export default async function StoHomePage() {
     },
     include: {
       proker: { select: { nama: true } },
-      // Sesi yang sedang dibuka sekarang
+      izin: {
+        where: { stoId: sto.id },
+        select: { jenis: true, status: true, alasan: true },
+      },
+      // Sesi yang sedang dibuka sekarang (satu agenda boleh punya banyak sesi).
       sesi: {
         where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
         orderBy: { bukaAt: "asc" },
@@ -58,6 +63,17 @@ export default async function StoHomePage() {
       agendaAkses.push(ag);
     }
   }
+
+  const titikAgenda: TitikAgendaSto[] = agendaAkses
+    .filter((agenda) => agenda.lat !== null && agenda.lng !== null)
+    .map((agenda) => ({
+      id: agenda.id,
+      judul: agenda.judul,
+      lokasi: agenda.lokasiNama,
+      lat: Number(agenda.lat),
+      lng: Number(agenda.lng),
+      radiusM: agenda.radiusM ?? 500,
+    }));
 
   // 4. Hitung Status Real-Time dan Pisahkan ke 3 Kategori
   const now = new Date();
@@ -111,6 +127,13 @@ export default async function StoHomePage() {
       statusPresensi: presensiSesi?.status ?? null,
       diLuarRadius: presensiSesi?.diLuarRadius ?? false,
       statusVerifikasi: presensiSesi?.statusVerifikasi ?? null,
+      izin: ag.izin[0]
+        ? {
+            jenis: ag.izin[0].jenis,
+            status: ag.izin[0].status,
+            alasan: ag.izin[0].alasan,
+          }
+        : null,
     };
 
     if (statusDihitung === "sedang_berlangsung") {
@@ -326,6 +349,8 @@ export default async function StoHomePage() {
 
           {/* Kolom Kanan: Daftar Agenda Kegiatan (Desktop 8/12, Mobile Full) */}
           <section className="lg:col-span-8 space-y-6">
+        <StoLocationPanel titikAgenda={titikAgenda} />
+
             {/* Banner Salam & Status Periode */}
             <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
