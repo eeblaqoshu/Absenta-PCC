@@ -213,6 +213,7 @@ model Agenda {
   pembuat AkunAdsek      @relation(fields: [dibuatOleh], references: [id])
   lokasi  Lokasi?        @relation(fields: [lokasiId], references: [id])
   sesi    SesiPresensi[]
+  izin    Izin[]
 
   @@index([prokerId, tglPelaksanaan])
   @@index([lokasiId])
@@ -225,7 +226,7 @@ model Agenda {
 
 model Izin {
   id           Int        @id @default(autoincrement())
-  sesiId       Int        @map("sesi_id")
+  agendaId     Int        @map("agenda_id")
   stoId        Int        @map("sto_id")
   jenis        JenisIzin  @default(izin)
   alasan       String
@@ -234,12 +235,12 @@ model Izin {
   ditinjauAt   DateTime?  @map("ditinjau_at") @db.DateTime(6)
   createdAt    DateTime   @default(now()) @map("created_at") @db.DateTime(6)
 
-  // Izin diajukan per sesi presensi (satu agenda bisa punya beberapa sesi).
-  sesi     SesiPresensi @relation(fields: [sesiId], references: [id], onDelete: Cascade)
+  // Izin diajukan per agenda, meskipun sesi presensi belum dibuat atau dibuka.
+  agenda   Agenda       @relation(fields: [agendaId], references: [id])
   sto      Sto          @relation(fields: [stoId], references: [id])
   peninjau AkunAdsek?   @relation(fields: [ditinjauOleh], references: [id])
 
-  @@unique([sesiId, stoId])
+  @@unique([agendaId, stoId])
   @@index([stoId])
   @@index([status])
   @@map("izin")
@@ -281,7 +282,6 @@ model SesiPresensi {
   agenda   Agenda     @relation(fields: [agendaId], references: [id])
   pembuat  AkunAdsek  @relation(fields: [dibuatOleh], references: [id])
   presensi Presensi[]
-  izin     Izin[]
 
   // Satu agenda boleh punya banyak sesi presensi (mis. beberapa hari / sesi ulang).
   @@index([agendaId])

@@ -113,7 +113,8 @@ export async function ambilStatistikSto(
 
   const sesiIds = sesiSelesai.map((s) => s.id);
 
-  // 4. Ambil presensi & izin milik STO ini pada sesi-sesi tersebut
+  // 4. Ambil presensi per sesi dan izin per agenda milik STO ini
+  const agendaIds = [...new Set(sesiSelesai.map((s) => s.agendaId))];
   const [presensiList, izinList] = await Promise.all([
     prisma.presensi.findMany({
       where: {
@@ -130,11 +131,11 @@ export async function ambilStatistikSto(
     }),
     prisma.izin.findMany({
       where: {
-        sesiId: { in: sesiIds },
+        agendaId: { in: agendaIds },
         stoId,
       },
       select: {
-        sesiId: true,
+        agendaId: true,
         jenis: true,
         status: true,
         alasan: true,
@@ -143,7 +144,7 @@ export async function ambilStatistikSto(
   ]);
 
   const presensiMap = new Map(presensiList.map((p) => [p.sesiId, p]));
-  const izinMap = new Map(izinList.map((i) => [i.sesiId, i]));
+  const izinMap = new Map(izinList.map((i) => [i.agendaId, i]));
 
   let tepatWaktu = 0;
   let terlambat = 0;
@@ -167,7 +168,7 @@ export async function ambilStatistikSto(
     totalSesiWajib += 1;
 
     const pr = presensiMap.get(s.id) ?? null;
-    const iz = izinMap.get(s.id) ?? null;
+    const iz = izinMap.get(s.agendaId) ?? null;
 
     // Presensi yang ditolak adsek (misal di luar radius) dianggap tidak hadir
     const presensiSah = pr && pr.statusVerifikasi !== StatusVerifikasi.ditolak ? pr : null;

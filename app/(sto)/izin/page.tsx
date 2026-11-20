@@ -1,13 +1,14 @@
-// app/(sto)/izin/page.tsx
-// Halaman izin STO: daftar SESI presensi yang belum ditutup pada agenda yang menjadi hak STO.
-// Izin diajukan per sesi (satu agenda bisa punya beberapa sesi).
+// Halaman pengajuan izin STO per agenda; sesi tidak perlu dibuat atau dibuka.
 import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
-import { formatJamIndo, tanggalWib } from "@/lib/waktu";
-import { IzinSto, type SesiIzin } from "@/components/sto/izin-sto";
+import {
+  formatTanggalIndo,
+  hitungStatusAgenda,
+  jamDariWaktuAgenda,
+} from "@/lib/waktu";
+import { IzinSto, type AgendaIzin } from "@/components/sto/izin-sto";
 import { StoNavbar } from "@/components/sto/sto-navbar";
-import { FileText } from "lucide-react";
 
 export default async function IzinPage() {
   const sto = await requireSto();
@@ -16,52 +17,67 @@ export default async function IzinPage() {
     select: { nama: true },
   });
   const sekarang = new Date();
-
-  // Sesi yang masih bisa diizinkan: belum ditutup (tutup_at > sekarang).
   const agenda = await prisma.agenda.findMany({
-    where: {
-      proker: { periodeId: sto.periodeId },
-      sesi: { some: { tutupAt: { gt: sekarang } } },
-    },
-    include: {
-      proker: { select: { nama: true } },
-      sesi: {
-        where: { tutupAt: { gt: sekarang } },
-        select: { id: true, bukaAt: true, tutupAt: true },
-        orderBy: { bukaAt: "asc" },
-      },
-    },
+    where: { proker: { periodeId: sto.periodeId } },
+    include: { proker: { select: { nama: true } } },
     orderBy: [{ tglPelaksanaan: "asc" }, { urutan: "asc" }],
   });
 
-  const semuaSesiId = agenda.flatMap((a) => a.sesi.map((s) => s.id));
-  const izinMilikSaya =
-    semuaSesiId.length > 0
-      ? await prisma.izin.findMany({
-          where: { stoId: sto.id, sesiId: { in: semuaSesiId } },
-        })
-      : [];
-  const izinPerSesi = new Map(izinMilikSaya.map((i) => [i.sesiId, i]));
+  const agendaYangBisaDiikuti: Array<{
+    id: number;
+    judul: string;
+    prokerNama: string;
+    jadwal: string;
+    statusAgenda: AgendaIzin["statusAgenda"];
+  }> = [];
 
-  const daftar: SesiIzin[] = [];
   for (const item of agenda) {
+    const statusAgenda = hitungStatusAgenda(
+      item.tglPelaksanaan,
+      item.waktuPelaksanaan,
+      item.tglSelesai,
+      sekarang,
+    );
+    if (statusAgenda === "selesai") continue;
+
     const akses = await bolehAkses(sto.id, item.id);
     if (!akses.boleh) continue;
 
-    for (const sesi of item.sesi) {
-      const izin = izinPerSesi.get(sesi.id);
-      daftar.push({
-        sesiId: sesi.id,
-        judul: item.judul,
-        namaProker: item.proker.nama,
-        tanggal: tanggalWib(sesi.bukaAt),
-        jamLabel: `${formatJamIndo(sesi.bukaAt)}–${formatJamIndo(sesi.tutupAt)} WIB`,
-        izin: izin
-          ? { id: izin.id, jenis: izin.jenis, status: izin.status, alasan: izin.alasan }
-          : null,
-      });
-    }
+    const tanggal = item.tglSelesai
+      ? `${formatTanggalIndo(item.tglPelaksanaan)} – ${formatTanggalIndo(item.tglSelesai)}`
+      : formatTanggalIndo(item.tglPelaksanaan);
+    agendaYangBisaDiikuti.push({
+      id: item.id,
+      judul: item.judul,
+      prokerNama: item.proker.nama,
+      jadwal: `${tanggal} • ${jamDariWaktuAgenda(item.waktuPelaksanaan)} WIB`,
+      statusAgenda,
+    });
   }
+
+  const izinSaya = agendaYangBisaDiikuti.length
+    ? await prisma.izin.findMany({
+        where: {
+          stoId: sto.id,
+          agendaId: { in: agendaYangBisaDiikuti.map((item) => item.id) },
+        },
+      })
+    : [];
+  const izinPerAgenda = new Map(izinSaya.map((izin) => [izin.agendaId, izin]));
+
+  const daftar: AgendaIzin[] = agendaYangBisaDiikuti.map((item) => {
+    const izin = izinPerAgenda.get(item.id);
+    return {
+      agendaId: item.id,
+      judul: item.judul,
+      namaProker: item.prokerNama,
+      jadwal: item.jadwal,
+      statusAgenda: item.statusAgenda,
+      izin: izin
+        ? { id: izin.id, jenis: izin.jenis, status: izin.status, alasan: izin.alasan }
+        : null,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-navy">
@@ -69,22 +85,11 @@ export default async function IzinPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-slate-muted">
-              Pengajuan Perizinan STO
-            </span>
-          </div>
           <h1 className="inline-flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
             Izin Tidak Hadir
           </h1>
           <p className="mt-1.5 text-xs text-slate-muted leading-relaxed">
-            Ajukan izin per <strong className="font-semibold text-navy">sesi presensi</strong>. Izin
-            yang disetujui adsek membuat poin sesi itu menjadi 0 (tidak mengurangi poin) walau Anda
-            tidak hadir atau datang terlambat.
-          </p>
-          <p className="mt-1 text-xs text-slate-muted">
-            Hanya sesi yang <strong className="font-semibold text-navy">belum ditutup</strong> yang
-            tampil di sini; sesi yang sudah lewat tidak bisa diajukan izin.
+            Ajukan izin untuk agenda yang akan datang atau sedang berlangsung. Pengajuan dapat dikirim sebelum sesi presensi dibuat atau dibuka.
           </p>
         </div>
 

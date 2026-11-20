@@ -241,7 +241,7 @@ async function main() {
 
   // 9. Sesi presensi per agenda (boleh lebih dari satu per agenda).
   // Jam disimpan UTC: 15:00 WIB = 08:00Z.
-  const sesiAgenda1 = await prisma.sesiPresensi.create({
+  await prisma.sesiPresensi.create({
     data: {
       agendaId: agenda1.id,
       dibuatOleh: sekumUser.id,
@@ -251,7 +251,7 @@ async function main() {
     },
   });
 
-  const sesiAgenda2 = await prisma.sesiPresensi.create({
+  await prisma.sesiPresensi.create({
     data: {
       agendaId: agenda2.id,
       dibuatOleh: sekumUser.id,
@@ -284,10 +284,10 @@ async function main() {
 
   console.log("✅ 4 Sesi presensi dibuat (agenda hari H punya 2 sesi)");
 
-  // 10. Contoh izin: diajukan per sesi presensi.
+  // 10. Contoh izin: diajukan per agenda, sebelum atau sesudah sesi dibuat.
   await prisma.izin.create({
     data: {
-      sesiId: sesiAgenda1.id,
+      agendaId: agenda1.id,
       stoId: sto1.id,
       jenis: JenisIzin.sakit,
       alasan: "Demam tinggi, ada surat keterangan dokter.",
@@ -297,7 +297,7 @@ async function main() {
 
   await prisma.izin.create({
     data: {
-      sesiId: sesiAgenda2.id,
+      agendaId: agenda2.id,
       stoId: sto3.id,
       jenis: JenisIzin.izin,
       alasan: "Ada kelas praktikum wajib di kampus.",
@@ -307,7 +307,7 @@ async function main() {
     },
   });
 
-  console.log("✅ 2 Contoh izin per sesi dibuat");
+  console.log("✅ 2 Contoh izin per agenda dibuat");
   console.log("🎉 Seeding selesai dengan sukses!");
 }
 

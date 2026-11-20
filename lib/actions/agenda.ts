@@ -10,15 +10,22 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { StatusPeriode, JenisAgenda, TargetPeserta } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import { hitungStatusAgenda, tanggalWib } from "@/lib/waktu";
+
+function tanggalValid(nilai: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(nilai)) return false;
+  const date = new Date(`${nilai}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === nilai;
+}
 
 const AgendaInputSchema = z.object({
   prokerId: z.coerce.number(),
   jenis: z.nativeEnum(JenisAgenda),
   judul: z.string().min(3, "Judul agenda minimal 3 karakter"),
   urutan: z.coerce.number().default(1),
-  tglPelaksanaan: z.string().min(1, "Tanggal pelaksanaan wajib diisi"),
-  tglSelesai: z.string().nullable(),
-  waktuPelaksanaan: z.string().min(1, "Waktu pelaksanaan wajib diisi"),
+  tglPelaksanaan: z.string().refine(tanggalValid, "Tanggal pelaksanaan tidak valid"),
+  tglSelesai: z.string().nullable().refine((nilai) => nilai === null || tanggalValid(nilai), "Tanggal selesai tidak valid"),
+  waktuPelaksanaan: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Jam agenda tidak valid (format HH:mm)"),
   lokasiNama: z.string().nullable(),
   lokasiId: z.number().int().positive().nullable(),
   lat: z.number().min(-90, "Latitude minimal -90").max(90, "Latitude maksimal 90").nullable(),
@@ -202,7 +209,11 @@ export async function ubahAgendaAction(agendaId: number, formData: FormData) {
 
     const agenda = await prisma.agenda.findUnique({
       where: { id: agendaId },
-      include: { proker: { include: { periode: true } } },
+      include: {
+        proker: { include: { periode: true } },
+        sesi: { select: { bukaAt: true } },
+        izin: { select: { id: true } },
+      },
     });
 
     if (!agenda || agenda.proker.periode.status === StatusPeriode.selesai) {
@@ -210,6 +221,21 @@ export async function ubahAgendaAction(agendaId: number, formData: FormData) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat mengubah agenda pada periode yang sudah selesai",
+        },
+      };
+    }
+    if (
+      hitungStatusAgenda(
+        agenda.tglPelaksanaan,
+        agenda.waktuPelaksanaan,
+        agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
+      return {
+        error: {
+          kode: "AGENDA_SELESAI",
+          pesan: "Agenda selesai dan hanya dapat dilihat bersama daftar hadirnya",
         },
       };
     }
@@ -247,6 +273,29 @@ export async function ubahAgendaAction(agendaId: number, formData: FormData) {
     if (tglSelesaiDate && tglSelesaiDate < tglDate) {
       return {
         error: { kode: "VALIDASI_GAGAL", pesan: "Tanggal selesai tidak boleh sebelum tanggal mulai" },
+      };
+    }
+
+    const tanggalMulaiBaru = tglDate.toISOString().slice(0, 10);
+    const tanggalAkhirBaru = (tglSelesaiDate ?? tglDate).toISOString().slice(0, 10);
+    const adaSesiDiLuarRentang = agenda.sesi.some((sesi) => {
+      const tanggalSesi = tanggalWib(sesi.bukaAt);
+      return tanggalSesi < tanggalMulaiBaru || tanggalSesi > tanggalAkhirBaru;
+    });
+    if (adaSesiDiLuarRentang) {
+      return {
+        error: {
+          kode: "SESI_DI_LUAR_RENTANG_BARU",
+          pesan: "Rentang agenda tidak bisa diubah karena ada sesi presensi di luar tanggal baru",
+        },
+      };
+    }
+    if ((agenda.sesi.length > 0 || agenda.izin.length > 0) && targetPeserta !== agenda.targetPeserta) {
+      return {
+        error: {
+          kode: "TARGET_TIDAK_BISA_DIUBAH",
+          pesan: "Target peserta tidak bisa diubah setelah izin atau sesi dibuat agar riwayat tetap konsisten",
+        },
       };
     }
 
@@ -294,6 +343,7 @@ export async function hapusAgendaAction(agendaId: number) {
       include: {
         proker: { include: { periode: true } },
         sesi: { include: { _count: { select: { presensi: true } } } },
+        izin: { select: { id: true } },
       },
     });
 
@@ -302,6 +352,21 @@ export async function hapusAgendaAction(agendaId: number) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat menghapus agenda pada periode selesai",
+        },
+      };
+    }
+    if (
+      hitungStatusAgenda(
+        agenda.tglPelaksanaan,
+        agenda.waktuPelaksanaan,
+        agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
+      return {
+        error: {
+          kode: "AGENDA_SELESAI",
+          pesan: "Agenda selesai dan tidak dapat dihapus lagi",
         },
       };
     }
@@ -316,9 +381,17 @@ export async function hapusAgendaAction(agendaId: number) {
         },
       };
     }
+    if (agenda.izin.length > 0) {
+      return {
+        error: {
+          kode: "MEMILIKI_PENGAJUAN_IZIN",
+          pesan: "Agenda tidak dapat dihapus karena memiliki riwayat pengajuan izin",
+        },
+      };
+    }
 
     await prisma.$transaction(async (tx) => {
-      // Hapus sesi presensi kosong (izin ikut terhapus lewat onDelete Cascade).
+      // Hapus sesi kosong setelah memastikan tidak ada rekaman presensi atau izin.
       await tx.sesiPresensi.deleteMany({ where: { agendaId } });
       await tx.agenda.delete({ where: { id: agendaId } });
     });

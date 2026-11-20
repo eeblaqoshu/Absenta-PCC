@@ -145,7 +145,7 @@ export function SesiModal({
     if (!sesiAwal) return;
     const ya = await konfirmasiHapus({
       judul: "Hapus sesi ini?",
-      pesan: "Presensi pada sesi ini tidak bisa dikembalikan.",
+      pesan: "Semua data presensi pada sesi ini akan terhapus permanen. Sesi hanya bisa dihapus sebelum agenda selesai.",
       tombolHapus: "Ya, Hapus Sesi",
     });
     if (!ya) return;
@@ -235,8 +235,7 @@ export function SesiModal({
             </div>
           </div>
           <p className="text-[10px] text-slate-muted">
-            QR hanya tampil antara jam mulai dan jam maksimum kedatangan. Status hadir bila absen ≤
-            15 menit dari jam mulai; setelah itu terlambat.
+            QR hanya tampil antara jam mulai dan jam maksimum kedatangan. Status hadir bila absen ≤ 15 menit dari jam mulai; setelah itu terlambat.
           </p>
 
           {sesiAwal && (

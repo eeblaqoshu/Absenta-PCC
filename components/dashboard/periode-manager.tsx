@@ -273,12 +273,14 @@ export function PeriodeManager({
                 {/* Date range */}
                 <p className="text-xs text-slate-muted mb-4">
                   {new Date(item.tglMulai).toLocaleDateString("id-ID", {
+                    timeZone: "Asia/Jakarta",
                     day: "numeric",
                     month: "long",
                     year: "numeric",
                   })}{" "}
                   —{" "}
                   {new Date(item.tglSelesai).toLocaleDateString("id-ID", {
+                    timeZone: "Asia/Jakarta",
                     day: "numeric",
                     month: "long",
                     year: "numeric",
