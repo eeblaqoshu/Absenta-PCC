@@ -1,4 +1,5 @@
 // components/dashboard/proker-detail/panitia-csv-tab.tsx
+// Tab impor kepanitiaan massal via file CSV: Nama, Peran Kepanitiaan, Divisi/Departemen.
 "use client";
 
 import { useState } from "react";
@@ -32,7 +33,7 @@ export function PanitiaCsvTab({
   const [csvFileName, setCsvFileName] = useState("");
   const [csvPreview, setCsvPreview] = useState<
     Array<{
-      nim: string;
+      nama: string;
       stoNama?: string;
       peran: string;
       divisi: string;
@@ -49,11 +50,11 @@ export function PanitiaCsvTab({
     const s4 = availableStos[3];
 
     const csvContent = [
-      "NIM,Peran,Divisi_Panitia",
-      `${s1?.nim || "223141001"},ketua,${s1?.divisi || "Pengurus Inti"}`,
-      `${s2?.nim || "223141002"},sekretaris,${s2?.divisi || "Pengurus Inti"}`,
-      `${s3?.nim || "223141003"},bendahara,${s3?.divisi || "Pengurus Inti"}`,
-      `${s4?.nim || "223141004"},pj_divisi,${s4?.divisi || "Divisi Workshop"}`,
+      "Nama,Peran_Kepanitiaan,Divisi_Departemen",
+      `${s1?.nama || "Nama Pengurus 1"},Ketua Pelaksana,${s1?.divisi || "Pengurus Inti"}`,
+      `${s2?.nama || "Nama Pengurus 2"},Sekretaris Pelaksana,${s2?.divisi || "Pengurus Inti"}`,
+      `${s3?.nama || "Nama Pengurus 3"},Bendahara Pelaksana,${s3?.divisi || "Pengurus Inti"}`,
+      `${s4?.nama || "Nama Pengurus 4"},Penanggung Jawab Sie Acara,${s4?.divisi || "Sie Acara"}`,
     ].join("\r\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -97,57 +98,82 @@ export function PanitiaCsvTab({
         .split(delimiter)
         .map((h) => h.trim().replace(/^["']|["']$/g, ""));
 
-      const nimIdx = headers.findIndex((h) => h.includes("nim"));
+      // Deteksi indeks kolom: Nama, Peran Kepanitiaan, Divisi/Departemen
+      const namaIdx = headers.findIndex(
+        (h) =>
+          h.includes("nama") ||
+          h.includes("name") ||
+          h.includes("pengurus") ||
+          h.includes("anggota") ||
+          h.includes("nim")
+      );
       const peranIdx = headers.findIndex(
         (h) =>
-          h.includes("peran") || h.includes("role") || h.includes("posisi"),
+          h.includes("peran") ||
+          h.includes("role") ||
+          h.includes("posisi") ||
+          h.includes("kepanitiaan") ||
+          h.includes("jabatan")
       );
       const divisiIdx = headers.findIndex(
         (h) =>
           h.includes("divisi") ||
+          h.includes("departemen") ||
+          h.includes("dept") ||
           h.includes("sie") ||
           h.includes("bidang") ||
-          h.includes("seksi") ||
-          h.includes("jabatan"),
+          h.includes("seksi")
       );
 
-      const effNim = nimIdx >= 0 ? nimIdx : 0;
+      const effNama = namaIdx >= 0 ? namaIdx : 0;
       const effPeran = peranIdx >= 0 ? peranIdx : 1;
       const effDivisi = divisiIdx >= 0 ? divisiIdx : 2;
 
-      const nimMap = new Map(availableStos.map((s) => [s.nim.trim(), s]));
+      const normalize = (s: string) => s.toLowerCase().trim().replace(/\s+/g, " ");
+
+      const stoByNama = new Map(
+        availableStos.map((s) => [normalize(s.nama), s])
+      );
+      const stoByNim = new Map(
+        availableStos.map((s) => [s.nim.trim().toLowerCase(), s])
+      );
       const existingPanitiaIds = new Set(
-        proker.kepanitiaan.map((k) => k.sto.id),
+        proker.kepanitiaan.map((k) => k.sto.id)
       );
 
       const parsed: typeof csvPreview = [];
       const raw: CsvBarisPanitia[] = [];
-      const seenNims = new Set<string>();
+      const seenStoIds = new Set<number>();
 
       for (let i = 1; i < lines.length; i++) {
         const row = lines[i];
         const cols = row
           .split(delimiter)
           .map((c) => c.trim().replace(/^["']|["']$/g, ""));
-        const nim = cols[effNim] || "";
+        const namaInput = cols[effNama] || "";
         const peran = cols[effPeran] || "";
         const divisi = cols[effDivisi] || "";
 
-        if (!nim) continue;
+        if (!namaInput) continue;
 
-        const matchedSto = nimMap.get(nim);
+        const key = normalize(namaInput);
+        const matchedSto =
+          stoByNama.get(key) ||
+          stoByNim.get(key) ||
+          availableStos.find((s) => normalize(s.nama) === key);
+
         let valid = true;
         let pesanError = "";
 
         if (!matchedSto) {
           valid = false;
-          pesanError = "NIM tidak terdaftar di periode ini";
+          pesanError = "Nama pengurus tidak terdaftar di periode ini";
         } else if (existingPanitiaIds.has(matchedSto.id)) {
           valid = false;
           pesanError = `${matchedSto.nama} sudah terdaftar`;
-        } else if (seenNims.has(nim)) {
+        } else if (seenStoIds.has(matchedSto.id)) {
           valid = false;
-          pesanError = "Duplikasi NIM di dalam file";
+          pesanError = "Duplikasi pengurus di dalam file";
         } else if (
           isDivisiLitbang(matchedSto) &&
           !isPeranLitbangPengawas(peran, divisi)
@@ -156,21 +182,24 @@ export function PanitiaCsvTab({
           pesanError = `${matchedSto.nama} (Divisi Litbang) hanya dapat ditugaskan sebagai Litbang Pengawas`;
         }
 
-        seenNims.add(nim);
+        if (matchedSto) {
+          seenStoIds.add(matchedSto.id);
+        }
 
-        const effDivisiVal = divisi || matchedSto?.divisi || "Divisi Workshop";
+        const effDivisiVal = divisi || matchedSto?.divisi || "Pengurus Inti";
 
         parsed.push({
-          nim,
+          nama: matchedSto?.nama || namaInput,
           stoNama: matchedSto?.nama,
-          peran: peran || "anggota",
+          peran: peran || "Anggota",
           divisi: effDivisiVal,
           valid,
           pesanError,
         });
 
         raw.push({
-          nim,
+          nama: matchedSto?.nama || namaInput,
+          nim: matchedSto?.nim,
           peran,
           divisiPanitia: effDivisiVal,
         });
@@ -218,11 +247,12 @@ export function PanitiaCsvTab({
 
   return (
     <div className="space-y-4">
+      {/* Header Info Format */}
       <div className="p-4 rounded-2xl bg-secondary/10 border border-secondary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         <div>
           <p className="font-semibold text-primary">Format File CSV:</p>
           <p className="text-secondary text-[11px] mt-0.5">
-            Kolom minimal: <span className="font-mono">NIM, Peran, Divisi_Panitia</span>
+            Kolom yang diperlukan: <span className="font-mono font-semibold">Nama, Peran_Kepanitiaan, Divisi_Departemen</span>
           </p>
         </div>
         <button
@@ -235,13 +265,14 @@ export function PanitiaCsvTab({
         </button>
       </div>
 
+      {/* Upload Drag & Drop Box */}
       <div className="border-2 border-dashed border-[#CBD5E1] rounded-2xl p-6 text-center hover:border-secondary transition-colors bg-white">
         <Upload className="w-8 h-8 text-slate-muted mx-auto mb-2" />
         <p className="text-xs font-semibold text-navy">
           Pilih berkas CSV dari komputer Anda
         </p>
         <p className="text-[11px] text-slate-muted mt-0.5">
-          Mendukung separator koma (,) atau titik koma (;)
+          Mendukung pemisah koma (,) atau titik koma (;)
         </p>
         <input
           type="file"
@@ -251,6 +282,7 @@ export function PanitiaCsvTab({
         />
       </div>
 
+      {/* Preview Tabel Hasil Parse CSV */}
       {csvPreview.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
@@ -273,10 +305,9 @@ export function PanitiaCsvTab({
             <table className="w-full text-left">
               <thead className="bg-surface sticky top-0 font-semibold text-slate-muted border-b border-[#E2E8F0]">
                 <tr>
-                  <th className="px-3 py-2">NIM</th>
-                  <th className="px-3 py-2">Nama</th>
-                  <th className="px-3 py-2">Peran</th>
-                  <th className="px-3 py-2">Divisi</th>
+                  <th className="px-3 py-2">Nama Pengurus</th>
+                  <th className="px-3 py-2">Peran Kepanitiaan</th>
+                  <th className="px-3 py-2">Divisi / Departemen</th>
                   <th className="px-3 py-2 text-right">Status</th>
                 </tr>
               </thead>
@@ -286,13 +317,10 @@ export function PanitiaCsvTab({
                     key={i}
                     className={row.valid ? "hover:bg-surface" : "bg-rose-50/50"}
                   >
-                    <td className="px-3 py-1.5 font-mono text-navy font-semibold">
-                      {row.nim}
+                    <td className="px-3 py-1.5 text-navy font-semibold">
+                      {row.nama}
                     </td>
-                    <td className="px-3 py-1.5 text-navy font-medium">
-                      {row.stoNama || "-"}
-                    </td>
-                    <td className="px-3 py-1.5 text-slate-muted">
+                    <td className="px-3 py-1.5 text-navy">
                       {row.peran}
                     </td>
                     <td className="px-3 py-1.5 text-slate-muted">

@@ -11,9 +11,11 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  OPSI_PERAN_PANITIA,
+  DAFTAR_SARAN_PERAN,
   isSekretarisUmum,
   isDivisiLitbang,
+  isPeranLitbangPengawas,
+  normalisasiPeranPanitia,
   type BarisFormPanitia,
   type StoOption,
   type ProkerData,
@@ -41,225 +43,25 @@ export function PanitiaStrukturTab({
   const panitiaStoIdSet = new Set(proker.kepanitiaan.map((k) => k.sto.id));
   const stoBelumMasuk = availableStos.filter((s) => !panitiaStoIdSet.has(s.id));
 
-  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>(() => {
-    const firstAvailable = availableStos.find(
-      (s) =>
-        !panitiaStoIdSet.has(s.id) &&
-        !isSekretarisUmum(s) &&
-        !isDivisiLitbang(s),
-    );
-    return [
-      {
-        tempId: Math.random().toString(36).substring(2, 9),
-        stoId: firstAvailable ? String(firstAvailable.id) : "",
-        roleKey: "ketua_pelaksana",
-        divisiPanitia: firstAvailable?.divisi || "Pengurus Inti",
-      },
-    ];
-  });
+  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>([
+    {
+      tempId: "row-init-1",
+      stoId: "",
+      peranTeks: "Ketua Pelaksana",
+      divisiPanitia: "",
+    },
+  ]);
 
   const tambahBaris = (preset?: Partial<BarisFormPanitia>) => {
-    const usedIds = new Set([
-      ...panitiaStoIdSet,
-      ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
-    ]);
-
-    let roleKey = preset?.roleKey;
-    if (!roleKey) {
-      const existingRoles = new Set(barisStruktur.map((b) => b.roleKey));
-      if (existingRoles.has("ketua_pelaksana")) {
-        const nextAvailableRole = OPSI_PERAN_PANITIA.find(
-          (o) => !existingRoles.has(o.key) && !o.kategori.includes("PI"),
-        );
-        roleKey = nextAvailableRole ? nextAvailableRole.key : "anggota_sie_acara";
-      } else {
-        roleKey = OPSI_PERAN_PANITIA[0].key;
-      }
-    }
-
-    const firstAvailable = availableStos.find((s) => {
-      if (usedIds.has(s.id)) return false;
-      if (isSekretarisUmum(s)) return false;
-      if (roleKey === "litbang_pengawas") {
-        return isDivisiLitbang(s);
-      }
-      return !isDivisiLitbang(s);
-    }) || availableStos.find((s) => !usedIds.has(s.id) && !isSekretarisUmum(s));
-
     setBarisStruktur((prev) => [
       ...prev,
       {
         tempId: Math.random().toString(36).substring(2, 9),
-        stoId:
-          preset?.stoId || (firstAvailable ? String(firstAvailable.id) : ""),
-        roleKey,
-        divisiPanitia:
-          preset?.divisiPanitia ?? (firstAvailable?.divisi || "Umum"),
+        stoId: preset?.stoId || "",
+        peranTeks: preset?.peranTeks || "Anggota Sie Acara",
+        divisiPanitia: preset?.divisiPanitia || "",
       },
     ]);
-  };
-
-  const terapkanPresetInti = () => {
-    const validRows = barisStruktur.filter((b) => Boolean(b.stoId));
-    const existingRolesInForm = new Set(validRows.map((b) => b.roleKey));
-
-    const existingRolesInKepanitiaan = new Set<string>();
-    for (const k of proker.kepanitiaan) {
-      const match = OPSI_PERAN_PANITIA.find(
-        (o) =>
-          o.label.toLowerCase() === (k.divisiPanitia || "").toLowerCase() ||
-          (o.key === "ketua_pelaksana" && k.peran === "ketua") ||
-          (o.key === "wakil_ketua_pelaksana" &&
-            (k.divisiPanitia || "").toLowerCase().includes("wakil")) ||
-          (o.key === "sekretaris_inti" &&
-            (k.divisiPanitia || "").toLowerCase().includes("sekretaris inti")) ||
-          (o.key === "sekretaris_pelaksana" &&
-            (k.peran === "sekretaris" ||
-              (k.divisiPanitia || "").toLowerCase().includes("sekretaris pelaksana"))) ||
-          (o.key === "bendahara_inti" &&
-            (k.divisiPanitia || "").toLowerCase().includes("bendahara inti")) ||
-          (o.key === "bendahara_pelaksana" &&
-            (k.peran === "bendahara" ||
-              (k.divisiPanitia || "").toLowerCase().includes("bendahara pelaksana"))) ||
-          (o.key === "litbang_pengawas" &&
-            (k.divisiPanitia || "").toLowerCase().includes("litbang")),
-      );
-      if (match) {
-        existingRolesInKepanitiaan.add(match.key);
-      }
-    }
-
-    const presets: {
-      roleKey: string;
-      kriteria?: "sekretaris" | "bendahara" | "litbang";
-    }[] = [
-      { roleKey: "ketua_pelaksana" },
-      { roleKey: "wakil_ketua_pelaksana" },
-      { roleKey: "sekretaris_inti", kriteria: "sekretaris" },
-      { roleKey: "sekretaris_pelaksana" },
-      { roleKey: "bendahara_inti", kriteria: "bendahara" },
-      { roleKey: "bendahara_pelaksana" },
-      { roleKey: "litbang_pengawas", kriteria: "litbang" },
-    ];
-
-    const presetsNeeded = presets.filter(
-      (p) =>
-        !existingRolesInForm.has(p.roleKey) &&
-        !existingRolesInKepanitiaan.has(p.roleKey),
-    );
-
-    if (presetsNeeded.length === 0) {
-      setPesan({
-        tipe: "sukses",
-        teks: "Semua peran Kepanitiaan Inti (Ketua, Wakil, Sekretaris, Bendahara, dan Litbang Pengawas) sudah terisi lengkap tanpa duplikasi.",
-      });
-      return;
-    }
-
-    const currentUsedIds = new Set([
-      ...panitiaStoIdSet,
-      ...validRows.map((b) => Number(b.stoId)),
-    ]);
-
-    const isMatchKriteria = (
-      sto: StoOption,
-      kriteria?: "sekretaris" | "bendahara" | "litbang",
-    ) => {
-      if (!kriteria) return true;
-      if (isSekretarisUmum(sto)) return false;
-      if (kriteria === "litbang") {
-        return isDivisiLitbang(sto);
-      }
-      if (isDivisiLitbang(sto)) return false;
-      const jab = (sto.jabatan || "").toLowerCase();
-      const div = (sto.divisi || "").toLowerCase();
-      return jab.includes(kriteria) || div.includes(kriteria);
-    };
-
-    const isSpecializedSto = (sto: StoOption) => {
-      if (isSekretarisUmum(sto) || isDivisiLitbang(sto)) return true;
-      const jab = (sto.jabatan || "").toLowerCase();
-      const div = (sto.divisi || "").toLowerCase();
-      return (
-        jab.includes("sekretaris") ||
-        div.includes("sekretaris") ||
-        jab.includes("bendahara") ||
-        div.includes("bendahara")
-      );
-    };
-
-    const pilihStoUntukPreset = (
-      kriteria?: "sekretaris" | "bendahara" | "litbang",
-    ): StoOption | null => {
-      if (kriteria) {
-        const match = availableStos.find(
-          (s) =>
-            !currentUsedIds.has(s.id) &&
-            !isSekretarisUmum(s) &&
-            isMatchKriteria(s, kriteria),
-        );
-        if (match) {
-          currentUsedIds.add(match.id);
-          return match;
-        }
-      } else {
-        const generalMatch = availableStos.find(
-          (s) =>
-            !currentUsedIds.has(s.id) &&
-            !isSekretarisUmum(s) &&
-            !isSpecializedSto(s),
-        );
-        if (generalMatch) {
-          currentUsedIds.add(generalMatch.id);
-          return generalMatch;
-        }
-      }
-
-      const fallbackMatch = availableStos.find(
-        (s) =>
-          !currentUsedIds.has(s.id) &&
-          !isSekretarisUmum(s) &&
-          !isDivisiLitbang(s),
-      );
-      if (fallbackMatch) {
-        currentUsedIds.add(fallbackMatch.id);
-        return fallbackMatch;
-      }
-
-      return null;
-    };
-
-    const emptyRowIndices = barisStruktur
-      .map((b, idx) => (!b.stoId ? idx : -1))
-      .filter((idx) => idx !== -1);
-
-    const updatedBaris = [...barisStruktur];
-    const presetsToCreate = [...presetsNeeded];
-
-    for (const emptyIdx of emptyRowIndices) {
-      if (presetsToCreate.length === 0) break;
-      const preset = presetsToCreate.shift()!;
-      const sto = pilihStoUntukPreset(preset.kriteria);
-      updatedBaris[emptyIdx] = {
-        ...updatedBaris[emptyIdx],
-        stoId: sto ? String(sto.id) : "",
-        roleKey: preset.roleKey,
-        divisiPanitia: sto?.divisi || "Pengurus STO",
-      };
-    }
-
-    const newRows: BarisFormPanitia[] = [];
-    for (const preset of presetsToCreate) {
-      const sto = pilihStoUntukPreset(preset.kriteria);
-      newRows.push({
-        tempId: Math.random().toString(36).substring(2, 9),
-        stoId: sto ? String(sto.id) : "",
-        roleKey: preset.roleKey,
-        divisiPanitia: sto?.divisi || "Pengurus STO",
-      });
-    }
-
-    setBarisStruktur([...updatedBaris, ...newRows]);
   };
 
   const ubahBaris = (tempId: string, patch: Partial<BarisFormPanitia>) => {
@@ -289,11 +91,11 @@ export function PanitiaStrukturTab({
     if (barisStruktur.length === 0) return;
     setPesan(null);
 
-    const invalidRow = barisStruktur.find((b) => !b.stoId);
+    const invalidRow = barisStruktur.find((b) => !b.stoId || !b.peranTeks.trim());
     if (invalidRow) {
       setPesan({
         tipe: "error",
-        teks: "Harap pilih pengurus STO pada setiap baris panitia.",
+        teks: "Harap pilih pengurus STO dan isi peran kepanitiaan pada setiap baris panitia.",
       });
       return;
     }
@@ -307,35 +109,13 @@ export function PanitiaStrukturTab({
       return;
     }
 
-    const peranIntiTunggal = [
-      "ketua_pelaksana",
-      "wakil_ketua_pelaksana",
-      "sekretaris_inti",
-      "sekretaris_pelaksana",
-      "bendahara_inti",
-      "bendahara_pelaksana",
-      "litbang_pengawas",
-    ];
-    for (const roleKey of peranIntiTunggal) {
-      const duplikat = barisStruktur.filter((b) => b.roleKey === roleKey);
-      if (duplikat.length > 1) {
-        const labelPeran =
-          OPSI_PERAN_PANITIA.find((o) => o.key === roleKey)?.label || roleKey;
-        setPesan({
-          tipe: "error",
-          teks: `Terdapat ${duplikat.length} baris dengan peran "${labelPeran}". Peran pimpinan inti & pengawas hanya boleh diisi oleh 1 orang.`,
-        });
-        return;
-      }
-    }
-
     for (const baris of barisStruktur) {
       if (baris.stoId) {
         const stoDipilih = availableStos.find(
           (s) => String(s.id) === String(baris.stoId),
         );
         if (
-          baris.roleKey === "sekretaris_inti" &&
+          baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
           stoDipilih &&
           isSekretarisUmum(stoDipilih)
         ) {
@@ -348,7 +128,7 @@ export function PanitiaStrukturTab({
         if (
           stoDipilih &&
           isDivisiLitbang(stoDipilih) &&
-          baris.roleKey !== "litbang_pengawas"
+          !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)
         ) {
           setPesan({
             tipe: "error",
@@ -360,13 +140,12 @@ export function PanitiaStrukturTab({
     }
 
     const payload: BarisPanitiaInput[] = barisStruktur.map((b) => {
-      const roleDef =
-        OPSI_PERAN_PANITIA.find((r) => r.key === b.roleKey) ||
-        OPSI_PERAN_PANITIA[0];
+      const norm = normalisasiPeranPanitia(b.peranTeks, b.divisiPanitia);
       return {
         stoId: Number(b.stoId),
-        peran: roleDef.peran,
-        divisiPanitia: roleDef.label,
+        peran: norm.peran,
+        peranTeks: b.peranTeks.trim(),
+        divisiPanitia: b.peranTeks.trim() || norm.divisiPanitia,
       };
     });
 
@@ -389,22 +168,22 @@ export function PanitiaStrukturTab({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Bagian Atas Fixed: Banner & Tombol Preset */}
+      {/* Bagian Atas Fixed: Banner & Tombol Tambah Manual */}
       <div className="shrink-0 px-6 pt-4 pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
           <div className="text-xs text-navy">
-            <span className="font-semibold">Tambahkan panitia sekaligus</span>{" "}
-            tanpa perlu membuka-tutup form berulang kali.
+            <span className="font-semibold">Susun Kepanitiaan Manual</span>:{" "}
+            Pilih peran dan tunjuk pengurus STO secara manual untuk program kerja ini.
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={terapkanPresetInti}
+              onClick={() => tambahBaris()}
               disabled={stoBelumMasuk.length === 0}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
-              title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
-              Preset Pimpinan Inti
+              <Plus className="w-3.5 h-3.5" />
+              Tambah Baris Panitia
             </button>
           </div>
         </div>
@@ -444,34 +223,22 @@ export function PanitiaStrukturTab({
               baris.stoId &&
               barisStruktur.filter((b) => b.stoId === baris.stoId).length > 1;
 
-            const isDuplikatPeran =
-              [
-                "ketua_pelaksana",
-                "wakil_ketua_pelaksana",
-                "sekretaris_inti",
-                "sekretaris_pelaksana",
-                "bendahara_inti",
-                "bendahara_pelaksana",
-                "litbang_pengawas",
-              ].includes(baris.roleKey) &&
-              barisStruktur.filter((b) => b.roleKey === baris.roleKey).length > 1;
-
             const stoDipilih = availableStos.find(
               (s) => String(s.id) === String(baris.stoId),
             );
             const isSekumSebagaiSekretarisInti =
-              baris.roleKey === "sekretaris_inti" &&
+              baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
               isSekretarisUmum(stoDipilih);
             const isLitbangBukanPengawas =
-              baris.roleKey !== "litbang_pengawas" &&
-              isDivisiLitbang(stoDipilih);
+              stoDipilih &&
+              isDivisiLitbang(stoDipilih) &&
+              !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks);
 
             return (
               <div
                 key={baris.tempId}
                 className={`p-3 rounded-2xl border transition-all ${
                   isDuplikat ||
-                  isDuplikatPeran ||
                   isSekumSebagaiSekretarisInti ||
                   isLitbangBukanPengawas
                     ? "border-rose-300 bg-rose-50/40"
@@ -484,19 +251,16 @@ export function PanitiaStrukturTab({
                     <label className="block text-[10px] font-semibold text-slate-muted mb-1">
                       Peran Kepanitiaan #{idx + 1}
                     </label>
-                    <select
-                      value={baris.roleKey}
+                    <input
+                      type="text"
+                      list="daftar-saran-peran-modal"
+                      value={baris.peranTeks}
                       onChange={(e) =>
-                        ubahBaris(baris.tempId, { roleKey: e.target.value })
+                        ubahBaris(baris.tempId, { peranTeks: e.target.value })
                       }
-                      className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
-                    >
-                      {OPSI_PERAN_PANITIA.map((op) => (
-                        <option key={op.key} value={op.key}>
-                          {op.label}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Ketik peran, cth: Ketua Pelaksana / Sie Acara"
+                      className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy placeholder:text-slate-muted focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
+                    />
                   </div>
 
                   {/* Kolom 2: Nama Pengurus STO */}
@@ -522,7 +286,8 @@ export function PanitiaStrukturTab({
                         .map((s) => {
                           const isLitbang = isDivisiLitbang(s);
                           const disabledLitbang =
-                            baris.roleKey !== "litbang_pengawas" && isLitbang;
+                            isLitbang &&
+                            !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks);
                           return (
                             <option
                               key={s.id}
@@ -567,12 +332,6 @@ export function PanitiaStrukturTab({
                   </div>
                 </div>
 
-                {isDuplikatPeran && (
-                  <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3 shrink-0" />
-                    Peran pimpinan inti & pengawas hanya boleh diisi oleh 1 orang.
-                  </p>
-                )}
                 {isSekumSebagaiSekretarisInti && (
                   <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
                     <AlertCircle className="w-3 h-3 shrink-0" />
@@ -624,6 +383,13 @@ export function PanitiaStrukturTab({
           </button>
         </div>
       </div>
+
+      {/* Datalist saran peran */}
+      <datalist id="daftar-saran-peran-modal">
+        {DAFTAR_SARAN_PERAN.map((saran) => (
+          <option key={saran} value={saran} />
+        ))}
+      </datalist>
     </div>
   );
 }

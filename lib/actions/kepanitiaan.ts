@@ -9,6 +9,7 @@ import { StatusPeriode, PeranPanitia } from "@prisma/client";
 import {
   isDivisiLitbang,
   isPeranLitbangPengawas,
+  normalisasiPeranPanitia,
   type BarisPanitiaInput,
   type CsvBarisPanitia,
 } from "@/components/dashboard/proker-detail/types";
@@ -24,24 +25,24 @@ export async function tambahPanitiaAction(formData: FormData) {
   try {
     await requireAdsek();
 
-    const rawData = {
-      prokerId: formData.get("prokerId"),
-      stoId: formData.get("stoId"),
-      peran: formData.get("peran"),
-      divisiPanitia: (formData.get("divisiPanitia") as string) || null,
-    };
-
-    const parsed = TambahPanitiaSchema.safeParse(rawData);
-    if (!parsed.success) {
+    const prokerId = Number(formData.get("prokerId"));
+    const stoId = Number(formData.get("stoId"));
+    if (!prokerId || !stoId) {
       return {
         error: {
           kode: "VALIDASI_GAGAL",
-          pesan: parsed.error.issues[0].message,
+          pesan: "Proker dan Pengurus STO wajib dipilih",
         },
       };
     }
 
-    const { prokerId, stoId, peran, divisiPanitia } = parsed.data;
+    const peranMentah = (formData.get("peran") as string) || (formData.get("peranTeks") as string) || "";
+    const divisiMentah = (formData.get("divisiPanitia") as string) || null;
+    const norm = normalisasiPeranPanitia(peranMentah, divisiMentah || undefined);
+    const peran = Object.values(PeranPanitia).includes(peranMentah as PeranPanitia)
+      ? (peranMentah as PeranPanitia)
+      : norm.peran;
+    const divisiPanitia = divisiMentah?.trim() || peranMentah.trim() || norm.divisiPanitia;
 
     const proker = await prisma.proker.findUnique({
       where: { id: prokerId },
@@ -196,7 +197,12 @@ export async function tambahBanyakPanitiaAction(
         continue;
       }
 
-      if (isDivisiLitbang(stoObj) && !isPeranLitbangPengawas(null, item.divisiPanitia)) {
+      const teksPeran = (item.peranTeks || item.divisiPanitia || String(item.peran || "")).trim();
+      const norm = normalisasiPeranPanitia(teksPeran, item.divisiPanitia || undefined);
+      const peranFinal = item.peran && Object.values(PeranPanitia).includes(item.peran) ? item.peran : norm.peran;
+      const divisiFinal = item.divisiPanitia?.trim() || teksPeran || norm.divisiPanitia;
+
+      if (isDivisiLitbang(stoObj) && !isPeranLitbangPengawas(teksPeran, divisiFinal)) {
         pesanGagal.push(`Baris ${no}: Pengurus dari Divisi Litbang (${stoObj.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`);
         continue;
       }
@@ -211,17 +217,12 @@ export async function tambahBanyakPanitiaAction(
         continue;
       }
 
-      if (!Object.values(PeranPanitia).includes(item.peran)) {
-        pesanGagal.push(`Baris ${no}: Peran tidak valid untuk ${namaSto}.`);
-        continue;
-      }
-
       seenInBatch.add(item.stoId);
       dataValid.push({
         prokerId,
         stoId: item.stoId,
-        peran: item.peran,
-        divisiPanitia: item.divisiPanitia?.trim() || null,
+        peran: peranFinal,
+        divisiPanitia: divisiFinal || null,
       });
     }
 
@@ -256,81 +257,6 @@ export async function tambahBanyakPanitiaAction(
       },
     };
   }
-}
-
-const DAFTAR_21_PERAN: { key: string; label: string; peran: PeranPanitia }[] = [
-  { key: "ketua_pelaksana", label: "Ketua Pelaksana", peran: PeranPanitia.ketua },
-  { key: "wakil_ketua_pelaksana", label: "Wakil Ketua Pelaksana", peran: PeranPanitia.ketua },
-  { key: "sekretaris_inti", label: "Sekretaris Inti", peran: PeranPanitia.sekretaris },
-  { key: "sekretaris_pelaksana", label: "Sekretaris Pelaksana", peran: PeranPanitia.sekretaris },
-  { key: "bendahara_inti", label: "Bendahara Inti", peran: PeranPanitia.bendahara },
-  { key: "bendahara_pelaksana", label: "Bendahara Pelaksana", peran: PeranPanitia.bendahara },
-  { key: "litbang_pengawas", label: "Litbang Pengawas", peran: PeranPanitia.pj_divisi },
-  { key: "pj_sie_acara", label: "Penanggung Jawab Sie Acara", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_acara", label: "Anggota Sie Acara", peran: PeranPanitia.anggota },
-  { key: "pj_sie_dekdok", label: "Penanggung Jawab Sie Dekdok", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_dekdok", label: "Anggota Sie Dekdok", peran: PeranPanitia.anggota },
-  { key: "pj_sie_humas", label: "Penanggung Jawab Sie Humas", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_humas", label: "Anggota Sie Humas", peran: PeranPanitia.anggota },
-  { key: "pj_sie_kreatif", label: "Penanggung Jawab Sie Kreatif", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_kreatif", label: "Anggota Sie Kreatif", peran: PeranPanitia.anggota },
-  { key: "pj_sie_perkap", label: "Penanggung Jawab Sie Perkap", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_perkap", label: "Anggota Sie Perkap", peran: PeranPanitia.anggota },
-  { key: "pj_sie_konsumsi", label: "Penanggung Jawab Sie Konsumsi", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_konsumsi", label: "Anggota Sie Konsumsi", peran: PeranPanitia.anggota },
-  { key: "pj_sie_dekdokre", label: "Penanggung Jawab Sie Dekdokre", peran: PeranPanitia.pj_divisi },
-  { key: "anggota_sie_dekdokre", label: "Anggota Sie Dekdokre", peran: PeranPanitia.anggota },
-];
-
-function normalisasiPeranPanitia(peranInput?: string, divisiInput?: string): {
-  peran: PeranPanitia;
-  divisiPanitia: string;
-} {
-  const p = (peranInput || "").trim().toLowerCase();
-  const d = (divisiInput || "").trim();
-
-  const matched = DAFTAR_21_PERAN.find(
-    (item) =>
-      item.key === p ||
-      item.label.toLowerCase() === p ||
-      item.label.toLowerCase() === d.toLowerCase(),
-  );
-  if (matched) {
-    return { peran: matched.peran, divisiPanitia: matched.label };
-  }
-
-  if (p.includes("wakil ketua")) return { peran: PeranPanitia.ketua, divisiPanitia: "Wakil Ketua Pelaksana" };
-  if (p === "ketua_pelaksana" || p === "ketua pelaksana") return { peran: PeranPanitia.ketua, divisiPanitia: "Ketua Pelaksana" };
-  if (p === "sekretaris_inti" || p === "sekretaris inti") return { peran: PeranPanitia.sekretaris, divisiPanitia: "Sekretaris Inti" };
-  if (p === "sekretaris_pelaksana" || p === "sekretaris pelaksana") return { peran: PeranPanitia.sekretaris, divisiPanitia: "Sekretaris Pelaksana" };
-  if (p === "bendahara_inti" || p === "bendahara inti") return { peran: PeranPanitia.bendahara, divisiPanitia: "Bendahara Inti" };
-  if (p === "bendahara_pelaksana" || p === "bendahara pelaksana") return { peran: PeranPanitia.bendahara, divisiPanitia: "Bendahara Pelaksana" };
-  if (p.includes("litbang") || p.includes("pengawas")) return { peran: PeranPanitia.pj_divisi, divisiPanitia: "Litbang Pengawas" };
-
-  if (p === "ketua") return { peran: PeranPanitia.ketua, divisiPanitia: d || "Ketua Pelaksana" };
-  if (p === "sekretaris") return { peran: PeranPanitia.sekretaris, divisiPanitia: d || "Sekretaris Pelaksana" };
-  if (p === "bendahara") return { peran: PeranPanitia.bendahara, divisiPanitia: d || "Bendahara Pelaksana" };
-  if (p === "pj_divisi" || p === "pj") return { peran: PeranPanitia.pj_divisi, divisiPanitia: d || "Penanggung Jawab" };
-  if (p === "anggota") return { peran: PeranPanitia.anggota, divisiPanitia: d || "Anggota" };
-
-  const gabung = `${p} ${d.toLowerCase()}`;
-  if (gabung.includes("ketua")) {
-    return { peran: PeranPanitia.ketua, divisiPanitia: d || peranInput?.trim() || "Ketua Pelaksana" };
-  }
-  if (gabung.includes("sekretaris") || gabung.includes("sekre")) {
-    return { peran: PeranPanitia.sekretaris, divisiPanitia: d || peranInput?.trim() || "Sekretaris Pelaksana" };
-  }
-  if (gabung.includes("bendahara") || gabung.includes("bendum")) {
-    return { peran: PeranPanitia.bendahara, divisiPanitia: d || peranInput?.trim() || "Bendahara Pelaksana" };
-  }
-  if (gabung.includes("pj") || gabung.includes("koordinator") || gabung.includes("penanggung")) {
-    return { peran: PeranPanitia.pj_divisi, divisiPanitia: d || peranInput?.trim() || "Penanggung Jawab" };
-  }
-
-  return {
-    peran: PeranPanitia.anggota,
-    divisiPanitia: d || peranInput?.trim() || "Anggota",
-  };
 }
 
 /**
@@ -371,9 +297,11 @@ export async function imporCsvPanitiaAction(
       select: { id: true, nama: true, nim: true, emailGoogle: true, divisi: true, jabatan: true },
     });
 
+    const stoByNama = new Map<string, typeof allStos[0]>();
     const stoByNim = new Map<string, typeof allStos[0]>();
     const stoByEmail = new Map<string, typeof allStos[0]>();
     for (const s of allStos) {
+      if (s.nama) stoByNama.set(s.nama.trim().toLowerCase().replace(/\s+/g, " "), s);
       if (s.nim) stoByNim.set(s.nim.trim().toLowerCase(), s);
       if (s.emailGoogle) stoByEmail.set(s.emailGoogle.trim().toLowerCase(), s);
     }
@@ -397,25 +325,30 @@ export async function imporCsvPanitiaAction(
       const row = barisList[i];
       const noBaris = i + 2;
 
-      const nimKey = row.nim?.trim().toLowerCase();
-      if (!nimKey) {
-        pesanGagal.push(`Baris ${noBaris}: Kolom NIM kosong.`);
+      const identifier = (row.nama || row.nim || "").trim().toLowerCase().replace(/\s+/g, " ");
+      if (!identifier) {
+        pesanGagal.push(`Baris ${noBaris}: Kolom Nama kosong.`);
         continue;
       }
 
-      const stoMatch = stoByNim.get(nimKey) || stoByEmail.get(nimKey);
+      const stoMatch =
+        stoByNama.get(identifier) ||
+        stoByNim.get(identifier) ||
+        stoByEmail.get(identifier) ||
+        allStos.find((s) => s.nama.trim().toLowerCase().replace(/\s+/g, " ") === identifier);
+
       if (!stoMatch) {
-        pesanGagal.push(`Baris ${noBaris}: Pengurus dengan NIM/Email '${row.nim}' tidak ditemukan di periode proker ini.`);
+        pesanGagal.push(`Baris ${noBaris}: Pengurus '${row.nama || row.nim}' tidak ditemukan di periode proker ini.`);
         continue;
       }
 
       if (existingStoSet.has(stoMatch.id)) {
-        pesanGagal.push(`Baris ${noBaris}: ${stoMatch.nama} (${stoMatch.nim}) sudah terdaftar dalam kepanitiaan.`);
+        pesanGagal.push(`Baris ${noBaris}: ${stoMatch.nama} sudah terdaftar dalam kepanitiaan.`);
         continue;
       }
 
       if (seenStoId.has(stoMatch.id)) {
-        pesanGagal.push(`Baris ${noBaris}: Duplikasi pengurus ${stoMatch.nama} (${stoMatch.nim}) di dalam file CSV.`);
+        pesanGagal.push(`Baris ${noBaris}: Duplikasi pengurus ${stoMatch.nama} di dalam file CSV.`);
         continue;
       }
 
@@ -483,17 +416,13 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
       };
     }
 
-    const peran = formData.get("peran") as PeranPanitia;
-    const divisiPanitia = (formData.get("divisiPanitia") as string) || null;
-
-    if (!Object.values(PeranPanitia).includes(peran)) {
-      return {
-        error: {
-          kode: "PERAN_TIDAK_VALID",
-          pesan: "Peran panitia tidak valid",
-        },
-      };
-    }
+    const peranMentah = (formData.get("peran") as string) || (formData.get("peranTeks") as string) || "";
+    const divisiInput = (formData.get("divisiPanitia") as string) || null;
+    const norm = normalisasiPeranPanitia(peranMentah, divisiInput || undefined);
+    const peran = Object.values(PeranPanitia).includes(peranMentah as PeranPanitia)
+      ? (peranMentah as PeranPanitia)
+      : norm.peran;
+    const divisiPanitia = divisiInput?.trim() || peranMentah.trim() || norm.divisiPanitia;
 
     // Periksa apakah STO diubah
     const stoIdInput = formData.get("stoId");

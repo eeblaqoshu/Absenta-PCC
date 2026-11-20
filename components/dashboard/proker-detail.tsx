@@ -3,7 +3,10 @@
 
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { hapusAgendaAction } from "@/lib/actions/agenda";
-import { ubahPanitiaAction, hapusPanitiaAction } from "@/lib/actions/kepanitiaan";
+import {
+  ubahPanitiaAction,
+  hapusPanitiaAction,
+} from "@/lib/actions/kepanitiaan";
 import { StatusPeriode } from "@prisma/client";
 import { konfirmasiHapus } from "@/lib/swal";
 import {
@@ -29,7 +32,10 @@ import {
 import Link from "next/link";
 import {
   OPSI_PERAN_PANITIA,
+  normalisasiPeranPanitia,
   isDivisiLitbang,
+  isSekretarisUmum,
+  isPeranLitbangPengawas,
   DETAK_MS,
   langgananDetak,
   cuplikanDetak,
@@ -139,15 +145,9 @@ export function ProkerDetail({
     setPanitiaDiedit(item);
     setSelectedStoIdEdit(item.sto.id);
     if (isDivisiLitbang(item.sto)) {
-      setSelectedRoleKeyEdit("litbang_pengawas");
+      setSelectedRoleKeyEdit("Litbang Pengawas");
     } else {
-      const byLabelOrPeran =
-        OPSI_PERAN_PANITIA.find(
-          (o) => o.label.toLowerCase() === item.divisiPanitia?.toLowerCase(),
-        ) || OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
-      setSelectedRoleKeyEdit(
-        byLabelOrPeran ? byLabelOrPeran.key : OPSI_PERAN_PANITIA[0].key,
-      );
+      setSelectedRoleKeyEdit(item.divisiPanitia || "Anggota");
     }
     setDivisiPanitiaEdit(item.sto.divisi || "Umum");
     setModalEditPanitiaBuka(true);
@@ -163,7 +163,7 @@ export function ProkerDetail({
 
     if (
       isDivisiLitbang(targetSto) &&
-      selectedRoleKeyEdit !== "litbang_pengawas"
+      !isPeranLitbangPengawas(selectedRoleKeyEdit, selectedRoleKeyEdit)
     ) {
       setPesan({
         tipe: "error",
@@ -172,14 +172,24 @@ export function ProkerDetail({
       return;
     }
 
-    const roleDef =
-      OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKeyEdit) ||
-      OPSI_PERAN_PANITIA[0];
+    if (
+      selectedRoleKeyEdit.trim().toLowerCase().includes("sekretaris inti") &&
+      isSekretarisUmum(targetSto)
+    ) {
+      setPesan({
+        tipe: "error",
+        teks: `Sekretaris Umum (${targetSto.nama}) tidak dapat ditugaskan sebagai Sekretaris Inti pada kepanitiaan ini.`,
+      });
+      return;
+    }
+
+    const norm = normalisasiPeranPanitia(selectedRoleKeyEdit, divisiPanitiaEdit);
 
     const formData = new FormData();
     formData.append("stoId", String(selectedStoIdEdit));
-    formData.append("peran", roleDef.peran);
-    formData.append("divisiPanitia", roleDef.label);
+    formData.append("peran", norm.peran);
+    formData.append("peranTeks", selectedRoleKeyEdit.trim());
+    formData.append("divisiPanitia", selectedRoleKeyEdit.trim() || norm.divisiPanitia);
 
     startTransition(async () => {
       const res = await ubahPanitiaAction(panitiaDiedit.id, formData);

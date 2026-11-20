@@ -131,6 +131,59 @@ export const OPSI_PERAN_PANITIA = [
   },
 ] as const;
 
+export const DAFTAR_SARAN_PERAN = OPSI_PERAN_PANITIA.map((o) => o.label);
+
+export function normalisasiPeranPanitia(peranInput?: string, divisiInput?: string): {
+  peran: PeranPanitia;
+  divisiPanitia: string;
+} {
+  const p = (peranInput || "").trim().toLowerCase();
+  const d = (divisiInput || "").trim();
+
+  const matched = OPSI_PERAN_PANITIA.find(
+    (item) =>
+      item.key === p ||
+      item.label.toLowerCase() === p ||
+      item.label.toLowerCase() === d.toLowerCase(),
+  );
+  if (matched) {
+    return { peran: matched.peran, divisiPanitia: matched.label };
+  }
+
+  if (p.includes("wakil ketua")) return { peran: PeranPanitia.ketua, divisiPanitia: "Wakil Ketua Pelaksana" };
+  if (p === "ketua_pelaksana" || p === "ketua pelaksana") return { peran: PeranPanitia.ketua, divisiPanitia: "Ketua Pelaksana" };
+  if (p === "sekretaris_inti" || p === "sekretaris inti") return { peran: PeranPanitia.sekretaris, divisiPanitia: "Sekretaris Inti" };
+  if (p === "sekretaris_pelaksana" || p === "sekretaris pelaksana") return { peran: PeranPanitia.sekretaris, divisiPanitia: "Sekretaris Pelaksana" };
+  if (p === "bendahara_inti" || p === "bendahara inti") return { peran: PeranPanitia.bendahara, divisiPanitia: "Bendahara Inti" };
+  if (p === "bendahara_pelaksana" || p === "bendahara pelaksana") return { peran: PeranPanitia.bendahara, divisiPanitia: "Bendahara Pelaksana" };
+  if (p.includes("litbang") || p.includes("pengawas")) return { peran: PeranPanitia.pj_divisi, divisiPanitia: "Litbang Pengawas" };
+
+  if (p === "ketua") return { peran: PeranPanitia.ketua, divisiPanitia: d || "Ketua Pelaksana" };
+  if (p === "sekretaris") return { peran: PeranPanitia.sekretaris, divisiPanitia: d || "Sekretaris Pelaksana" };
+  if (p === "bendahara") return { peran: PeranPanitia.bendahara, divisiPanitia: d || "Bendahara Pelaksana" };
+  if (p === "pj_divisi" || p === "pj") return { peran: PeranPanitia.pj_divisi, divisiPanitia: d || "Penanggung Jawab" };
+  if (p === "anggota") return { peran: PeranPanitia.anggota, divisiPanitia: d || "Anggota" };
+
+  const gabung = `${p} ${d.toLowerCase()}`;
+  if (gabung.includes("ketua")) {
+    return { peran: PeranPanitia.ketua, divisiPanitia: d || peranInput?.trim() || "Ketua Pelaksana" };
+  }
+  if (gabung.includes("sekretaris") || gabung.includes("sekre")) {
+    return { peran: PeranPanitia.sekretaris, divisiPanitia: d || peranInput?.trim() || "Sekretaris Pelaksana" };
+  }
+  if (gabung.includes("bendahara") || gabung.includes("bendum")) {
+    return { peran: PeranPanitia.bendahara, divisiPanitia: d || peranInput?.trim() || "Bendahara Pelaksana" };
+  }
+  if (gabung.includes("pj") || gabung.includes("koordinator") || gabung.includes("penanggung")) {
+    return { peran: PeranPanitia.pj_divisi, divisiPanitia: d || peranInput?.trim() || "Penanggung Jawab" };
+  }
+
+  return {
+    peran: PeranPanitia.anggota,
+    divisiPanitia: d || peranInput?.trim() || "Anggota",
+  };
+}
+
 export interface PanitiaItem {
   id: number;
   peran: PeranPanitia;
@@ -181,7 +234,8 @@ export interface StoOption {
 export interface BarisFormPanitia {
   tempId: string;
   stoId: string;
-  roleKey: string;
+  roleKey?: string;
+  peranTeks: string;
   divisiPanitia: string;
 }
 
@@ -338,12 +392,14 @@ export function getTargetPesertaLabel(target: TargetPeserta) {
 
 export interface BarisPanitiaInput {
   stoId: number;
-  peran: PeranPanitia;
+  peran?: PeranPanitia;
+  peranTeks?: string;
   divisiPanitia?: string | null;
 }
 
 export interface CsvBarisPanitia {
-  nim: string;
+  nama?: string;
+  nim?: string;
   peran?: string;
   divisiPanitia?: string;
 }

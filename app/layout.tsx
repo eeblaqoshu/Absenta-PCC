@@ -45,8 +45,12 @@ export default function RootLayout({
     <html
       lang="id"
       className={`${poppins.variable} antialiased`}
+      suppressHydrationWarning
     >
-      <body className={`${poppins.className} min-h-screen flex flex-col font-sans`}>
+      <body
+        className={`${poppins.className} min-h-screen flex flex-col font-sans`}
+        suppressHydrationWarning
+      >
         <LenisProvider>
           <PwaRegister />
           {children}
