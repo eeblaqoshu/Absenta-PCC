@@ -8,7 +8,6 @@ import {
   Clock,
   FileText,
   XCircle,
-  Award,
   Calendar,
   MapPin,
 } from "lucide-react";
@@ -39,8 +38,7 @@ export default async function StoStatistikPage() {
               Statistik & Riwayat Absensi
             </h1>
             <p className="text-xs sm:text-sm text-slate-muted max-w-2xl leading-relaxed">
-              Pantau rekap kehadiran Anda pada seluruh sesi kegiatan yang telah selesai. Poin
-              kehadiran dihitung berdasarkan ketepatan waktu dan status perizinan resmi.
+              Pantau rekap kehadiran Anda pada seluruh sesi kegiatan yang telah selesai secara transparan dan akurat.
             </p>
           </div>
         </div>
@@ -48,20 +46,17 @@ export default async function StoStatistikPage() {
         {/* 4 Kartu Kategori Statistik Presensi */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* 1. Hadir Tepat Waktu */}
-          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                +2 Poin
-              </span>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-black text-primary">
+          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-3xl sm:text-4xl font-black text-primary leading-none">
                 {statistik.tepatWaktu}
               </p>
-              <h3 className="text-xs sm:text-sm font-bold text-navy mt-0.5">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h3 className="text-xs sm:text-sm font-bold text-navy">
                 Hadir Tepat Waktu
               </h3>
               <p className="text-[11px] text-slate-muted mt-0.5">Scan ≤ 15 menit awal</p>
@@ -69,20 +64,17 @@ export default async function StoStatistikPage() {
           </div>
 
           {/* 2. Hadir Terlambat */}
-          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <Clock className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                -2 / 0 Poin
-              </span>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-black text-primary">
+          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-3xl sm:text-4xl font-black text-primary leading-none">
                 {statistik.terlambat}
               </p>
-              <h3 className="text-xs sm:text-sm font-bold text-navy mt-0.5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h3 className="text-xs sm:text-sm font-bold text-navy">
                 Hadir Terlambat
               </h3>
               <p className="text-[11px] text-slate-muted mt-0.5">Scan lewat 15 menit</p>
@@ -90,20 +82,17 @@ export default async function StoStatistikPage() {
           </div>
 
           {/* 3. Jumlah Izin */}
-          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <FileText className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                0 Poin
-              </span>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-black text-primary">
+          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-3xl sm:text-4xl font-black text-primary leading-none">
                 {statistik.izin}
               </p>
-              <h3 className="text-xs sm:text-sm font-bold text-navy mt-0.5">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h3 className="text-xs sm:text-sm font-bold text-navy">
                 Jumlah Izin
               </h3>
               <p className="text-[11px] text-slate-muted mt-0.5">Disetujui oleh adsek</p>
@@ -111,20 +100,17 @@ export default async function StoStatistikPage() {
           </div>
 
           {/* 4. Tanpa Keterangan (Alpa) */}
-          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <XCircle className="w-5 h-5" />
-              </div>
-              <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                -2 Poin
-              </span>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-black text-primary">
+          <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-3xl sm:text-4xl font-black text-primary leading-none">
                 {statistik.alpa}
               </p>
-              <h3 className="text-xs sm:text-sm font-bold text-navy mt-0.5">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <XCircle className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <h3 className="text-xs sm:text-sm font-bold text-navy">
                 Tanpa Keterangan
               </h3>
               <p className="text-[11px] text-slate-muted mt-0.5">Tidak hadir & tanpa izin</p>
@@ -152,8 +138,7 @@ export default async function StoStatistikPage() {
               </div>
               <p className="text-sm font-bold text-navy">Belum ada sesi presensi yang berakhir</p>
               <p className="text-xs text-slate-muted max-w-sm mx-auto">
-                Setelah sesi agenda ditutup oleh adsek, riwayat kehadiran Anda beserta poinnya akan
-                ditampilkan secara detail di sini.
+                Setelah sesi agenda ditutup oleh adsek, riwayat kehadiran Anda akan ditampilkan secara detail di sini.
               </p>
             </div>
           ) : (
@@ -215,8 +200,8 @@ export default async function StoStatistikPage() {
                       )}
                     </div>
 
-                    {/* Sisi Kanan: Status Badge & Poin */}
-                    <div className="flex items-center md:flex-col md:items-end justify-between gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-0 border-[#E2E8F0]">
+                    {/* Sisi Kanan: Status Badge Kehadiran */}
+                    <div className="flex items-center md:justify-end shrink-0 pt-2 md:pt-0 border-t md:border-0 border-[#E2E8F0]">
                       <div>
                         {isTepatWaktu && (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -242,20 +227,6 @@ export default async function StoStatistikPage() {
                             {item.statusLabel}
                           </span>
                         )}
-                      </div>
-
-                      <div className="text-right">
-                        <span
-                          className={`text-sm font-extrabold ${
-                            item.poin > 0
-                              ? "text-emerald-600"
-                              : item.poin < 0
-                              ? "text-rose-600"
-                              : "text-slate-muted"
-                          }`}
-                        >
-                          {item.poin > 0 ? `+${item.poin}` : item.poin} Poin
-                        </span>
                       </div>
                     </div>
                   </div>

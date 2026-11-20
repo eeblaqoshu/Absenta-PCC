@@ -54,7 +54,7 @@ export default async function AdsekDashboardPage() {
                   : "text-[#B45309]"
               }`}
             >
-              {periodeAktif ? "Periode Aktif Berjalan" : "Tidak Ada Periode Aktif"}
+              {periodeAktif ? "Periode Aktif" : "Tidak Ada Periode Aktif"}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">

@@ -121,30 +121,25 @@ export function ProkerList({
   return (
     <div className="space-y-6">
       {/* Header Banner Card */}
-      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                isPeriodeAktif ? "bg-accent animate-pulse" : "bg-slate-400"
-              }`}
-            />
-            <span
-              className={`text-xs font-semibold ${
-                isPeriodeAktif ? "text-secondary" : "text-slate-muted"
-              }`}
-            >
-              {isPeriodeAktif ? "Periode Aktif" : "Periode Selesai (Read-Only)"}
-            </span>
-            <span className="text-xs text-slate-muted">•</span>
-            <span className="text-xs font-medium text-slate-muted">
-              {namaPeriode}
-            </span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5">
+            <div className="inline-flex items-center gap-1.5 shrink-0">
+              <span
+                className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  isPeriodeAktif ? "bg-accent animate-pulse" : "bg-slate-400"
+                }`}
+              />
+              <span
+                className="text-xs font-semibold whitespace-nowrap text-secondary">
+                {namaPeriode}
+              </span>
+            </div>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
             Program Kerja (Proker)
           </h2>
-          <p className="text-xs text-slate-muted mt-1">
+          <p className="text-xs text-slate-muted mt-1 leading-relaxed">
             Kelola seluruh program kerja organisasi, susunan panitia
             (PI/PJ/Anggota), dan agenda kegiatan.
           </p>
@@ -238,35 +233,35 @@ export function ProkerList({
                   {item.deskripsi || "Tidak ada deskripsi tambahan."}
                 </p>
 
+                {/* Badge Stats Panitia & Agenda */}
+                <div className="flex flex-wrap items-center gap-2 mt-3.5">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-[#E2E8F0] text-navy font-semibold text-[11px]">
+                    <Users className="w-3.5 h-3.5 text-secondary" />
+                    <span>{item._count.kepanitiaan} Panitia</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-[#E2E8F0] text-navy font-semibold text-[11px]">
+                    <Calendar className="w-3.5 h-3.5 text-accent" />
+                    <span>{item._count.agenda} Agenda</span>
+                  </span>
+                </div>
+
                 {/* Info pembuat */}
-                <p className="text-[11px] text-slate-muted mt-3">
+                <p className="text-[11px] text-slate-muted mt-2.5">
                   Dibuat oleh:{" "}
                   <span className="font-medium text-navy">
                     {item.pembuat.nama}
                   </span>
                 </p>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-[#E2E8F0] text-xs">
-                  <div className="flex items-center gap-1.5 text-navy">
-                    <Users className="w-3.5 h-3.5 text-secondary" />
-                    <span>{item._count.kepanitiaan} Panitia</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-navy">
-                    <Calendar className="w-3.5 h-3.5 text-accent" />
-                    <span>{item._count.agenda} Agenda</span>
-                  </div>
-                </div>
               </div>
 
               {/* Action Button */}
-              <div className="mt-5 pt-3 border-t border-[#E2E8F0]">
+              <div className="mt-4 pt-3 border-t border-[#E2E8F0]">
                 <Link
                   href={`/dashboard/proker/${item.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-surface hover:bg-secondary hover:text-white text-navy text-xs font-semibold transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-surface hover:bg-secondary hover:text-white text-navy text-xs font-semibold transition-all group/btn"
                 >
                   Kelola Panitia & Agenda
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
             </div>

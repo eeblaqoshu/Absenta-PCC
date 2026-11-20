@@ -29,7 +29,6 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
-  Upload,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -343,17 +342,17 @@ export function ProkerDetail({
   return (
     <div className="space-y-6">
       {/* Header Banner Card */}
-      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
             <Link
               href="/dashboard/proker"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors whitespace-nowrap shrink-0"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Daftar Proker
             </Link>
-            <span className="text-slate-muted text-xs">•</span>
+            <span className="hidden sm:inline text-slate-muted text-xs">•</span>
             <span className="text-xs font-medium text-slate-muted">
               Periode {proker.periode.nama}
             </span>
@@ -374,13 +373,13 @@ export function ProkerDetail({
           {!isReadonly && (
             <>
               {tabAktif === "panitia" ? (
-                <button
-                  onClick={() => setModalPanitiaBuka(true)}
+                <Link
+                  href={`/dashboard/proker/${proker.id}/panitia`}
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
-                  <Upload className="w-4 h-4" />
+                  <Users className="w-4 h-4" />
                   Kelola Panitia (Banyak / CSV)
-                </button>
+                </Link>
               ) : (
                 <button
                   onClick={() => {

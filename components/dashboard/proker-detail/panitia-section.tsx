@@ -1,6 +1,7 @@
 // components/dashboard/proker-detail/panitia-section.tsx
 "use client";
 
+import Link from "next/link";
 import { Users, Edit2, Trash2 } from "lucide-react";
 import { getPeranBadge, type PanitiaItem, type ProkerData } from "./types";
 
@@ -27,8 +28,19 @@ export function PanitiaSection({
           Belum ada susunan panitia untuk proker ini
         </p>
         <p className="text-xs text-slate-muted mt-1">
-          Tambahkan pengurus STO ke dalam kepanitiaan melalui tombol &quot;Tambah Panitia&quot;.
+          Tambahkan pengurus STO ke dalam kepanitiaan melalui halaman &quot;Kelola Susunan Panitia&quot;.
         </p>
+        {!isReadonly && (
+          <div className="mt-4">
+            <Link
+              href={`/dashboard/proker/${proker.id}/panitia`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all"
+            >
+              <Users className="w-4 h-4" />
+              Kelola Susunan Panitia
+            </Link>
+          </div>
+        )}
       </div>
     );
   }
@@ -39,7 +51,7 @@ export function PanitiaSection({
         <table className="w-full text-left text-xs">
           <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
             <tr>
-              <th className="px-6 py-3.5">Nama & NIM Pengurus</th>
+              <th className="px-6 py-3.5">Nama & NIM STO</th>
               <th className="px-6 py-3.5">Peran Kepanitiaan</th>
               <th className="px-6 py-3.5">Divisi / Departemen</th>
               {!isReadonly && <th className="px-6 py-3.5 text-right">Aksi</th>}
@@ -54,9 +66,6 @@ export function PanitiaSection({
                 <tr key={item.id} className="hover:bg-surface/70 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shrink-0">
-                        {item.sto.nama.charAt(0).toUpperCase()}
-                      </div>
                       <div>
                         <div className="font-semibold text-navy">{item.sto.nama}</div>
                         <div className="text-[11px] text-slate-muted">

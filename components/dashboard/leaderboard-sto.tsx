@@ -143,14 +143,6 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
                     <td className="py-2.5 pr-3">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-semibold text-navy">{b.nama}</p>
-                        {Boolean(b.bonusPeran && b.bonusPeran > 0) && (
-                          <span
-                            className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-secondary/10 text-secondary border border-secondary/20"
-                            title={`Mendapat bonus +${b.bonusPeran} poin sebagai Ketuplak/Waketuplak`}
-                          >
-                            +{b.bonusPeran} Ketuplak
-                          </span>
-                        )}
                       </div>
                       <p className="text-[11px] text-slate-muted">{b.nim}</p>
                     </td>

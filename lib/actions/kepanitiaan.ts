@@ -204,6 +204,7 @@ export async function tambahBanyakPanitiaAction(
     });
 
     revalidatePath(`/dashboard/proker/${prokerId}`);
+    revalidatePath(`/dashboard/proker/${prokerId}/panitia`);
     return {
       sukses: true,
       totalBerhasil: dataValid.length,
@@ -460,6 +461,7 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
     });
 
     revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}`);
+    revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}/panitia`);
     return { sukses: true, pesan: "Data panitia berhasil diperbarui" };
   } catch (err: unknown) {
     const error = err as Error;
@@ -495,6 +497,7 @@ export async function hapusPanitiaAction(kepanitiaanId: number) {
     });
 
     revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}`);
+    revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}/panitia`);
     return { sukses: true, pesan: "Panitia berhasil dihapus dari proker" };
   } catch (err: unknown) {
     const error = err as Error;
