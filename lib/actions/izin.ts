@@ -1,6 +1,5 @@
 // lib/actions/izin.ts
-// Pengajuan izin STO per SESI presensi dan peninjauannya oleh adsek.
-// Satu agenda bisa punya beberapa sesi, jadi izin melekat ke sesi (bukan ke agenda).
+// Pengajuan izin STO per agenda dan peninjauannya oleh adsek.
 "use server";
 
 import { prisma } from "@/lib/prisma";
@@ -9,9 +8,10 @@ import { bolehAkses } from "@/lib/akses";
 import { revalidatePath } from "next/cache";
 import { StatusIzin } from "@prisma/client";
 import { z } from "zod";
+import { hitungStatusAgenda } from "@/lib/waktu";
 
 const AjukanIzinSchema = z.object({
-  sesiId: z.coerce.number().int().positive(),
+  agendaId: z.coerce.number().int().positive(),
   jenis: z.enum(["terlambat", "sakit", "izin", "lainnya"]).default("izin"),
   alasan: z
     .string()
@@ -25,31 +25,30 @@ export async function ajukanIzinAction(prevState: unknown, formData: FormData) {
     const sto = await requireSto();
 
     const parsed = AjukanIzinSchema.safeParse({
-      sesiId: formData.get("sesiId"),
+      agendaId: formData.get("agendaId"),
       jenis: formData.get("jenis") ?? "izin",
       alasan: formData.get("alasan"),
     });
     if (!parsed.success) {
       return { error: { kode: "VALIDASI_GAGAL", pesan: parsed.error.issues[0].message } };
     }
-    const { sesiId, jenis, alasan } = parsed.data;
+    const { agendaId, jenis, alasan } = parsed.data;
 
-    const sesi = await prisma.sesiPresensi.findUnique({
-      where: { id: sesiId },
-      include: {
-        agenda: {
-          select: {
-            id: true,
-            proker: { select: { periodeId: true, periode: { select: { status: true } } } },
-          },
-        },
+    const agenda = await prisma.agenda.findUnique({
+      where: { id: agendaId },
+      select: {
+        id: true,
+        tglPelaksanaan: true,
+        tglSelesai: true,
+        waktuPelaksanaan: true,
+        proker: { select: { periodeId: true, periode: { select: { status: true } } } },
       },
     });
 
-    if (!sesi) {
-      return { error: { kode: "SESI_TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } };
+    if (!agenda) {
+      return { error: { kode: "AGENDA_TIDAK_DITEMUKAN", pesan: "Agenda tidak ditemukan" } };
     }
-    if (sesi.agenda.proker.periode.status === "selesai") {
+    if (agenda.proker.periode.status === "selesai") {
       return {
         error: {
           kode: "PERIODE_READ_ONLY",
@@ -57,39 +56,45 @@ export async function ajukanIzinAction(prevState: unknown, formData: FormData) {
         },
       };
     }
-    if (sesi.agenda.proker.periodeId !== sto.periodeId) {
-      return { error: { kode: "TIDAK_BERHAK", pesan: "Sesi ini bukan milik periode kepengurusan Anda" } };
+    if (agenda.proker.periodeId !== sto.periodeId) {
+      return { error: { kode: "TIDAK_BERHAK", pesan: "Agenda ini bukan milik periode kepengurusan Anda" } };
     }
-    if (sesi.tutupAt <= new Date()) {
+    if (
+      hitungStatusAgenda(
+        agenda.tglPelaksanaan,
+        agenda.waktuPelaksanaan,
+        agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
       return {
         error: {
-          kode: "SESI_SUDAH_DITUTUP",
-          pesan: "Sesi presensi ini sudah ditutup, izin tidak bisa diajukan lagi",
+          kode: "AGENDA_SUDAH_SELESAI",
+          pesan: "Izin hanya dapat diajukan sebelum atau selama agenda berlangsung",
         },
       };
     }
-
-    const akses = await bolehAkses(sto.id, sesi.agenda.id);
+    const akses = await bolehAkses(sto.id, agenda.id);
     if (!akses.boleh) {
-      return { error: { kode: "TIDAK_BERHAK", pesan: akses.alasan ?? "Anda tidak berhak atas sesi ini" } };
+      return { error: { kode: "TIDAK_BERHAK", pesan: akses.alasan ?? "Anda tidak berhak atas agenda ini" } };
     }
 
     const izinLama = await prisma.izin.findUnique({
-      where: { sesiId_stoId: { sesiId, stoId: sto.id } },
+      where: { agendaId_stoId: { agendaId, stoId: sto.id } },
     });
 
     if (izinLama?.status === StatusIzin.disetujui) {
       return {
         error: {
           kode: "IZIN_SUDAH_DISETUJUI",
-          pesan: "Izin untuk sesi ini sudah disetujui, hubungi adsek bila ingin diubah",
+          pesan: "Izin untuk agenda ini sudah disetujui, hubungi adsek bila ingin diubah",
         },
       };
     }
 
     await prisma.izin.upsert({
-      where: { sesiId_stoId: { sesiId, stoId: sto.id } },
-      create: { sesiId, stoId: sto.id, jenis, alasan, status: StatusIzin.menunggu },
+      where: { agendaId_stoId: { agendaId, stoId: sto.id } },
+      create: { agendaId, stoId: sto.id, jenis, alasan, status: StatusIzin.menunggu },
       update: {
         jenis,
         alasan,
@@ -119,16 +124,14 @@ export async function batalIzinAction(izinId: number) {
     const izin = await prisma.izin.findUnique({
       where: { id: izinId },
       include: {
-        sesi: {
-          select: { agenda: { select: { proker: { select: { periode: { select: { status: true } } } } } } },
-        },
+        agenda: { select: { proker: { select: { periode: { select: { status: true } } } } } },
       },
     });
 
     if (!izin || izin.stoId !== sto.id) {
       return { error: { kode: "TIDAK_DITEMUKAN", pesan: "Pengajuan izin tidak ditemukan" } };
     }
-    if (izin.sesi.agenda.proker.periode.status === "selesai") {
+    if (izin.agenda.proker.periode.status === "selesai") {
       return { error: { kode: "PERIODE_READ_ONLY", pesan: "Periode sudah selesai dan read-only" } };
     }
     if (izin.status === StatusIzin.disetujui) {
@@ -166,16 +169,14 @@ export async function tinjauIzinAction(izinId: number, keputusan: "disetujui" | 
     const izin = await prisma.izin.findUnique({
       where: { id: parsed.data.izinId },
       include: {
-        sesi: {
-          select: { agenda: { select: { proker: { select: { periode: { select: { status: true } } } } } } },
-        },
+        agenda: { select: { proker: { select: { periode: { select: { status: true } } } } } },
       },
     });
 
     if (!izin) {
       return { error: { kode: "TIDAK_DITEMUKAN", pesan: "Pengajuan izin tidak ditemukan" } };
     }
-    if (izin.sesi.agenda.proker.periode.status === "selesai") {
+    if (izin.agenda.proker.periode.status === "selesai") {
       return { error: { kode: "PERIODE_READ_ONLY", pesan: "Periode sudah selesai dan read-only" } };
     }
 
@@ -198,7 +199,7 @@ export async function tinjauIzinAction(izinId: number, keputusan: "disetujui" | 
       pesan:
         parsed.data.keputusan === "disetujui"
           ? "Izin disetujui"
-          : "Izin ditolak, STO akan dihitung alpa bila tidak hadir",
+          : "Izin ditolak; kehadiran tetap mengikuti presensi sesi",
     };
   } catch (err: unknown) {
     const error = err as Error;

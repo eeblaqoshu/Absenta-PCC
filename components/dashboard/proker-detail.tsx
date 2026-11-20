@@ -30,6 +30,7 @@ import Link from "next/link";
 import {
   OPSI_PERAN_PANITIA,
   isDivisiLitbang,
+  DETAK_MS,
   langgananDetak,
   cuplikanDetak,
   keTanggalWib,
@@ -72,16 +73,21 @@ export function ProkerDetail({
   // Real-time time tick (no render loop)
   const [tabStatus, setTabStatus] = useState<StatusAgendaDihitung>("sedang_berlangsung");
   const detak = useSyncExternalStore(langgananDetak, cuplikanDetak, () => 0);
-  const now = useMemo(() => new Date(), [detak]);
+  const now = useMemo(
+    () => (detak > 0 ? new Date(detak * DETAK_MS) : null),
+    [detak],
+  );
 
   const agendaBerstatus = useMemo(() => {
     return proker.agenda.map((a) => {
-      const statusLive = hitungStatusAgenda(
-        new Date(a.tglPelaksanaan),
-        a.waktuPelaksanaan,
-        a.tglSelesai ? new Date(a.tglSelesai) : null,
-        now,
-      );
+      const statusLive = now
+        ? hitungStatusAgenda(
+            new Date(a.tglPelaksanaan),
+            a.waktuPelaksanaan,
+            a.tglSelesai ? new Date(a.tglSelesai) : null,
+            now,
+          )
+        : a.statusDihitung;
       return { ...a, statusLive };
     });
   }, [proker.agenda, now]);

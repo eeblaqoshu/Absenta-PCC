@@ -11,16 +11,27 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { requireAdsek } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { agendaTelahBerlalu, gabungTanggalDenganJamWib, tanggalWib } from "@/lib/waktu";
+import {
+  agendaTelahBerlalu,
+  gabungTanggalDenganJamWib,
+  hitungStatusAgenda,
+  tanggalWib,
+} from "@/lib/waktu";
 import { z } from "zod";
 
 const RX_JAM = /^([01]\d|2[0-3]):[0-5]\d$/;
+function tanggalValid(nilai: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(nilai)) return false;
+  const date = new Date(`${nilai}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === nilai;
+}
 
 const SesiInputSchema = z.object({
   agendaId: z.coerce.number().int().positive(),
   tanggal: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal sesi tidak valid"),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal sesi tidak valid")
+    .refine(tanggalValid, "Tanggal sesi tidak valid"),
   jamMulai: z.string().regex(RX_JAM, "Jam mulai tidak valid (format HH:mm)"),
   jamMaksDatang: z
     .string()
@@ -88,6 +99,21 @@ export async function buatSesiAction(prevState: unknown, formData: FormData) {
         },
       };
     }
+    if (
+      hitungStatusAgenda(
+        agenda.tglPelaksanaan,
+        agenda.waktuPelaksanaan,
+        agenda.tglSelesai,
+        new Date(),
+      ) !== "sedang_berlangsung"
+    ) {
+      return {
+        error: {
+          kode: "AGENDA_BELUM_BERLANGSUNG",
+          pesan: "Sesi baru hanya bisa dibuat saat agenda sedang berlangsung",
+        },
+      };
+    }
     if (!dalamRentangAgenda(agenda, tanggal)) {
       return {
         error: {
@@ -116,6 +142,19 @@ export async function buatSesiAction(prevState: unknown, formData: FormData) {
         error: {
           kode: "WAKTU_TIDAK_VALID",
           pesan: "Jam maksimum kedatangan harus setelah jam mulai sesi",
+        },
+      };
+    }
+
+    const sesiTumpangTindih = await prisma.sesiPresensi.findFirst({
+      where: { agendaId, bukaAt: { lt: tutupAt }, tutupAt: { gt: bukaAt } },
+      select: { id: true },
+    });
+    if (sesiTumpangTindih) {
+      return {
+        error: {
+          kode: "SESI_BERTUMPANG_TINDIH",
+          pesan: "Waktu sesi bertumpang tindih dengan sesi lain pada agenda ini",
         },
       };
     }
@@ -176,6 +215,7 @@ export async function ubahSesiAction(sesiId: number, formData: FormData) {
             id: true,
             tglPelaksanaan: true,
             tglSelesai: true,
+            waktuPelaksanaan: true,
             proker: { select: { id: true, periode: { select: { status: true } } } },
           },
         },
@@ -193,14 +233,6 @@ export async function ubahSesiAction(sesiId: number, formData: FormData) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat mengubah sesi pada periode kepengurusan yang sudah selesai",
-        },
-      };
-    }
-    if (agendaTelahBerlalu(sesi.agenda.tglPelaksanaan, sesi.agenda.tglSelesai)) {
-      return {
-        error: {
-          kode: "AGENDA_SELESAI",
-          pesan: "Agenda ini sudah selesai, jadwal sesi tidak bisa diubah lagi",
         },
       };
     }
@@ -227,6 +259,40 @@ export async function ubahSesiAction(sesiId: number, formData: FormData) {
       };
     }
 
+    if (
+      hitungStatusAgenda(
+        sesi.agenda.tglPelaksanaan,
+        sesi.agenda.waktuPelaksanaan,
+        sesi.agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
+      return {
+        error: {
+          kode: "AGENDA_SELESAI",
+          pesan: "Agenda selesai dan sesi hanya dapat dilihat bersama daftar hadirnya",
+        },
+      };
+    }
+
+    const sesiTumpangTindih = await prisma.sesiPresensi.findFirst({
+      where: {
+        agendaId,
+        id: { not: sesiId },
+        bukaAt: { lt: tutupAt },
+        tutupAt: { gt: bukaAt },
+      },
+      select: { id: true },
+    });
+    if (sesiTumpangTindih) {
+      return {
+        error: {
+          kode: "SESI_BERTUMPANG_TINDIH",
+          pesan: "Waktu sesi bertumpang tindih dengan sesi lain pada agenda ini",
+        },
+      };
+    }
+
     // Kalau sudah ada presensi masuk, jam mulai dikunci supaya status kehadiran
     // (hadir/terlambat) yang sudah tercatat tidak berubah.
     if (sesi._count.presensi > 0 && bukaAt.getTime() !== sesi.bukaAt.getTime()) {
@@ -235,6 +301,18 @@ export async function ubahSesiAction(sesiId: number, formData: FormData) {
           kode: "SESI_SUDAH_ADA_PRESENSI",
           pesan:
             "Sesi sudah punya presensi. Jam mulai tidak boleh diubah; hanya jam maksimum kedatangan yang bisa diubah.",
+        },
+      };
+    }
+    const presensiTerakhir = await prisma.presensi.aggregate({
+      where: { sesiId },
+      _max: { waktuScan: true },
+    });
+    if (presensiTerakhir._max.waktuScan && tutupAt <= presensiTerakhir._max.waktuScan) {
+      return {
+        error: {
+          kode: "JAM_TUTUP_SEBELUM_PRESENSI",
+          pesan: "Jam maksimum kedatangan harus setelah waktu presensi yang sudah tercatat",
         },
       };
     }
@@ -274,6 +352,7 @@ export async function ubahTutupSesiAction(sesiId: number, jamMaksDatang: string)
           select: {
             tglPelaksanaan: true,
             tglSelesai: true,
+            waktuPelaksanaan: true,
             proker: { select: { id: true, periode: { select: { status: true } } } },
           },
         },
@@ -290,21 +369,57 @@ export async function ubahTutupSesiAction(sesiId: number, jamMaksDatang: string)
         },
       };
     }
-    if (agendaTelahBerlalu(sesi.agenda.tglPelaksanaan, sesi.agenda.tglSelesai)) {
+    if (
+      hitungStatusAgenda(
+        sesi.agenda.tglPelaksanaan,
+        sesi.agenda.waktuPelaksanaan,
+        sesi.agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
       return {
         error: {
           kode: "AGENDA_SELESAI",
-          pesan: "Agenda ini sudah selesai, jadwal sesi tidak bisa diubah lagi",
+          pesan: "Agenda selesai dan sesi tidak dapat diubah lagi",
         },
       };
     }
-
     const tutupBaru = gabungTanggalDenganJamWib(new Date(tanggalWib(sesi.bukaAt)), parsed.data);
     if (tutupBaru <= sesi.bukaAt) {
       return {
         error: {
           kode: "WAKTU_TIDAK_VALID",
           pesan: "Jam maksimum kedatangan harus setelah jam mulai sesi",
+        },
+      };
+    }
+
+    const sesiTumpangTindih = await prisma.sesiPresensi.findFirst({
+      where: {
+        agendaId: sesi.agendaId,
+        id: { not: sesiId },
+        bukaAt: { lt: tutupBaru },
+        tutupAt: { gt: sesi.bukaAt },
+      },
+      select: { id: true },
+    });
+    if (sesiTumpangTindih) {
+      return {
+        error: {
+          kode: "SESI_BERTUMPANG_TINDIH",
+          pesan: "Jam maksimum kedatangan bertumpang tindih dengan sesi lain pada agenda ini",
+        },
+      };
+    }
+    const presensiTerakhir = await prisma.presensi.aggregate({
+      where: { sesiId },
+      _max: { waktuScan: true },
+    });
+    if (presensiTerakhir._max.waktuScan && tutupBaru <= presensiTerakhir._max.waktuScan) {
+      return {
+        error: {
+          kode: "JAM_TUTUP_SEBELUM_PRESENSI",
+          pesan: "Jam maksimum kedatangan harus setelah waktu presensi yang sudah tercatat",
         },
       };
     }
@@ -332,7 +447,12 @@ export async function tutupSesiSekarangAction(sesiId: number) {
       where: { id: sesiId },
       include: {
         agenda: {
-          select: { proker: { select: { id: true, periode: { select: { status: true } } } } },
+          select: {
+            tglPelaksanaan: true,
+            tglSelesai: true,
+            waktuPelaksanaan: true,
+            proker: { select: { id: true, periode: { select: { status: true } } } },
+          },
         },
       },
     });
@@ -345,6 +465,21 @@ export async function tutupSesiSekarangAction(sesiId: number) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat mengubah sesi pada periode kepengurusan yang sudah selesai",
+        },
+      };
+    }
+    if (
+      hitungStatusAgenda(
+        sesi.agenda.tglPelaksanaan,
+        sesi.agenda.waktuPelaksanaan,
+        sesi.agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
+      return {
+        error: {
+          kode: "AGENDA_SELESAI",
+          pesan: "Agenda selesai dan sesi tidak dapat diubah lagi",
         },
       };
     }
@@ -380,10 +515,10 @@ export async function hapusSesiAction(sesiId: number) {
           select: {
             tglPelaksanaan: true,
             tglSelesai: true,
+            waktuPelaksanaan: true,
             proker: { select: { id: true, periode: { select: { status: true } } } },
           },
         },
-        _count: { select: { presensi: true } },
       },
     });
 
@@ -398,7 +533,14 @@ export async function hapusSesiAction(sesiId: number) {
         },
       };
     }
-    if (agendaTelahBerlalu(sesi.agenda.tglPelaksanaan, sesi.agenda.tglSelesai)) {
+    if (
+      hitungStatusAgenda(
+        sesi.agenda.tglPelaksanaan,
+        sesi.agenda.waktuPelaksanaan,
+        sesi.agenda.tglSelesai,
+        new Date(),
+      ) === "selesai"
+    ) {
       return {
         error: {
           kode: "AGENDA_SELESAI",
@@ -407,21 +549,29 @@ export async function hapusSesiAction(sesiId: number) {
         },
       };
     }
-    if (sesi._count.presensi > 0) {
+    await prisma.$transaction(async (tx) => {
+      await tx.presensi.deleteMany({ where: { sesiId } });
+      await tx.sesiPresensi.delete({ where: { id: sesiId } });
+    });
+
+    revalidatePath(`/dashboard/proker/${sesi.agenda.proker.id}`);
+    revalidatePath(`/dashboard/presensi/${sesiId}`);
+
+    return { sukses: true, pesan: "Sesi dan data presensinya berhasil dihapus" };
+  } catch (err: unknown) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      err.code === "P2003"
+    ) {
       return {
         error: {
-          kode: "SESI_SUDAH_ADA_PRESENSI",
-          pesan: "Sesi tidak bisa dihapus karena sudah ada data presensi",
+          kode: "SESI_MEMILIKI_PRESENSI_BARU",
+          pesan: "Ada presensi baru saat sesi dihapus. Muat ulang lalu coba lagi.",
         },
       };
     }
-
-    await prisma.sesiPresensi.delete({ where: { id: sesiId } });
-
-    revalidatePath(`/dashboard/proker/${sesi.agenda.proker.id}`);
-
-    return { sukses: true, pesan: "Sesi presensi berhasil dihapus" };
-  } catch (err: unknown) {
     const error = err as Error;
     return { error: { kode: "SERVER_ERROR", pesan: error.message || "Gagal menghapus sesi" } };
   }

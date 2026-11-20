@@ -37,7 +37,7 @@ Istilah: **adsek** = admin + sekretaris umum + sekretaris inti. **STO** = pengur
 periode ─┬─< STO
          └─< proker ─┬─< kepanitiaan >─ STO
                      └─< agenda ─< sesi_presensi ─< presensi >─ STO
-                     └─< agenda ─< sesi_presensi ─< izin >─ STO
+                     └─< agenda ─< izin >─ STO
 akun_adsek ── dibuat_oleh (proker, agenda, sesi_presensi, lokasi)
 lokasi ──< agenda (lokasi_id, opsional; koordinat & radius disalin ke agenda)
 ```
@@ -68,8 +68,8 @@ agenda(id, proker_id, jenis, judul, urutan, tgl_pelaksanaan DATE, tgl_selesai DA
        target_peserta, dibuat_oleh)
 lokasi(id, nama UNIQUE, lat, lng, radius_m DEFAULT 500, dibuat_oleh, created_at)
 sesi_presensi(id, agenda_id, dibuat_oleh, buka_at, tutup_at, qr_secret)
-izin(id, sesi_id, sto_id, jenis DEFAULT 'izin', alasan, status, ditinjau_oleh NULL, ditinjau_at NULL, created_at,
-     UNIQUE(sesi_id, sto_id))
+izin(id, agenda_id, sto_id, jenis DEFAULT 'izin', alasan, status, ditinjau_oleh NULL, ditinjau_at NULL, created_at,
+     UNIQUE(agenda_id, sto_id))
 presensi(id, sesi_id, sto_id, waktu_scan, lat, lng, jarak_m, status,
          di_luar_radius DEFAULT false, status_verifikasi DEFAULT 'diterima',
          menit_terlambat DEFAULT 0, manual DEFAULT false,
@@ -106,9 +106,10 @@ Peran selalu dibaca dari `kepanitiaan` pada saat pengecekan (per pasangan `proke
 - **Satu agenda boleh punya banyak sesi presensi.** Setiap sesi memilih **tanggal** (di dalam rentang agenda) + **jam mulai** + **jam maksimum kedatangan**; `buka_at` = tanggal+jam mulai, `tutup_at` = jam maksimum kedatangan (WIB). Tidak ada `durasi_menit`.
 - Sesi dibuat/diubah/ditutup/hapus lewat **modal popup** pada kartu agenda; daftar hadir dibuka lewat **modal popup** (tidak ada form/daftar menempel di kartu).
 - **Agenda `akan_datang` tanpa sesi** hanya menampilkan kartu informatif: tanpa badge "Belum Dibuka", tanpa tombol Buat Sesi/Daftar Hadir. Tombol **Tambah Sesi** muncul saat agenda `sedang_berlangsung`.
-- **Agenda `selesai`**: tidak bisa dibuatkan sesi baru dan tidak menampilkan QR; sesi lama tetap bisa dibuka daftar hadirnya lewat modal, dan jam maksimum kedatangan masih boleh dikoreksi.
-- `buka_at` terkunci bila sesi sudah punya presensi (`SESI_SUDAH_ADA_PRESENSI`); `tutup_at` tetap boleh diubah.
-- Daftar agenda adsek memakai tampilan yang sama dengan dashboard STO: tab status **Akan Datang / Sedang Berlangsung / Selesai** + kartu agenda. Setelah sesi ada, tiap baris sesi menampilkan **Layar QR** (hanya saat berjalan), **Daftar Hadir** (modal), dan tombol ubah sesi.
+- **Agenda `selesai`**: tidak bisa dibuatkan sesi baru dan tidak menampilkan QR; opsi ubah/hapus agenda serta opsi ubah/tutup/hapus sesi disembunyikan. Daftar hadir sesi lama tetap bisa dibuka.
+- Sesi hanya dapat dihapus sebelum agendanya selesai. Penghapusan sesi menghapus semua data presensi sesi tersebut secara permanen dalam transaksi yang sama; setelah agenda selesai, sesi dan riwayatnya terkunci.
+- `buka_at` terkunci bila sesi sudah punya presensi (`SESI_SUDAH_ADA_PRESENSI`); `tutup_at` hanya dapat diubah sebelum agenda selesai.
+- Daftar agenda adsek memakai tampilan yang sama dengan dashboard STO: tab status **Akan Datang / Sedang Berlangsung / Selesai** + kartu agenda. Setelah sesi ada, tiap baris sesi menampilkan **Layar QR** (hanya saat berjalan), **Daftar Hadir** (modal), dan tombol ubah sesi selama agenda belum selesai.
 - Form sesi meminta **tanggal** (di dalam rentang agenda), **jam mulai** (WIB), dan **jam maksimum kedatangan** (WIB). Tersedia tombol "Sekarang" untuk mengisi jam dari waktu saat ini.
 - Sebelum `buka_at` atau setelah `tutup_at`, layar sesi **tidak menampilkan QR** (presensi tidak bisa dilakukan); daftar kehadiran dan ekspor CSV tetap tersedia.
 
@@ -119,14 +120,14 @@ Peran selalu dibaca dari `kepanitiaan` pada saat pengecekan (per pasangan `proke
 - Tidak ada baris presensi = alpa (dihitung dari kepanitiaan/target peserta dikurangi presensi).
 - Batas 15 menit adalah konstanta awal (lihat Pertanyaan Terbuka).
 
-### 5.5a Izin (per sesi)
-- Izin melekat pada **sesi presensi**, bukan agenda. Satu izin per pasangan `sesi_id + sto_id` (UNIQUE).
-- STO melihat semua sesi yang menjadi haknya pada periode aktif (lewat `bolehAkses`) dan yang **belum ditutup**, lalu mengajukan izin untuk salah satunya.
+### 5.5a Izin (per agenda)
+- Izin melekat pada **agenda**, tidak mensyaratkan sesi presensi sudah dibuat atau dibuka. Satu izin per pasangan `agenda_id + sto_id` (UNIQUE).
+- STO melihat agenda yang menjadi haknya pada periode aktif (lewat `bolehAkses`) selama status agenda belum selesai, lalu dapat mengajukan izin jauh sebelum waktu agenda.
 - Setiap izin punya **jenis**: `terlambat`, `sakit`, `izin`, `lainnya` (default `izin`), plus alasan teks minimal 5 karakter.
 - Izin berstatus `menunggu` sampai adsek meninjau: setujui atau tolak. Peninjau dicatat pada `ditinjau_oleh` + `ditinjau_at`.
 - STO dapat mengubah jenis/alasan (status kembali `menunggu`) atau membatalkan selama belum disetujui.
 - Izin yang sudah disetujui tidak bisa dibatalkan STO (harus lewat adsek).
-- Sesi yang sudah ditutup tidak bisa diajukan izin (`SESI_SUDAH_DITUTUP`).
+- Status izin tampil pada kartu agenda STO dan diterapkan ke seluruh sesi agenda tersebut. Pada daftar hadir per sesi, status izin menjadi status cadangan jika STO tidak memiliki presensi sah.
 - Periode `selesai` = read-only: pengajuan, pembatalan, dan peninjauan izin ditolak.
 - Lampiran berkas bukti izin belum ada (lihat Pertanyaan Terbuka).
 
@@ -156,7 +157,7 @@ Poin dihitung per **sesi presensi yang sudah ditutup** (`tutup_at` < sekarang), 
 - Halaman sesi adsek (`/dashboard/presensi/[sesi]`) menampilkan **tabel kelola kehadiran** seluruh peserta sah agenda (diturunkan dari `target_peserta` via `lib/peserta.ts`), satu baris per STO dengan status otomatis: hadir, terlambat (menit), izin (disetujui/menunggu), alpa, atau ditolak.
 - Adsek dapat **mencatat kehadiran manual** (absensi manual) untuk peserta yang belum punya presensi; baris ditandai `manual = true`.
 - Adsek dapat **mengatur menit keterlambatan** setiap presensi; status `hadir`/`terlambat` dan poin ikut dihitung ulang.
-- Adsek dapat **memverifikasi** presensi di luar radius dan **meninjau izin** yang masuk langsung dari tabel ini.
+- Adsek dapat **memverifikasi** presensi di luar radius dan meninjau izin dari tabel ini; izin berasal dari agenda dan berlaku di semua sesi agenda.
 - Tabel dapat **diekspor ke CSV** (`/api/presensi/export?sesiId=...`, hanya adsek).
 
 ### 5.6 Validasi scan (semua dilakukan di server)
@@ -212,7 +213,7 @@ Alur: klien login via Firebase dan mendapat ID token → dikirim ke API → serv
 - **Agenda**: CRUD per proker; isi jenis, rentang tanggal (`tgl_pelaksanaan`–`tgl_selesai`), jam mulai, lokasi + titik presensi (pilih master `lokasi` atau pin manual di peta) + radius, serta target peserta.
 - **Sesi presensi**: satu agenda boleh punya **banyak sesi**; buat sesi lewat modal (tanggal dalam rentang agenda + jam mulai + jam maksimum kedatangan), tampilkan QR dinamis, unduh QR (PNG), ubah jam maksimum kedatangan, tutup lebih awal; QR disembunyikan setelah sesi tutup.
 - **Verifikasi radius**: tinjau presensi di luar radius (terima/tolak) di layar sesi / tabel kehadiran.
-- **Izin**: STO memilih jenis izin (`terlambat`/`sakit`/`izin`/`lainnya`) untuk **sesi** yang menjadi haknya; adsek meninjau (setujui/tolak) per sesi.
+- **Izin**: STO memilih jenis izin (`terlambat`/`sakit`/`izin`/`lainnya`) untuk agenda yang menjadi haknya sebelum agenda selesai, meski sesi belum dibuat; adsek meninjau per agenda.
 - **Kelola kehadiran**: tabel per sesi dengan status otomatis, absensi manual, koreksi menit keterlambatan, verifikasi radius, dan tinjau izin.
 - **Leaderboard**: `/dashboard/leaderboard` + Top 3 di ringkasan.
 - **Rekap**: kehadiran per sesi, per agenda, per proker, per STO; ekspor CSV (`/api/presensi/export?sesiId=...`).
@@ -224,13 +225,13 @@ Alur: klien login via Firebase dan mendapat ID token → dikirim ke API → serv
 /home                       Home STO (3 tab + profil)
 /profil                     Profil STO
 /scan                       Pilih agenda + scanner QR (+ unggah gambar QR)
-/izin                       Lihat sesi hak saya yang belum ditutup + ajukan izin (jenis + alasan)
+/izin                       Lihat agenda hak saya yang belum selesai + ajukan izin (jenis + alasan)
 /dashboard                  Ringkasan adsek (termasuk Top 3 poin)
 /dashboard/periode          Kelola periode (admin)
 /dashboard/sto              Kelola STO (admin)
 /dashboard/leaderboard      Leaderboard poin kehadiran (adsek)
 /dashboard/lokasi           Kelola master lokasi presensi (admin)
-/dashboard/izin             Tinjau izin STO per sesi (adsek)
+/dashboard/izin             Tinjau izin STO per agenda (adsek)
 /dashboard/proker           Daftar dan form proker
 /dashboard/proker/[id]      Detail proker: kepanitiaan + agenda (tab status + modal sesi)
 /dashboard/presensi/[sesi]  Layar QR (hanya saat berjalan) + tabel kelola kehadiran + ekspor CSV
@@ -256,9 +257,9 @@ Alur: klien login via Firebase dan mendapat ID token → dikirim ke API → serv
 6. Screenshot QR lama (lewat jendela token) ditolak.
 7. Periode `selesai` tidak bisa diubah.
 8. STO yang bukan panitia proker tetap melihat agenda `semua_panitia_sto`.
-9. Izin yang disetujui membuat poin sesi itu 0; tanpa izin, alpa atau terlambat bernilai -2; tepat waktu bernilai 2.
+9. Izin yang disetujui membuat poin semua sesi dalam agenda itu 0; tanpa izin, alpa atau terlambat bernilai -2; tepat waktu bernilai 2.
 10. QR yang berganti tiap 14 menit: token dari jendela lebih lama dari satu jendela sebelumnya ditolak.
-11. Izin diajukan per sesi (sesi belum ditutup) dan punya jenis (`terlambat`/`sakit`/`izin`/`lainnya`).
+11. Izin diajukan per agenda sebelum agenda selesai (meski belum ada sesi) dan punya jenis (`terlambat`/`sakit`/`izin`/`lainnya`); status tampil di kartu agenda STO dan semua tabel kehadiran sesinya.
 12. Adsek bisa mencatat kehadiran manual dan mengubah menit keterlambatan; status `hadir`/`terlambat` dan poin ikut berubah sesuai ambang 15 menit.
 13. Setelah `tutup_at`, QR tidak ditampilkan lagi, tetapi tabel kehadiran dan ekspor CSV tetap bisa diakses adsek.
 14. Satu agenda boleh memiliki beberapa sesi; sesi di luar rentang tanggal agenda ditolak (`TANGGAL_DI_LUAR_RENTANG`).
@@ -307,7 +308,7 @@ Alur: klien login via Firebase dan mendapat ID token → dikirim ke API → serv
 - Perlukah tombol "pakai lokasi saya" untuk adsek juga saat membuat sesi tanpa master lokasi? (Saat ini sudah tersedia di pemilih peta.)
 - Rate limit endpoint scan masih in-memory per proses (12 percobaan/menit per STO). Perlu pindah ke penyimpanan bersama bila deploy multi-instance?
 - Izin v1 belum punya lampiran berkas (surat/foto). Perlu unggah bukti + penyimpanan (filesystem/objek)?
-- Izin diajukan per sesi. Perlu batas waktu pengajuan (mis. maksimal H-1 atau sebelum sesi ditutup)?
+- Apakah izin perlu batas waktu pengajuan yang lebih awal daripada status agenda selesai?
 - Poin "hadir terlambat tanpa izin" saat ini **-2**. Kalau maksud awal adalah 1 (dan -2 hanya untuk alpa), ubah `TERLAMBAT_TANPA_IZIN` di `lib/poin.ts`.
 - Poin dihitung per sesi tertutup. Karena satu agenda kini boleh punya beberapa sesi, satu agenda = jumlah sesi tertutupnya.
 - Verifikasi presensi luar radius: apakah perlu batas waktu peninjauan, dan apakah penolakan sebaiknya wajib disertai alasan?
