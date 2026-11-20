@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   tentukanKategori,
   hitungPoin,
+  isKetuplakAtauWaketuplak,
   BOBOT_POIN,
 } from "../lib/poin";
 import { StatusPresensi } from "@prisma/client";
@@ -16,11 +17,11 @@ describe("lib/poin", () => {
     assert.equal(kategori, "tepat_waktu");
     assert.equal(
       hitungPoin({ status: StatusPresensi.hadir, adaIzinDisetujui: false }),
-      BOBOT_POIN.TEPAT_WAKTU
+      2
     );
   });
 
-  it("terlambat tanpa izin menghasilkan -2 poin", () => {
+  it("hadir terlambat tanpa izin menghasilkan 1 poin", () => {
     const kategori = tentukanKategori({
       status: StatusPresensi.terlambat,
       adaIzinDisetujui: false,
@@ -28,11 +29,11 @@ describe("lib/poin", () => {
     assert.equal(kategori, "terlambat_tanpa_izin");
     assert.equal(
       hitungPoin({ status: StatusPresensi.terlambat, adaIzinDisetujui: false }),
-      BOBOT_POIN.TERLAMBAT_TANPA_IZIN
+      1
     );
   });
 
-  it("terlambat dengan izin disetujui menghasilkan 0 poin", () => {
+  it("hadir terlambat dengan izin disetujui menghasilkan 1 poin", () => {
     const kategori = tentukanKategori({
       status: StatusPresensi.terlambat,
       adaIzinDisetujui: true,
@@ -40,7 +41,7 @@ describe("lib/poin", () => {
     assert.equal(kategori, "terlambat_dengan_izin");
     assert.equal(
       hitungPoin({ status: StatusPresensi.terlambat, adaIzinDisetujui: true }),
-      BOBOT_POIN.TERLAMBAT_DENGAN_IZIN
+      1
     );
   });
 
@@ -52,7 +53,7 @@ describe("lib/poin", () => {
     assert.equal(kategori, "alpa_tanpa_izin");
     assert.equal(
       hitungPoin({ status: null, adaIzinDisetujui: false }),
-      BOBOT_POIN.ALPA_TANPA_IZIN
+      -2
     );
   });
 
@@ -64,7 +65,16 @@ describe("lib/poin", () => {
     assert.equal(kategori, "alpa_dengan_izin");
     assert.equal(
       hitungPoin({ status: null, adaIzinDisetujui: true }),
-      BOBOT_POIN.ALPA_DENGAN_IZIN
+      0
     );
+  });
+
+  it("mengenali peran ketuplak dan waketuplak untuk bonus 2 poin", () => {
+    assert.equal(isKetuplakAtauWaketuplak("ketua", "Ketua Pelaksana"), true);
+    assert.equal(isKetuplakAtauWaketuplak("ketua", "Wakil Ketua Pelaksana"), true);
+    assert.equal(isKetuplakAtauWaketuplak("pj_divisi", "Waketuplak"), true);
+    assert.equal(isKetuplakAtauWaketuplak("sekretaris", "Sekretaris Pelaksana"), false);
+    assert.equal(isKetuplakAtauWaketuplak("anggota", "Anggota Sie Acara"), false);
+    assert.equal(BOBOT_POIN.BONUS_KETUPLAK_WAKETUPLAK, 2);
   });
 });

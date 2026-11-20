@@ -7,10 +7,10 @@ interface Props {
   deskripsi?: string;
 }
 
-/** Tampilan "Belum ada agenda" yang konsisten antar halaman. */
+/** Tampilan "Belum ada kegiatan" yang konsisten antar halaman. */
 export function EmptyAgenda({
-  judul = "Belum ada agenda di kategori ini",
-  deskripsi = "Agenda kegiatan akan otomatis terdata setelah dijadwalkan oleh adsek/panitia terkait.",
+  judul = "Belum ada kegiatan di kategori ini",
+  deskripsi = "Kegiatan akan otomatis terdata setelah dijadwalkan oleh adsek/panitia terkait.",
 }: Props) {
   return (
     <div className="rounded-3xl border border-[#E2E8F0] bg-white px-4 py-14 text-center shadow-sm">

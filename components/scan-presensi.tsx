@@ -348,8 +348,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
         <ScanLeafletMap sesiDipilih={sesiDipilih} posisi={posisi} />
 
         <p className="text-[11px] text-slate-muted mt-2">
-          Titik biru = pusat sesi, titik merah = posisi Anda. Presensi di luar radius tetap
-          tercatat, lalu diverifikasi adsek.
+          Titik biru = pusat sesi, titik merah = posisi Anda. Presensi hanya dapat dilakukan jika Anda berada di dalam radius lokasi kegiatan.
         </p>
       </div>
 

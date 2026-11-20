@@ -32,7 +32,12 @@ export function ModalKelolaPanitia({
   if (!isOpen) return null;
 
   return (
-    <Modal onClose={onClose} ariaLabel="Kelola Susunan Panitia" size="2xl">
+    <Modal
+      onClose={onClose}
+      ariaLabel="Kelola Susunan Panitia"
+      size="3xl"
+      className="h-[88vh] max-h-[720px] flex flex-col"
+    >
       <ModalHeader
         title="Kelola Susunan Panitia"
         description={`${proker.nama} • Periode ${proker.periode.nama}`}
@@ -40,7 +45,7 @@ export function ModalKelolaPanitia({
         onClose={onClose}
       />
 
-      <div className="px-6 pt-3 border-b border-[#E2E8F0] flex items-center gap-4 bg-surface">
+      <div className="shrink-0 px-6 pt-3 border-b border-[#E2E8F0] flex items-center gap-4 bg-surface">
         <button
           type="button"
           onClick={() => setTabModal("struktur")}
@@ -65,17 +70,17 @@ export function ModalKelolaPanitia({
         </button>
       </div>
 
-      <ModalBody>
-        {tabModal === "struktur" ? (
-          <PanitiaStrukturTab
-            proker={proker}
-            availableStos={availableStos}
-            onClose={onClose}
-            setPesan={setPesan}
-            isPending={isPending}
-            startTransition={startTransition}
-          />
-        ) : (
+      {tabModal === "struktur" ? (
+        <PanitiaStrukturTab
+          proker={proker}
+          availableStos={availableStos}
+          onClose={onClose}
+          setPesan={setPesan}
+          isPending={isPending}
+          startTransition={startTransition}
+        />
+      ) : (
+        <ModalBody className="flex-1 min-h-0 overflow-y-auto">
           <PanitiaCsvTab
             proker={proker}
             availableStos={availableStos}
@@ -84,8 +89,8 @@ export function ModalKelolaPanitia({
             isPending={isPending}
             startTransition={startTransition}
           />
-        )}
-      </ModalBody>
+        </ModalBody>
+      )}
     </Modal>
   );
 }

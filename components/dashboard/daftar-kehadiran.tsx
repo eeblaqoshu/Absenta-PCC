@@ -1,24 +1,23 @@
 // components/dashboard/daftar-kehadiran.tsx
-// Tabel kelola kehadiran satu sesi (adsek): status per peserta, koreksi menit
-// keterlambatan, absensi manual, verifikasi radius, tinjau izin, dan ekspor CSV.
+// Tabel kelola kehadiran satu sesi (adsek): status per peserta, koreksi status/izin
+// manual via dropdown, verifikasi radius, dan ekspor CSV.
 "use client";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  catatPresensiManualAction,
-  aturMenitTerlambatAction,
+  catatStatusKehadiranManualAction,
   verifikasiPresensiAction,
+  type PilihanStatusManual,
 } from "@/lib/actions/presensi";
-import { tinjauIzinAction } from "@/lib/actions/izin";
-import { Download, Loader2, UserPlus, Check, X, RefreshCw } from "lucide-react";
+import { Download, Loader2, RefreshCw } from "lucide-react";
 import type { RekapKehadiranSesi, StatusKehadiran } from "@/lib/kehadiran";
 
 const LABEL: Record<StatusKehadiran, string> = {
   hadir: "Hadir",
   terlambat: "Terlambat",
-  izin_disetujui: "Izin disetujui",
-  izin_menunggu: "Izin menunggu",
+  izin_disetujui: "Izin",
+  izin_menunggu: "Izin",
   alpa: "Alpa",
   ditolak: "Ditolak",
 };
@@ -31,6 +30,13 @@ const GAYA: Record<StatusKehadiran, string> = {
   alpa: "bg-rose-100 text-rose-700",
   ditolak: "bg-[#E2E8F0] text-slate-muted",
 };
+
+function statusKePilihan(status: StatusKehadiran): PilihanStatusManual {
+  if (status === "hadir") return "hadir";
+  if (status === "terlambat") return "terlambat";
+  if (status === "izin_disetujui" || status === "izin_menunggu") return "izin";
+  return "alpa";
+}
 
 interface Props {
   sesiId: number;
@@ -99,15 +105,14 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
         </p>
       )}
 
-      <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
+      <div className="overflow-x-auto scrollbar-none" data-lenis-prevent-horizontal>
         <table className="w-full text-left text-xs">
           <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
             <tr>
               <th className="px-3 py-3">Peserta</th>
               <th className="px-3 py-3">Status</th>
-              <th className="px-3 py-3">Telat (menit)</th>
+              <th className="px-3 py-3">Atur Status (Manual)</th>
               <th className="px-3 py-3">Radius</th>
-              <th className="px-3 py-3">Izin</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E2E8F0]">
@@ -123,36 +128,29 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${GAYA[b.statusKehadiran]}`}>
                     {LABEL[b.statusKehadiran]}
                   </span>
+                  {b.statusKehadiran === "terlambat" && b.menitTerlambat > 0 && (
+                    <span className="ml-1 text-[10px] text-amber-700 font-semibold">
+                      ({b.menitTerlambat}m)
+                    </span>
+                  )}
                   {b.manual && <span className="ml-1 text-[10px] text-slate-muted">manual</span>}
                   {rekap.sesiSudahDitutup && (
                     <span className="ml-1 text-[10px] text-slate-muted">({b.poin > 0 ? "+" : ""}{b.poin} poin)</span>
                   )}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap">
-                  {b.presensiId ? (
-                    <BarisMenit
-                      presensiId={b.presensiId}
-                      awal={b.menitTerlambat}
-                      isReadonly={isReadonly}
-                      sedangProses={prosesId === `menit-${b.presensiId}`}
-                      onSimpan={(menit) =>
-                        jalankan(`menit-${b.presensiId}`, () =>
-                          aturMenitTerlambatAction(b.presensiId as number, menit)
-                        )
-                      }
-                    />
-                  ) : isReadonly ? (
-                    <span className="text-slate-muted">-</span>
-                  ) : (
-                    <BarisCatatManual
-                      sedangProses={prosesId === `catat-${b.stoId}`}
-                      onCatat={(menit) =>
-                        jalankan(`catat-${b.stoId}`, () =>
-                          catatPresensiManualAction(sesiId, b.stoId, menit)
-                        )
-                      }
-                    />
-                  )}
+                  <BarisStatusManual
+                    key={`${b.stoId}-${b.statusKehadiran}-${b.menitTerlambat}`}
+                    statusAwal={statusKePilihan(b.statusKehadiran)}
+                    menitAwal={b.menitTerlambat}
+                    isReadonly={isReadonly}
+                    sedangProses={prosesId === `status-${b.stoId}`}
+                    onSimpan={(status, menit) =>
+                      jalankan(`status-${b.stoId}`, () =>
+                        catatStatusKehadiranManualAction(sesiId, b.stoId, status, menit)
+                      )
+                    }
+                  />
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap">
                   {b.presensiId ? (
@@ -197,45 +195,6 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
                     <span className="text-slate-muted">-</span>
                   )}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap">
-                  {b.izin ? (
-                    <div className="space-y-1">
-                      <span className="text-[11px] text-navy capitalize">
-                        {b.izin.jenis} • {b.izin.status}
-                      </span>
-                      {b.izin.status === "menunggu" && !isReadonly && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            disabled={prosesId === `izin-${b.izin!.id}`}
-                            onClick={() =>
-                              jalankan(`izin-${b.izin!.id}`, () =>
-                                tinjauIzinAction(b.izin!.id, "disetujui")
-                              )
-                            }
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-60"
-                          >
-                            <Check className="w-3 h-3" />
-                            Setujui
-                          </button>
-                          <button
-                            disabled={prosesId === `izin-${b.izin!.id}`}
-                            onClick={() =>
-                              jalankan(`izin-${b.izin!.id}`, () =>
-                                tinjauIzinAction(b.izin!.id, "ditolak")
-                              )
-                            }
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold cursor-pointer disabled:opacity-60"
-                          >
-                            <X className="w-3 h-3" />
-                            Tolak
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-slate-muted">-</span>
-                  )}
-                </td>
               </tr>
             ))}
           </tbody>
@@ -252,78 +211,64 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
   );
 }
 
-/** Input menit keterlambatan untuk presensi yang sudah ada. */
-function BarisMenit({
-  presensiId,
-  awal,
+/** Dropdown pilihan status presensi manual (Hadir, Terlambat, Izin, Alpa) */
+function BarisStatusManual({
+  statusAwal,
+  menitAwal,
   isReadonly,
   sedangProses,
   onSimpan,
 }: {
-  presensiId: number;
-  awal: number;
+  statusAwal: PilihanStatusManual;
+  menitAwal: number;
   isReadonly: boolean;
   sedangProses: boolean;
-  onSimpan: (menit: number) => void;
+  onSimpan: (status: PilihanStatusManual, menit: number) => void;
 }) {
-  const [nilai, setNilai] = useState<number>(awal);
-  const berubah = nilai !== awal;
+  const [status, setStatus] = useState<PilihanStatusManual>(statusAwal);
+  const [menit, setMenit] = useState<number>(menitAwal > 0 ? menitAwal : 16);
 
   if (isReadonly) {
-    return <span className="text-[11px] text-slate-muted">{awal} mnt</span>;
+    return <span className="text-slate-muted">-</span>;
   }
 
+  const adaPerubahan =
+    status !== statusAwal || (status === "terlambat" && menit !== menitAwal);
+
   return (
-    <div className="flex items-center gap-1">
-      <input
-        type="number"
-        min={0}
-        max={1440}
-        value={nilai}
-        onChange={(e) => setNilai(Number(e.target.value))}
-        className="w-16 rounded-lg border border-[#CBD5E1] bg-white px-2 py-1 text-[11px] text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
-      />
+    <div className="flex items-center gap-1.5">
+      <select
+        value={status}
+        disabled={sedangProses}
+        onChange={(e) => setStatus(e.target.value as PilihanStatusManual)}
+        className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-1 text-[11px] font-semibold text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30 disabled:opacity-60"
+      >
+        <option value="alpa">Alpa</option>
+        <option value="hadir">Hadir</option>
+        <option value="terlambat">Terlambat</option>
+        <option value="izin">Izin</option>
+      </select>
+
+      {status === "terlambat" && (
+        <input
+          type="number"
+          min={1}
+          max={1440}
+          value={menit}
+          disabled={sedangProses}
+          onChange={(e) => setMenit(Math.max(1, Number(e.target.value)))}
+          className="w-14 rounded-lg border border-[#CBD5E1] bg-white px-2 py-1 text-[11px] text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30 disabled:opacity-60"
+          title="Menit keterlambatan"
+        />
+      )}
+
       <button
-        disabled={!berubah || sedangProses}
-        onClick={() => onSimpan(nilai)}
-        className="px-2 py-1 rounded-lg bg-secondary hover:bg-primary text-white text-[10px] font-bold disabled:opacity-40"
-        title={`Simpan keterlambatan presensi #${presensiId}`}
+        disabled={!adaPerubahan || sedangProses}
+        onClick={() => onSimpan(status, menit)}
+        className="px-2.5 py-1 rounded-lg bg-secondary hover:bg-primary text-white text-[10px] font-bold disabled:opacity-30 transition-all cursor-pointer disabled:cursor-not-allowed"
+        title="Simpan status presensi"
       >
         {sedangProses ? <Loader2 className="w-3 h-3 animate-spin" /> : "Simpan"}
-      </button>
-    </div>
-  );
-}
-
-/** Form kecil untuk absensi manual peserta yang belum punya presensi. */
-function BarisCatatManual({
-  sedangProses,
-  onCatat,
-}: {
-  sedangProses: boolean;
-  onCatat: (menit: number) => void;
-}) {
-  const [menit, setMenit] = useState<number>(0);
-
-  return (
-    <div className="flex items-center gap-1">
-      <input
-        type="number"
-        min={0}
-        max={1440}
-        value={menit}
-        onChange={(e) => setMenit(Number(e.target.value))}
-        className="w-16 rounded-lg border border-[#CBD5E1] bg-white px-2 py-1 text-[11px] text-navy focus:border-secondary focus:outline-none focus:ring-2 focus:ring-secondary/30"
-        title="Menit keterlambatan"
-      />
-      <button
-        disabled={sedangProses}
-        onClick={() => onCatat(menit)}
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary hover:bg-secondary text-white text-[10px] font-bold disabled:opacity-60"
-        title="Catat kehadiran manual"
-      >
-        {sedangProses ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
-        Catat
       </button>
     </div>
   );

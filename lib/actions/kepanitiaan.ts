@@ -6,7 +6,12 @@ import { requireAdsek } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { StatusPeriode, PeranPanitia } from "@prisma/client";
-import type { BarisPanitiaInput, CsvBarisPanitia } from "@/components/dashboard/proker-detail/types";
+import {
+  isDivisiLitbang,
+  isPeranLitbangPengawas,
+  type BarisPanitiaInput,
+  type CsvBarisPanitia,
+} from "@/components/dashboard/proker-detail/types";
 
 const TambahPanitiaSchema = z.object({
   prokerId: z.coerce.number(),
@@ -48,6 +53,29 @@ export async function tambahPanitiaAction(formData: FormData) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat mengubah kepanitiaan pada periode yang sudah selesai",
+        },
+      };
+    }
+
+    const sto = await prisma.sto.findUnique({
+      where: { id: stoId },
+      select: { id: true, nama: true, divisi: true, jabatan: true },
+    });
+
+    if (!sto) {
+      return {
+        error: {
+          kode: "STO_TIDAK_DITEMUKAN",
+          pesan: "Pengurus STO tidak ditemukan.",
+        },
+      };
+    }
+
+    if (isDivisiLitbang(sto) && !isPeranLitbangPengawas(null, divisiPanitia)) {
+      return {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: `Pengurus dari Divisi Litbang (${sto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
         },
       };
     }
@@ -137,9 +165,10 @@ export async function tambahBanyakPanitiaAction(
         periodeId: proker.periodeId,
         id: { in: panitiaList.map((p) => p.stoId) },
       },
-      select: { id: true, nama: true },
+      select: { id: true, nama: true, divisi: true, jabatan: true },
     });
     const validStoMap = new Map(validStos.map((s) => [s.id, s.nama]));
+    const validStoObjMap = new Map(validStos.map((s) => [s.id, s]));
 
     const seenInBatch = new Set<number>();
     const dataValid: {
@@ -161,8 +190,14 @@ export async function tambahBanyakPanitiaAction(
       }
 
       const namaSto = validStoMap.get(item.stoId);
-      if (!namaSto) {
+      const stoObj = validStoObjMap.get(item.stoId);
+      if (!namaSto || !stoObj) {
         pesanGagal.push(`Baris ${no}: Pengurus tidak valid atau bukan pengurus di periode aktif ini.`);
+        continue;
+      }
+
+      if (isDivisiLitbang(stoObj) && !isPeranLitbangPengawas(null, item.divisiPanitia)) {
+        pesanGagal.push(`Baris ${no}: Pengurus dari Divisi Litbang (${stoObj.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`);
         continue;
       }
 
@@ -204,6 +239,7 @@ export async function tambahBanyakPanitiaAction(
     });
 
     revalidatePath(`/dashboard/proker/${prokerId}`);
+    revalidatePath(`/dashboard/proker/${prokerId}/panitia`);
     return {
       sukses: true,
       totalBerhasil: dataValid.length,
@@ -332,7 +368,7 @@ export async function imporCsvPanitiaAction(
 
     const allStos = await prisma.sto.findMany({
       where: { periodeId: proker.periodeId },
-      select: { id: true, nama: true, nim: true, emailGoogle: true },
+      select: { id: true, nama: true, nim: true, emailGoogle: true, divisi: true, jabatan: true },
     });
 
     const stoByNim = new Map<string, typeof allStos[0]>();
@@ -385,6 +421,11 @@ export async function imporCsvPanitiaAction(
 
       const { peran, divisiPanitia } = normalisasiPeranPanitia(row.peran, row.divisiPanitia);
 
+      if (isDivisiLitbang(stoMatch) && !isPeranLitbangPengawas(row.peran, divisiPanitia)) {
+        pesanGagal.push(`Baris ${noBaris}: Pengurus dari Divisi Litbang (${stoMatch.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`);
+        continue;
+      }
+
       seenStoId.add(stoMatch.id);
       dataValid.push({
         prokerId,
@@ -427,7 +468,10 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
 
     const kepanitiaan = await prisma.kepanitiaan.findUnique({
       where: { id: kepanitiaanId },
-      include: { proker: { include: { periode: true } } },
+      include: {
+        proker: { include: { periode: true } },
+        sto: true,
+      },
     });
 
     if (!kepanitiaan || kepanitiaan.proker.periode.status === StatusPeriode.selesai) {
@@ -451,15 +495,73 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
       };
     }
 
+    // Periksa apakah STO diubah
+    const stoIdInput = formData.get("stoId");
+    const newStoId = stoIdInput ? parseInt(String(stoIdInput), 10) : kepanitiaan.stoId;
+    if (isNaN(newStoId) || newStoId <= 0) {
+      return {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: "ID STO tidak valid",
+        },
+      };
+    }
+
+    let targetSto = kepanitiaan.sto;
+    if (newStoId !== kepanitiaan.stoId) {
+      const stoBaru = await prisma.sto.findUnique({
+        where: { id: newStoId },
+      });
+      if (!stoBaru || stoBaru.periodeId !== kepanitiaan.proker.periodeId) {
+        return {
+          error: {
+            kode: "STO_TIDAK_DITEMUKAN",
+            pesan: "Pengurus STO baru tidak ditemukan atau bukan bagian dari periode aktif ini",
+          },
+        };
+      }
+
+      // Pastikan STO baru belum terdaftar di kepanitiaan proker ini
+      const duplikat = await prisma.kepanitiaan.findUnique({
+        where: {
+          prokerId_stoId: {
+            prokerId: kepanitiaan.prokerId,
+            stoId: newStoId,
+          },
+        },
+      });
+      if (duplikat && duplikat.id !== kepanitiaanId) {
+        return {
+          error: {
+            kode: "STO_SUDAH_PANITIA",
+            pesan: `Pengurus ${stoBaru.nama} sudah terdaftar dalam susunan panitia proker ini`,
+          },
+        };
+      }
+
+      targetSto = stoBaru;
+    }
+
+    if (isDivisiLitbang(targetSto) && !isPeranLitbangPengawas(null, divisiPanitia)) {
+      return {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: `Pengurus dari Divisi Litbang (${targetSto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+        },
+      };
+    }
+
     await prisma.kepanitiaan.update({
       where: { id: kepanitiaanId },
       data: {
+        stoId: targetSto.id,
         peran,
         divisiPanitia,
       },
     });
 
     revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}`);
+    revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}/panitia`);
     return { sukses: true, pesan: "Data panitia berhasil diperbarui" };
   } catch (err: unknown) {
     const error = err as Error;
@@ -495,6 +597,7 @@ export async function hapusPanitiaAction(kepanitiaanId: number) {
     });
 
     revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}`);
+    revalidatePath(`/dashboard/proker/${kepanitiaan.prokerId}/panitia`);
     return { sukses: true, pesan: "Panitia berhasil dihapus dari proker" };
   } catch (err: unknown) {
     const error = err as Error;

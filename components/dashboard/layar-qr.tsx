@@ -255,7 +255,7 @@ export function LayarQr({ sesiId, judulAgenda, namaProker, lokasiNama, isReadonl
           <h1 className="text-lg font-bold text-primary">{judulAgenda}</h1>
           <p className="text-xs text-slate-muted mt-0.5 inline-flex items-center gap-1">
             <MapPin className="w-3 h-3" />
-            {lokasiNama ?? "Titik agenda"} • radius {data?.radiusM ?? "-"} m
+            {lokasiNama ?? "Titik kegiatan"} • radius {data?.radiusM ?? "-"} m
           </p>
         </div>
 

@@ -79,8 +79,10 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
           <div className="text-[11px] leading-relaxed text-slate-muted">
             <p className="font-semibold text-navy">Ketentuan poin</p>
             <p>+2 hadir tepat waktu (≤15 menit)</p>
-            <p>-2 terlambat tanpa izin &amp; alpa tanpa izin</p>
-            <p>0 terlambat dengan izin &amp; alpa dengan izin</p>
+            <p>+1 hadir terlambat (&gt;15 menit)</p>
+            <p>0 izin disetujui (tidak hadir)</p>
+            <p>-2 alpa / tidak hadir tanpa izin</p>
+            <p className="text-secondary font-medium">+2 bonus peran Ketuplak &amp; Waketuplak</p>
           </div>
         </div>
 
@@ -89,7 +91,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
             Belum ada sesi presensi yang selesai pada periode ini.
           </p>
         ) : (
-          <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
+          <div className="overflow-x-auto scrollbar-none" data-lenis-prevent-horizontal>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-[#E2E8F0] text-left text-[11px] uppercase tracking-wide text-slate-muted">
@@ -139,8 +141,9 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
                       {MEDALI[b.peringkat - 1] ?? b.peringkat}
                     </td>
                     <td className="py-2.5 pr-3">
-                      <p className="font-semibold text-navy">{b.nama}</p>
-                      <p className="text-[11px] text-slate-muted">{b.nim}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-navy">{b.nama}</p>
+                      </div>
                     </td>
                     <td className="py-2.5 pr-3 text-slate-muted">{b.divisi ?? "Umum"}</td>
                     <td className="py-2.5 pr-3 text-center text-emerald-600">{b.tepatWaktu}</td>

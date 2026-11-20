@@ -23,6 +23,7 @@ interface ModalProps {
   ariaLabel: string;
   size?: ModalSize;
   closeOnBackdrop?: boolean;
+  className?: string;
 }
 
 /**
@@ -37,6 +38,7 @@ export function Modal({
   ariaLabel,
   size = "md",
   closeOnBackdrop = true,
+  className = "",
 }: ModalProps) {
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -78,7 +80,7 @@ export function Modal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 16 }}
         transition={{ type: "spring", damping: 28, stiffness: 360 }}
-        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl`}
+        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl ${className}`}
       >
         {children}
       </motion.div>

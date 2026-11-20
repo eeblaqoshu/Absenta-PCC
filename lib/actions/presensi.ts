@@ -9,7 +9,7 @@ import { requireAdsek } from "@/lib/auth";
 import { bolehAkses } from "@/lib/akses";
 import { statusDariMenitTerlambat } from "@/lib/waktu";
 import { revalidatePath } from "next/cache";
-import { StatusVerifikasi } from "@prisma/client";
+import { StatusVerifikasi, StatusPresensi, StatusIzin, JenisIzin } from "@prisma/client";
 
 /**
  * Setujui atau tolak presensi yang berada di luar radius.
@@ -264,5 +264,166 @@ export async function aturMenitTerlambatAction(presensiId: number, menitTerlamba
   } catch (err: unknown) {
     const error = err as Error;
     return { error: { kode: "SERVER_ERROR", pesan: error.message || "Gagal mengatur keterlambatan" } };
+  }
+}
+
+export type PilihanStatusManual = "hadir" | "terlambat" | "izin" | "alpa";
+
+/**
+ * Catat / ubah status kehadiran manual dari dropdown tabel daftar kehadiran (AdSek).
+ * Pilihan: hadir, terlambat, izin, alpa.
+ */
+export async function catatStatusKehadiranManualAction(
+  sesiId: number,
+  stoId: number,
+  status: PilihanStatusManual,
+  menitTerlambatInput?: number
+) {
+  try {
+    const adsek = await requireAdsek();
+
+    if (!Number.isInteger(sesiId) || sesiId <= 0) {
+      return { error: { kode: "VALIDASI_GAGAL", pesan: "ID sesi tidak valid" } };
+    }
+    if (!Number.isInteger(stoId) || stoId <= 0) {
+      return { error: { kode: "VALIDASI_GAGAL", pesan: "ID STO tidak valid" } };
+    }
+    if (!["hadir", "terlambat", "izin", "alpa"].includes(status)) {
+      return { error: { kode: "VALIDASI_GAGAL", pesan: "Pilihan status tidak valid" } };
+    }
+
+    const sesi = await prisma.sesiPresensi.findUnique({
+      where: { id: sesiId },
+      select: {
+        id: true,
+        agendaId: true,
+        agenda: {
+          select: {
+            lat: true,
+            lng: true,
+            proker: { select: { id: true, periode: { select: { status: true } } } },
+          },
+        },
+      },
+    });
+    if (!sesi) {
+      return { error: { kode: "TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } };
+    }
+    if (sesi.agenda.proker.periode.status === "selesai") {
+      return {
+        error: {
+          kode: "PERIODE_READ_ONLY",
+          pesan: "Periode kepengurusan ini sudah selesai dan bersifat read-only",
+        },
+      };
+    }
+
+    // Pastikan peserta sah untuk agenda ini
+    const akses = await bolehAkses(stoId, sesi.agendaId);
+    if (!akses.boleh) {
+      return {
+        error: {
+          kode: "TIDAK_BERHAK",
+          pesan: akses.alasan ?? "STO ini tidak berhak atas agenda tersebut",
+        },
+      };
+    }
+
+    if (status === "izin") {
+      // Hapus presensi bila ada sebelumnya
+      await prisma.presensi.deleteMany({
+        where: { sesiId, stoId },
+      });
+      // Catat / update izin disetujui langsung oleh adsek
+      await prisma.izin.upsert({
+        where: { sesiId_stoId: { sesiId, stoId } },
+        create: {
+          sesiId,
+          stoId,
+          jenis: JenisIzin.izin,
+          alasan: "Dicatat manual oleh Adsek",
+          status: StatusIzin.disetujui,
+          ditinjauOleh: adsek.id,
+          ditinjauAt: new Date(),
+        },
+        update: {
+          jenis: JenisIzin.izin,
+          alasan: "Dicatat manual oleh Adsek",
+          status: StatusIzin.disetujui,
+          ditinjauOleh: adsek.id,
+          ditinjauAt: new Date(),
+        },
+      });
+    } else if (status === "alpa") {
+      // Hapus presensi dan izin agar kembali alpa
+      await prisma.presensi.deleteMany({
+        where: { sesiId, stoId },
+      });
+      await prisma.izin.deleteMany({
+        where: { sesiId, stoId },
+      });
+    } else {
+      // Status 'hadir' atau 'terlambat'
+      // Hapus izin bila ada sebelumnya
+      await prisma.izin.deleteMany({
+        where: { sesiId, stoId },
+      });
+
+      let menit = 0;
+      if (status === "terlambat") {
+        menit = Number(menitTerlambatInput) || 16;
+        if (menit <= 15) menit = 16; // Minimal 16 menit agar berstatus terlambat
+      }
+
+      await prisma.presensi.upsert({
+        where: { sesiId_stoId: { sesiId, stoId } },
+        create: {
+          sesiId,
+          stoId,
+          waktuScan: new Date(),
+          lat: sesi.agenda.lat ?? 0,
+          lng: sesi.agenda.lng ?? 0,
+          jarakM: 0,
+          status: status === "hadir" ? StatusPresensi.hadir : StatusPresensi.terlambat,
+          diLuarRadius: false,
+          statusVerifikasi: StatusVerifikasi.diterima,
+          menitTerlambat: menit,
+          manual: true,
+        },
+        update: {
+          status: status === "hadir" ? StatusPresensi.hadir : StatusPresensi.terlambat,
+          menitTerlambat: menit,
+          manual: true,
+          diLuarRadius: false,
+          statusVerifikasi: StatusVerifikasi.diterima,
+        },
+      });
+    }
+
+    revalidatePath(`/dashboard/presensi/${sesiId}`);
+    revalidatePath(`/dashboard/proker/${sesi.agenda.proker.id}`);
+    revalidatePath("/dashboard/leaderboard");
+    revalidatePath("/dashboard");
+    revalidatePath("/home");
+    revalidatePath("/statistik");
+
+    const pesanSukses =
+      status === "izin"
+        ? "Status diubah menjadi Izin"
+        : status === "alpa"
+          ? "Status diubah menjadi Alpa"
+          : status === "hadir"
+            ? "Status diubah menjadi Hadir"
+            : `Status diubah menjadi Terlambat (${menitTerlambatInput || 16} menit)`;
+
+    return { sukses: true, pesan: pesanSukses };
+  } catch (err: unknown) {
+    const error = err as Error;
+    return {
+      error: {
+        kode: "SERVER_ERROR",
+        pesan: error.message || "Gagal memperbarui status kehadiran",
+      },
+    };
   }
 }

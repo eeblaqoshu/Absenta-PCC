@@ -81,7 +81,7 @@ export function PeriodeManager({
   const handleTutupPeriode = async (id: number, namaPeriode: string) => {
     const setuju = await konfirmasiAksi({
       judul: "Tutup Periode Kepengurusan?",
-      pesan: `Yakin ingin menutup periode "${namaPeriode}"?\n PERINGATAN: Periode selesai akan berstatus READ-ONLY (proker, panitia, agenda, dan sesi presensi tidak dapat dimanipulasi lagi).`,
+      pesan: `Yakin ingin menutup periode "${namaPeriode}"?\n PERINGATAN: Periode selesai akan berstatus READ-ONLY (proker, panitia, kegiatan, dan sesi presensi tidak dapat dimanipulasi lagi).`,
       icon: "warning",
       tombolYa: "Ya, Tutup Periode",
       warnaKonfirmasi: "#F5B301",

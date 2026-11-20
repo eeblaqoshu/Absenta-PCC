@@ -183,7 +183,7 @@ export function SesiModal({
                 {lokasiNama ?? "Titik lokasi belum diatur"}
               </p>
               <p className="text-slate-muted">
-                Radius {radiusM ?? "-"} m • titik presensi mengikuti agenda, bukan sesi
+                Radius {radiusM ?? "-"} m • titik presensi mengikuti kegiatan, bukan sesi
               </p>
             </div>
           </div>
@@ -203,7 +203,7 @@ export function SesiModal({
             />
             <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-muted">
               <CalendarClock className="h-3 w-3" />
-              Rentang agenda: {tglMulai}
+              Rentang kegiatan: {tglMulai}
               {tglSelesai && tglSelesai !== tglMulai ? ` s/d ${tglSelesai}` : ""}
             </p>
           </div>

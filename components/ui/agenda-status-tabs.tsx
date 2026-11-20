@@ -34,7 +34,7 @@ export function AgendaStatusTabs<T extends string>({
   return (
     <div
       className="overflow-x-auto rounded-full border border-[#E2E8F0] bg-surface p-1.5 shadow-sm scrollbar-none"
-      data-lenis-prevent
+      data-lenis-prevent-horizontal
     >
       <div className="flex min-w-full items-center gap-1.5 sm:min-w-0 sm:grid sm:grid-cols-3">
         {items.map((tab) => {

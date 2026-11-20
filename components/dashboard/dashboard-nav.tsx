@@ -70,19 +70,13 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
       isActive: pathname.startsWith("/dashboard/proker"),
     },
     {
-      href: "/dashboard/izin",
-      label: "Izin",
-      icon: FileText,
-      isActive: pathname.startsWith("/dashboard/izin"),
-    },
-  ];
-
-  const masterDataItems = [
-    {
       href: "/dashboard/leaderboard",
       label: "Leaderboard",
       icon: Trophy,
     },
+  ];
+
+  const masterDataItems = [
     {
       href: "/dashboard/sto",
       label: "Data STO",
@@ -101,14 +95,14 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
   ];
 
   const isMasterDataActive = masterDataItems.some(
-    (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+    (item) => pathname === item.href || pathname.startsWith(item.href + "/"),
   );
 
   if (mobile) {
     return (
       <div
         className="flex items-center justify-center gap-4 sm:gap-6 px-4 border-t border-[#E2E8F0] overflow-x-auto bg-white/95 backdrop-blur-sm scrollbar-none"
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
       >
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -186,7 +180,8 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
                 {masterDataItems.map((sub) => {
                   const SubIcon = sub.icon;
                   const isSubActive =
-                    pathname === sub.href || pathname.startsWith(sub.href + "/");
+                    pathname === sub.href ||
+                    pathname.startsWith(sub.href + "/");
                   return (
                     <Link
                       key={sub.href}

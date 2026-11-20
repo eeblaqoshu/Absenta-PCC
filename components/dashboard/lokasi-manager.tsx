@@ -103,7 +103,7 @@ export function LokasiManager({ initialLokasi }: Props) {
   async function hapus(item: LokasiItem) {
     const ya = await konfirmasiHapus({
       judul: "Hapus lokasi?",
-      pesan: `Lokasi "${item.nama}" akan dihapus. Titik pada agenda yang sudah dibuat tidak berubah.`,
+      pesan: `Lokasi "${item.nama}" akan dihapus. Titik pada kegiatan yang sudah dibuat tidak berubah.`,
     });
     if (!ya) return;
     setPesan(null);
@@ -216,7 +216,7 @@ export function LokasiManager({ initialLokasi }: Props) {
           <form onSubmit={simpan} className="flex min-h-0 flex-1 flex-col">
             <ModalHeader
               title={diedit ? `Ubah Lokasi: ${diedit.nama}` : "Daftarkan Lokasi Baru"}
-              description="Titik pusat dan radius menjadi nilai awal saat dipilih pada agenda."
+              description="Titik pusat dan radius menjadi nilai awal saat dipilih pada kegiatan."
               icon={MapPin}
               onClose={() => {
                 setModalBuka(false);

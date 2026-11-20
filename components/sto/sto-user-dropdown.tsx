@@ -4,12 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  User,
-  LogOut,
-  ChevronDown,
-  Loader2,
-} from "lucide-react";
+import { User, LogOut, ChevronDown, Loader2 } from "lucide-react";
 import type { StoNavbarUser } from "./sto-navbar";
 
 interface StoUserDropdownProps {
@@ -129,7 +124,9 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
             {/* Header / Info User */}
             <div className="px-3 py-2.5 bg-surface/70 rounded-xl mb-1 border border-[#E2E8F0]/60 space-y-2">
               <div>
-                <p className="text-xs font-bold text-navy truncate">{sto.nama}</p>
+                <p className="text-xs font-bold text-navy truncate">
+                  {sto.nama}
+                </p>
                 {sto.nim && (
                   <p className="text-[10px] text-slate-muted truncate mt-0.5">
                     NIM: {sto.nim}
@@ -138,10 +135,10 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
               </div>
               <div className="pt-2 border-t border-[#E2E8F0]/60 flex items-center justify-between gap-2">
                 <span className="text-[10px] font-medium text-slate-muted shrink-0">
-                  Divisi / Departemen
+                  Div/Dep
                 </span>
                 <span
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-secondary/10 text-secondary border border-secondary/20 truncate max-w-[130px]"
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-info/10 text-slated-muted border border-slated-muted/20 uppercase tracking-wider truncate max-w-[130px]"
                   title={sto.divisi || "Pengurus STO"}
                 >
                   {sto.divisi || "Pengurus STO"}

@@ -32,6 +32,22 @@ html.lenis body {
   min-height: 100vh;
 }
 
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* Izinkan scroll horizontal tetap berjalan tanpa mengunci scroll vertikal halaman */
+.lenis [data-lenis-prevent-horizontal] {
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
+}
+
+/* Container vertikal khusus (misal: modal / drawer) */
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-vertical] {
+  overscroll-behavior: contain;
+}
+
 input,
 button,
 select,

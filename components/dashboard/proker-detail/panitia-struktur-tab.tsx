@@ -13,6 +13,7 @@ import {
 import {
   OPSI_PERAN_PANITIA,
   isSekretarisUmum,
+  isDivisiLitbang,
   type BarisFormPanitia,
   type StoOption,
   type ProkerData,
@@ -42,7 +43,10 @@ export function PanitiaStrukturTab({
 
   const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>(() => {
     const firstAvailable = availableStos.find(
-      (s) => !panitiaStoIdSet.has(s.id) && !isSekretarisUmum(s),
+      (s) =>
+        !panitiaStoIdSet.has(s.id) &&
+        !isSekretarisUmum(s) &&
+        !isDivisiLitbang(s),
     );
     return [
       {
@@ -59,9 +63,6 @@ export function PanitiaStrukturTab({
       ...panitiaStoIdSet,
       ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
     ]);
-    const firstAvailable = availableStos.find(
-      (s) => !usedIds.has(s.id) && !isSekretarisUmum(s),
-    );
 
     let roleKey = preset?.roleKey;
     if (!roleKey) {
@@ -75,6 +76,15 @@ export function PanitiaStrukturTab({
         roleKey = OPSI_PERAN_PANITIA[0].key;
       }
     }
+
+    const firstAvailable = availableStos.find((s) => {
+      if (usedIds.has(s.id)) return false;
+      if (isSekretarisUmum(s)) return false;
+      if (roleKey === "litbang_pengawas") {
+        return isDivisiLitbang(s);
+      }
+      return !isDivisiLitbang(s);
+    }) || availableStos.find((s) => !usedIds.has(s.id) && !isSekretarisUmum(s));
 
     setBarisStruktur((prev) => [
       ...prev,
@@ -157,22 +167,24 @@ export function PanitiaStrukturTab({
     ) => {
       if (!kriteria) return true;
       if (isSekretarisUmum(sto)) return false;
+      if (kriteria === "litbang") {
+        return isDivisiLitbang(sto);
+      }
+      if (isDivisiLitbang(sto)) return false;
       const jab = (sto.jabatan || "").toLowerCase();
       const div = (sto.divisi || "").toLowerCase();
       return jab.includes(kriteria) || div.includes(kriteria);
     };
 
     const isSpecializedSto = (sto: StoOption) => {
-      if (isSekretarisUmum(sto)) return true;
+      if (isSekretarisUmum(sto) || isDivisiLitbang(sto)) return true;
       const jab = (sto.jabatan || "").toLowerCase();
       const div = (sto.divisi || "").toLowerCase();
       return (
         jab.includes("sekretaris") ||
         div.includes("sekretaris") ||
         jab.includes("bendahara") ||
-        div.includes("bendahara") ||
-        jab.includes("litbang") ||
-        div.includes("litbang")
+        div.includes("bendahara")
       );
     };
 
@@ -204,7 +216,10 @@ export function PanitiaStrukturTab({
       }
 
       const fallbackMatch = availableStos.find(
-        (s) => !currentUsedIds.has(s.id) && !isSekretarisUmum(s),
+        (s) =>
+          !currentUsedIds.has(s.id) &&
+          !isSekretarisUmum(s) &&
+          !isDivisiLitbang(s),
       );
       if (fallbackMatch) {
         currentUsedIds.add(fallbackMatch.id);
@@ -314,19 +329,33 @@ export function PanitiaStrukturTab({
       }
     }
 
-    const barisSekretarisInti = barisStruktur.find(
-      (b) => b.roleKey === "sekretaris_inti",
-    );
-    if (barisSekretarisInti && barisSekretarisInti.stoId) {
-      const stoDipilih = availableStos.find(
-        (s) => String(s.id) === String(barisSekretarisInti.stoId),
-      );
-      if (stoDipilih && isSekretarisUmum(stoDipilih)) {
-        setPesan({
-          tipe: "error",
-          teks: `Pengurus "${stoDipilih.nama}" menjabat sebagai Sekretaris Umum dan tidak dapat ditugaskan sebagai Sekretaris Inti kepanitiaan.`,
-        });
-        return;
+    for (const baris of barisStruktur) {
+      if (baris.stoId) {
+        const stoDipilih = availableStos.find(
+          (s) => String(s.id) === String(baris.stoId),
+        );
+        if (
+          baris.roleKey === "sekretaris_inti" &&
+          stoDipilih &&
+          isSekretarisUmum(stoDipilih)
+        ) {
+          setPesan({
+            tipe: "error",
+            teks: `Pengurus "${stoDipilih.nama}" menjabat sebagai Sekretaris Umum dan tidak dapat ditugaskan sebagai Sekretaris Inti kepanitiaan.`,
+          });
+          return;
+        }
+        if (
+          stoDipilih &&
+          isDivisiLitbang(stoDipilih) &&
+          baris.roleKey !== "litbang_pengawas"
+        ) {
+          setPesan({
+            tipe: "error",
+            teks: `Pengurus "${stoDipilih.nama}" dari Divisi Litbang hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+          });
+          return;
+        }
       }
     }
 
@@ -359,48 +388,52 @@ export function PanitiaStrukturTab({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
-        <div className="text-xs text-navy">
-          <span className="font-semibold">Tambahkan panitia sekaligus</span>{" "}
-          tanpa perlu membuka-tutup form berulang kali.
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={terapkanPresetInti}
-            disabled={stoBelumMasuk.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
-            title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
-          >
-            Preset Pimpinan Inti
-          </button>
-        </div>
-      </div>
-
-      {barisStruktur.length === 0 ? (
-        <div className="p-8 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-surface/50">
-          <Users className="w-8 h-8 text-slate-muted mx-auto mb-2" />
-          <p className="text-xs font-semibold text-navy">
-            Belum ada baris panitia yang ditambahkan
-          </p>
-          <p className="text-[11px] text-slate-muted mt-0.5 mb-3">
-            Klik tombol di bawah untuk mulai menyusun kepanitiaan.
-          </p>
-          <div className="flex items-center justify-center gap-2">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+      {/* Bagian Atas Fixed: Banner & Tombol Preset */}
+      <div className="shrink-0 px-6 pt-4 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
+          <div className="text-xs text-navy">
+            <span className="font-semibold">Tambahkan panitia sekaligus</span>{" "}
+            tanpa perlu membuka-tutup form berulang kali.
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => tambahBaris()}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-white text-xs font-semibold cursor-pointer"
+              onClick={terapkanPresetInti}
+              disabled={stoBelumMasuk.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
             >
-              <Plus className="w-3.5 h-3.5" />
-              Tambah Baris Pertama
+              Preset Pimpinan Inti
             </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-          {barisStruktur.map((baris, idx) => {
+      </div>
+
+      {/* Bagian Tengah Scrollable: List Data Panitia */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2 space-y-2.5">
+        {barisStruktur.length === 0 ? (
+          <div className="p-8 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-surface/50 my-auto">
+            <Users className="w-8 h-8 text-slate-muted mx-auto mb-2" />
+            <p className="text-xs font-semibold text-navy">
+              Belum ada baris panitia yang ditambahkan
+            </p>
+            <p className="text-[11px] text-slate-muted mt-0.5 mb-3">
+              Klik tombol di bawah untuk mulai menyusun kepanitiaan.
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => tambahBaris()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-white text-xs font-semibold cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Tambah Baris Pertama
+              </button>
+            </div>
+          </div>
+        ) : (
+          barisStruktur.map((baris, idx) => {
             const selectedInOtherRows = new Set(
               barisStruktur
                 .filter((b) => b.tempId !== baris.tempId)
@@ -429,48 +462,27 @@ export function PanitiaStrukturTab({
             const isSekumSebagaiSekretarisInti =
               baris.roleKey === "sekretaris_inti" &&
               isSekretarisUmum(stoDipilih);
+            const isLitbangBukanPengawas =
+              baris.roleKey !== "litbang_pengawas" &&
+              isDivisiLitbang(stoDipilih);
 
             return (
               <div
                 key={baris.tempId}
                 className={`p-3 rounded-2xl border transition-all ${
-                  isDuplikat || isDuplikatPeran || isSekumSebagaiSekretarisInti
+                  isDuplikat ||
+                  isDuplikatPeran ||
+                  isSekumSebagaiSekretarisInti ||
+                  isLitbangBukanPengawas
                     ? "border-rose-300 bg-rose-50/40"
                     : "border-[#E2E8F0] bg-white hover:border-secondary/40"
                 }`}
               >
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                  {/* Kolom 1: Peran Kepanitiaan */}
                   <div className="md:col-span-4">
                     <label className="block text-[10px] font-semibold text-slate-muted mb-1">
-                      Pengurus STO #{idx + 1}
-                    </label>
-                    <select
-                      value={baris.stoId}
-                      onChange={(e) =>
-                        ubahBaris(baris.tempId, { stoId: e.target.value })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
-                    >
-                      <option value="">-- Pilih Pengurus STO --</option>
-                      {availableStos
-                        .filter((s) => {
-                          const sudahDiProker = panitiaStoIdSet.has(s.id);
-                          const sudahDiBarisLain = selectedInOtherRows.has(s.id);
-                          const isRowIni = String(s.id) === String(baris.stoId);
-                          return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
-                        })
-                        .map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.nama} ({s.nim})
-                            {s.divisi ? ` - ${s.divisi}` : ""}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  <div className="md:col-span-4">
-                    <label className="block text-[10px] font-semibold text-slate-muted mb-1">
-                      Peran Kepanitiaan
+                      Peran Kepanitiaan #{idx + 1}
                     </label>
                     <select
                       value={baris.roleKey}
@@ -487,6 +499,49 @@ export function PanitiaStrukturTab({
                     </select>
                   </div>
 
+                  {/* Kolom 2: Nama Pengurus STO */}
+                  <div className="md:col-span-4">
+                    <label className="block text-[10px] font-semibold text-slate-muted mb-1">
+                      Pengurus STO
+                    </label>
+                    <select
+                      value={baris.stoId}
+                      onChange={(e) =>
+                        ubahBaris(baris.tempId, { stoId: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
+                    >
+                      <option value="">-- Pilih Pengurus STO --</option>
+                      {availableStos
+                        .filter((s) => {
+                          const sudahDiProker = panitiaStoIdSet.has(s.id);
+                          const sudahDiBarisLain = selectedInOtherRows.has(s.id);
+                          const isRowIni = String(s.id) === String(baris.stoId);
+                          return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
+                        })
+                        .map((s) => {
+                          const isLitbang = isDivisiLitbang(s);
+                          const disabledLitbang =
+                            baris.roleKey !== "litbang_pengawas" && isLitbang;
+                          return (
+                            <option
+                              key={s.id}
+                              value={s.id}
+                              disabled={disabledLitbang}
+                            >
+                              {s.nama} ({s.nim})
+                              {disabledLitbang
+                                ? " - Khusus Litbang Pengawas"
+                                : s.divisi
+                                  ? ` - ${s.divisi}`
+                                  : ""}
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
+
+                  {/* Kolom 3: Divisi STO */}
                   <div className="md:col-span-3">
                     <label className="block text-[10px] font-semibold text-slate-muted mb-1">
                       Divisi STO
@@ -499,6 +554,7 @@ export function PanitiaStrukturTab({
                     />
                   </div>
 
+                  {/* Kolom 4: Hapus Baris */}
                   <div className="md:col-span-1 flex items-center justify-end pt-4 md:pt-0">
                     <button
                       type="button"
@@ -523,41 +579,50 @@ export function PanitiaStrukturTab({
                     Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris Inti.
                   </p>
                 )}
+                {isLitbangBukanPengawas && (
+                  <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    Pengurus dari Divisi Litbang ({stoDipilih?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.
+                  </p>
+                )}
               </div>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#E2E8F0]">
-        <div className="flex items-center gap-3">
+      {/* Bagian Bawah Fixed: Tombol Aksi Bawah */}
+      <div className="shrink-0 px-6 py-3.5 border-t border-[#E2E8F0] bg-white sm:bg-surface/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => tambahBaris()}
+              disabled={stoBelumMasuk.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white text-navy text-xs font-semibold hover:bg-surface shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Plus className="w-3.5 h-3.5 text-secondary" />
+              Tambah Baris Panitia
+            </button>
+            <span className="text-xs text-slate-muted">
+              Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)} STO belum masuk
+            </span>
+          </div>
+
           <button
             type="button"
-            onClick={() => tambahBaris()}
-            disabled={stoBelumMasuk.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white text-navy text-xs font-semibold hover:bg-surface shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            disabled={isPending || barisStruktur.length === 0}
+            onClick={handleSubmitBanyakPanitia}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 shadow-md shadow-secondary/25 transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-secondary" />
-            Tambah Baris Panitia
+            {isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            )}
+            Simpan Struktur Panitia ({barisStruktur.length})
           </button>
-          <span className="text-xs text-slate-muted">
-            Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)} STO belum masuk
-          </span>
         </div>
-
-        <button
-          type="button"
-          disabled={isPending || barisStruktur.length === 0}
-          onClick={handleSubmitBanyakPanitia}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 shadow-md shadow-secondary/25 transition-all cursor-pointer"
-        >
-          {isPending ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <CheckCircle2 className="w-3.5 h-3.5" />
-          )}
-          Simpan Struktur Panitia ({barisStruktur.length})
-        </button>
       </div>
     </div>
   );

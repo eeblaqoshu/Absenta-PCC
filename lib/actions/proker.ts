@@ -9,7 +9,8 @@ import { StatusPeriode } from "@prisma/client";
 
 
 const BuatProkerSchema = z.object({
-  nama: z.string().min(3, "Nama proker minimal 3 karakter"),
+  nama: z.string().min(3, "Nama minimal 3 karakter"),
+  kategori: z.enum(["proker", "agenda"]).default("proker"),
   deskripsi: z.string().optional().nullable(),
 });
 
@@ -32,6 +33,7 @@ export async function buatProkerAction(prevState: unknown, formData: FormData) {
 
     const rawData = {
       nama: formData.get("nama") as string,
+      kategori: (formData.get("kategori") as string) || "proker",
       deskripsi: (formData.get("deskripsi") as string) || null,
     };
 
@@ -49,6 +51,7 @@ export async function buatProkerAction(prevState: unknown, formData: FormData) {
       data: {
         periodeId: periodeAktif.id,
         nama: parsed.data.nama,
+        kategori: parsed.data.kategori,
         deskripsi: parsed.data.deskripsi,
         dibuatOleh: adsek.id,
       },
@@ -56,7 +59,8 @@ export async function buatProkerAction(prevState: unknown, formData: FormData) {
 
     revalidatePath("/dashboard/proker");
     revalidatePath("/dashboard");
-    return { sukses: true, pesan: "Program kerja berhasil dibuat" };
+    const label = parsed.data.kategori === "agenda" ? "Agenda" : "Program kerja";
+    return { sukses: true, pesan: `${label} berhasil dibuat` };
   } catch (err: unknown) {
     const error = err as Error;
     return {
@@ -98,6 +102,7 @@ export async function ubahProkerAction(prokerId: number, formData: FormData) {
 
     const rawData = {
       nama: formData.get("nama") as string,
+      kategori: (formData.get("kategori") as string) || "proker",
       deskripsi: (formData.get("deskripsi") as string) || null,
     };
 
@@ -115,13 +120,15 @@ export async function ubahProkerAction(prokerId: number, formData: FormData) {
       where: { id: prokerId },
       data: {
         nama: parsed.data.nama,
+        kategori: parsed.data.kategori,
         deskripsi: parsed.data.deskripsi,
       },
     });
 
     revalidatePath(`/dashboard/proker/${prokerId}`);
     revalidatePath("/dashboard/proker");
-    return { sukses: true, pesan: "Program kerja berhasil diperbarui" };
+    const label = parsed.data.kategori === "agenda" ? "Agenda" : "Program kerja";
+    return { sukses: true, pesan: `${label} berhasil diperbarui` };
   } catch (err: unknown) {
     const error = err as Error;
     return {

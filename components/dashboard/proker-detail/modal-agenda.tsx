@@ -1,7 +1,12 @@
 // components/dashboard/proker-detail/modal-agenda.tsx
 "use client";
 
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import {
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Calendar, Loader2 } from "lucide-react";
 import { JenisAgenda, TargetPeserta } from "@prisma/client";
 import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";
@@ -13,7 +18,6 @@ interface Props {
   isPending: boolean;
   judulAgenda: string;
   jenisAgenda: JenisAgenda;
-  urutanAgenda: number;
   tglAgenda: string;
   tglSelesaiAgenda: string;
   waktuAgenda: string;
@@ -25,7 +29,6 @@ interface Props {
   daftarLokasi: LokasiOption[];
   setJudulAgenda: (v: string) => void;
   setJenisAgenda: (v: JenisAgenda) => void;
-  setUrutanAgenda: (v: number) => void;
   setTglAgenda: (v: string) => void;
   setTglSelesaiAgenda: (v: string) => void;
   setWaktuAgenda: (v: string) => void;
@@ -44,7 +47,6 @@ export function ModalAgenda({
   isPending,
   judulAgenda,
   jenisAgenda,
-  urutanAgenda,
   tglAgenda,
   tglSelesaiAgenda,
   waktuAgenda,
@@ -56,7 +58,6 @@ export function ModalAgenda({
   daftarLokasi,
   setJudulAgenda,
   setJenisAgenda,
-  setUrutanAgenda,
   setTglAgenda,
   setTglSelesaiAgenda,
   setWaktuAgenda,
@@ -71,10 +72,16 @@ export function ModalAgenda({
   if (!isOpen) return null;
 
   return (
-    <Modal onClose={onClose} ariaLabel={isEdit ? "Edit agenda" : "Tambah agenda"} size="lg">
+    <Modal
+      onClose={onClose}
+      ariaLabel={isEdit ? "Edit kegiatan" : "Tambah kegiatan"}
+      size="lg"
+    >
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalHeader
-          title={isEdit ? "Edit Agenda Kegiatan" : "Tambah Agenda Kegiatan Baru"}
+          title={
+            isEdit ? "Edit Kegiatan" : "Tambah Kegiatan Baru"
+          }
           description="Titik presensi diatur di sini; semua sesi memakai titik yang sama."
           icon={Calendar}
           onClose={onClose}
@@ -82,7 +89,7 @@ export function ModalAgenda({
         <ModalBody>
           <div>
             <label className="block text-xs font-semibold text-navy mb-1">
-              Judul Agenda
+              Judul Kegiatan
             </label>
             <input
               type="text"
@@ -94,34 +101,22 @@ export function ModalAgenda({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-navy mb-1">
-                Jenis Agenda
-              </label>
-              <select
-                value={jenisAgenda}
-                onChange={(e) => setJenisAgenda(e.target.value as JenisAgenda)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-              >
-                <option value={JenisAgenda.rapat_pj}>Rapat PJ & PI</option>
-                <option value={JenisAgenda.rapat_besar}>Rapat Besar</option>
-                <option value={JenisAgenda.rapat_koordinasi}>Rapat Koordinasi</option>
-                <option value={JenisAgenda.hari_h}>Hari H Pelaksanaan</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-navy mb-1">
-                Urutan Agenda
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={urutanAgenda}
-                onChange={(e) => setUrutanAgenda(parseInt(e.target.value) || 1)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-navy mb-1">
+              Jenis Kegiatan
+            </label>
+            <select
+              value={jenisAgenda}
+              onChange={(e) => setJenisAgenda(e.target.value as JenisAgenda)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+            >
+              <option value={JenisAgenda.rapat_pj}>Rapat PJ & PI</option>
+              <option value={JenisAgenda.rapat_besar}>Rapat Besar</option>
+              <option value={JenisAgenda.rapat_koordinasi}>
+                Rapat Koordinasi
+              </option>
+              <option value={JenisAgenda.hari_h}>Hari H Pelaksanaan</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -151,8 +146,9 @@ export function ModalAgenda({
             </div>
           </div>
           <p className="text-[10px] text-slate-muted -mt-1">
-            Biarkan tanggal selesai kosong bila agenda hanya satu hari. Agenda multi-hari boleh punya
-            sesi presensi di tanggal mana pun di dalam rentang ini.
+            Biarkan tanggal selesai kosong bila agenda hanya satu hari. Agenda
+            multi-hari boleh punya sesi presensi di tanggal mana pun di dalam
+            rentang ini.
           </p>
 
           <div>
@@ -174,7 +170,9 @@ export function ModalAgenda({
             </label>
             <select
               value={targetPeserta}
-              onChange={(e) => setTargetPeserta(e.target.value as TargetPeserta)}
+              onChange={(e) =>
+                setTargetPeserta(e.target.value as TargetPeserta)
+              }
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
             >
               <option value={TargetPeserta.hanya_pj_pi}>
@@ -188,8 +186,8 @@ export function ModalAgenda({
               </option>
             </select>
             <p className="text-[10px] text-slate-muted mt-1">
-              Aturan akses ini menentukan siapa saja yang dapat melihat agenda ini di /home dan
-              melakukan scan presensi.
+              Aturan akses ini menentukan siapa saja yang dapat melihat agenda
+              ini di /home dan melakukan scan presensi.
             </p>
           </div>
 
@@ -234,7 +232,9 @@ export function ModalAgenda({
                   min={10}
                   max={5000}
                   value={radiusAgenda}
-                  onChange={(e) => setRadiusAgenda(parseInt(e.target.value) || 500)}
+                  onChange={(e) =>
+                    setRadiusAgenda(parseInt(e.target.value) || 500)
+                  }
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
                 />
               </div>
@@ -242,8 +242,8 @@ export function ModalAgenda({
 
             <div className="rounded-xl border border-[#E2E8F0] p-3 bg-surface/60">
               <p className="text-[10px] text-slate-muted mb-2">
-                Titik presensi melekat pada agenda (bukan sesi). Semua sesi agenda ini memakai titik
-                &amp; radius yang sama.
+                Titik presensi melekat pada agenda (bukan sesi). Semua sesi
+                agenda ini memakai titik &amp; radius yang sama.
               </p>
               <PetaPilihLokasi
                 lat={titikAgendaAktif.lat}
@@ -269,7 +269,7 @@ export function ModalAgenda({
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25 cursor-pointer transition-all"
           >
             {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Simpan Agenda
+            {isEdit ? "Perbarui Kegiatan" : "Simpan Kegiatan"}
           </button>
         </ModalFooter>
       </form>

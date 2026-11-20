@@ -2,13 +2,9 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import {
-  buatAgendaAction,
-  ubahAgendaAction,
-  hapusAgendaAction,
-} from "@/lib/actions/agenda";
+import { hapusAgendaAction } from "@/lib/actions/agenda";
 import { ubahPanitiaAction, hapusPanitiaAction } from "@/lib/actions/kepanitiaan";
-import { JenisAgenda, TargetPeserta, StatusPeriode } from "@prisma/client";
+import { StatusPeriode } from "@prisma/client";
 import { konfirmasiHapus } from "@/lib/swal";
 import {
   SesiModal,
@@ -29,11 +25,11 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
-  Upload,
 } from "lucide-react";
 import Link from "next/link";
 import {
   OPSI_PERAN_PANITIA,
+  isDivisiLitbang,
   DETAK_MS,
   langgananDetak,
   cuplikanDetak,
@@ -47,7 +43,6 @@ import { PanitiaSection } from "./proker-detail/panitia-section";
 import { AgendaSection } from "./proker-detail/agenda-section";
 import { ModalKelolaPanitia } from "./proker-detail/modal-kelola-panitia";
 import { ModalEditPanitia } from "./proker-detail/modal-edit-panitia";
-import { ModalAgenda } from "./proker-detail/modal-agenda";
 
 // Re-export untuk backwards-compatibility
 export { OPSI_PERAN_PANITIA };
@@ -135,38 +130,25 @@ export function ProkerDetail({
   // Modal edit panitia tunggal
   const [modalEditPanitiaBuka, setModalEditPanitiaBuka] = useState(false);
   const [panitiaDiedit, setPanitiaDiedit] = useState<PanitiaItem | null>(null);
+  const [selectedStoIdEdit, setSelectedStoIdEdit] = useState<number>(0);
   const [selectedRoleKeyEdit, setSelectedRoleKeyEdit] = useState<string>("ketua_pelaksana");
   const [divisiPanitiaEdit, setDivisiPanitiaEdit] = useState<string>("");
-
-  // Modal agenda state
-  const [modalAgendaBuka, setModalAgendaBuka] = useState(false);
-  const [modalEditAgendaBuka, setModalEditAgendaBuka] = useState(false);
-  const [agendaDiedit, setAgendaDiedit] = useState<AgendaItem | null>(null);
-
-  const [judulAgenda, setJudulAgenda] = useState("");
-  const [jenisAgenda, setJenisAgenda] = useState<JenisAgenda>(JenisAgenda.rapat_besar);
-  const [urutanAgenda, setUrutanAgenda] = useState<number>(1);
-  const [tglAgenda, setTglAgenda] = useState("");
-  const [tglSelesaiAgenda, setTglSelesaiAgenda] = useState("");
-  const [waktuAgenda, setWaktuAgenda] = useState("15:00");
-  const [lokasiAgenda, setLokasiAgenda] = useState("");
-  const [lokasiAgendaId, setLokasiAgendaId] = useState("");
-  const [radiusAgenda, setRadiusAgenda] = useState<number>(500);
-  const [titikAgenda, setTitikAgenda] = useState<{ lat: number; lng: number } | null>(null);
-  const [targetPeserta, setTargetPeserta] = useState<TargetPeserta>(TargetPeserta.semua_panitia);
-
-  const titikAgendaAktif = titikAgenda ?? { lat: -7.0513, lng: 110.4337 };
 
   // Handler Edit Panitia Tunggal
   const handleOpenEditPanitia = (item: PanitiaItem) => {
     setPanitiaDiedit(item);
-    const byLabelOrPeran =
-      OPSI_PERAN_PANITIA.find(
-        (o) => o.label.toLowerCase() === item.divisiPanitia?.toLowerCase(),
-      ) || OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
-    setSelectedRoleKeyEdit(
-      byLabelOrPeran ? byLabelOrPeran.key : OPSI_PERAN_PANITIA[0].key,
-    );
+    setSelectedStoIdEdit(item.sto.id);
+    if (isDivisiLitbang(item.sto)) {
+      setSelectedRoleKeyEdit("litbang_pengawas");
+    } else {
+      const byLabelOrPeran =
+        OPSI_PERAN_PANITIA.find(
+          (o) => o.label.toLowerCase() === item.divisiPanitia?.toLowerCase(),
+        ) || OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
+      setSelectedRoleKeyEdit(
+        byLabelOrPeran ? byLabelOrPeran.key : OPSI_PERAN_PANITIA[0].key,
+      );
+    }
     setDivisiPanitiaEdit(item.sto.divisi || "Umum");
     setModalEditPanitiaBuka(true);
   };
@@ -176,11 +158,26 @@ export function ProkerDetail({
     if (!panitiaDiedit) return;
     setPesan(null);
 
+    const targetSto =
+      availableStos.find((s) => s.id === selectedStoIdEdit) || panitiaDiedit.sto;
+
+    if (
+      isDivisiLitbang(targetSto) &&
+      selectedRoleKeyEdit !== "litbang_pengawas"
+    ) {
+      setPesan({
+        tipe: "error",
+        teks: `Pengurus dari Divisi Litbang (${targetSto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+      });
+      return;
+    }
+
     const roleDef =
       OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKeyEdit) ||
       OPSI_PERAN_PANITIA[0];
 
     const formData = new FormData();
+    formData.append("stoId", String(selectedStoIdEdit));
     formData.append("peran", roleDef.peran);
     formData.append("divisiPanitia", roleDef.label);
 
@@ -214,125 +211,11 @@ export function ProkerDetail({
     });
   };
 
-  // Handler Agenda
-  const resetFormAgenda = () => {
-    setJudulAgenda("");
-    setJenisAgenda(JenisAgenda.rapat_besar);
-    setUrutanAgenda(proker.agenda.length + 1);
-    setTglAgenda("");
-    setTglSelesaiAgenda("");
-    setWaktuAgenda("15:00");
-    setLokasiAgenda("");
-    setLokasiAgendaId("");
-    setRadiusAgenda(500);
-    setTitikAgenda(null);
-    setTargetPeserta(TargetPeserta.semua_panitia);
-    setAgendaDiedit(null);
-  };
-
-  const handleOpenEditAgenda = (item: AgendaItem) => {
-    setAgendaDiedit(item);
-    setJudulAgenda(item.judul);
-    setJenisAgenda(item.jenis);
-    setUrutanAgenda(item.urutan);
-    setTglAgenda(keTanggalWib(item.tglPelaksanaan));
-    setTglSelesaiAgenda(item.tglSelesai ? keTanggalWib(item.tglSelesai) : "");
-    setWaktuAgenda(jamDariWaktuAgenda(item.waktuPelaksanaan));
-    setLokasiAgenda(item.lokasiNama || "");
-    setLokasiAgendaId(item.lokasiId ? String(item.lokasiId) : "");
-    setRadiusAgenda(item.radiusM || 500);
-    setTitikAgenda(
-      item.lat !== null && item.lng !== null
-        ? { lat: item.lat, lng: item.lng }
-        : null,
-    );
-    setTargetPeserta(item.targetPeserta);
-    setModalEditAgendaBuka(true);
-  };
-
-  const pilihLokasiMaster = (idStr: string) => {
-    setLokasiAgendaId(idStr);
-    if (!idStr) return;
-    const l = daftarLokasi.find((item) => String(item.id) === idStr);
-    if (l) {
-      setLokasiAgenda(l.nama);
-      setRadiusAgenda(l.radiusM);
-      setTitikAgenda({ lat: l.lat, lng: l.lng });
-    }
-  };
-
-  const handleSubmitTambahAgenda = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPesan(null);
-
-    const formData = new FormData();
-    formData.append("judul", judulAgenda);
-    formData.append("jenis", jenisAgenda);
-    formData.append("urutan", String(urutanAgenda));
-    formData.append("tglPelaksanaan", tglAgenda);
-    if (tglSelesaiAgenda) {
-      formData.append("tglSelesai", tglSelesaiAgenda);
-    }
-    formData.append("waktuPelaksanaan", waktuAgenda);
-    formData.append("targetPeserta", targetPeserta);
-    if (lokasiAgenda) formData.append("lokasiNama", lokasiAgenda);
-    if (lokasiAgendaId) formData.append("lokasiId", lokasiAgendaId);
-    if (titikAgenda) {
-      formData.append("lat", String(titikAgenda.lat));
-      formData.append("lng", String(titikAgenda.lng));
-      formData.append("radiusM", String(radiusAgenda));
-    }
-
-    startTransition(async () => {
-      const res = await buatAgendaAction(proker.id, formData);
-      if (res.error) {
-        setPesan({ tipe: "error", teks: res.error.pesan });
-      } else {
-        setPesan({ tipe: "sukses", teks: res.pesan });
-        setModalAgendaBuka(false);
-        resetFormAgenda();
-      }
-    });
-  };
-
-  const handleSubmitEditAgenda = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!agendaDiedit) return;
-    setPesan(null);
-
-    const formData = new FormData();
-    formData.append("judul", judulAgenda);
-    formData.append("jenis", jenisAgenda);
-    formData.append("urutan", String(urutanAgenda));
-    formData.append("tglPelaksanaan", tglAgenda);
-    formData.append("tglSelesai", tglSelesaiAgenda || "");
-    formData.append("waktuPelaksanaan", waktuAgenda);
-    formData.append("targetPeserta", targetPeserta);
-    formData.append("lokasiNama", lokasiAgenda || "");
-    formData.append("lokasiId", lokasiAgendaId || "");
-    if (titikAgenda) {
-      formData.append("lat", String(titikAgenda.lat));
-      formData.append("lng", String(titikAgenda.lng));
-      formData.append("radiusM", String(radiusAgenda));
-    }
-
-    startTransition(async () => {
-      const res = await ubahAgendaAction(agendaDiedit.id, formData);
-      if (res.error) {
-        setPesan({ tipe: "error", teks: res.error.pesan });
-      } else {
-        setPesan({ tipe: "sukses", teks: res.pesan });
-        setModalEditAgendaBuka(false);
-        resetFormAgenda();
-      }
-    });
-  };
-
   const handleHapusAgenda = async (agendaId: number, judulAgendaHapus: string) => {
     const setuju = await konfirmasiHapus({
-      judul: "Hapus Agenda Kegiatan?",
-      pesan: `Anda yakin ingin menghapus agenda "${judulAgendaHapus}"? Agenda hanya bisa dihapus bila belum punya sesi presensi.`,
-      tombolHapus: "Ya, Hapus Agenda",
+      judul: "Hapus Kegiatan?",
+      pesan: `Anda yakin ingin menghapus kegiatan "${judulAgendaHapus}"? Kegiatan hanya bisa dihapus bila belum punya sesi presensi.`,
+      tombolHapus: "Ya, Hapus Kegiatan",
     });
     if (!setuju) return;
 
@@ -349,19 +232,19 @@ export function ProkerDetail({
   return (
     <div className="space-y-6">
       {/* Header Banner Card */}
-      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
             <Link
               href="/dashboard/proker"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors whitespace-nowrap shrink-0"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Daftar Proker
             </Link>
-            <span className="text-slate-muted text-xs">•</span>
-            <span className="text-xs font-medium text-slate-muted">
-              Periode {proker.periode.nama}
+            <span className="hidden sm:inline text-slate-muted text-xs">•</span>
+            <span className="sm:hidden text-xs font-medium text-slate-muted">
+              {proker.periode.nama}
             </span>
           </div>
 
@@ -380,24 +263,21 @@ export function ProkerDetail({
           {!isReadonly && (
             <>
               {tabAktif === "panitia" ? (
-                <button
-                  onClick={() => setModalPanitiaBuka(true)}
+                <Link
+                  href={`/dashboard/proker/${proker.id}/panitia`}
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
-                  <Upload className="w-4 h-4" />
-                  Kelola Panitia (Banyak / CSV)
-                </button>
+                  <Users className="w-4 h-4" />
+                  Tambah Panitia Baru
+                </Link>
               ) : (
-                <button
-                  onClick={() => {
-                    resetFormAgenda();
-                    setModalAgendaBuka(true);
-                  }}
+                <Link
+                  href={`/dashboard/proker/${proker.id}/agenda/baru`}
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  Tambah Agenda
-                </button>
+                  Tambah Kegiatan
+                </Link>
               )}
             </>
           )}
@@ -451,7 +331,7 @@ export function ProkerDetail({
           }`}
         >
           <Calendar className="w-4 h-4" />
-          Agenda Kegiatan ({proker.agenda.length})
+          Kegiatan ({proker.agenda.length})
         </button>
       </div>
 
@@ -479,7 +359,6 @@ export function ProkerDetail({
           now={now}
           rekap={rekap}
           setTabStatus={setTabStatus}
-          onEditAgenda={handleOpenEditAgenda}
           onHapusAgenda={handleHapusAgenda}
           onOpenModalSesi={setModalSesi}
         />
@@ -500,51 +379,19 @@ export function ProkerDetail({
       <ModalEditPanitia
         isOpen={modalEditPanitiaBuka}
         panitiaDiedit={panitiaDiedit}
+        availableStos={availableStos}
+        existingPanitiaStoIds={new Set(proker.kepanitiaan.map((k) => k.sto.id))}
+        selectedStoIdEdit={selectedStoIdEdit}
         selectedRoleKeyEdit={selectedRoleKeyEdit}
         divisiPanitiaEdit={divisiPanitiaEdit}
         isPending={isPending}
+        setSelectedStoIdEdit={setSelectedStoIdEdit}
         setSelectedRoleKeyEdit={setSelectedRoleKeyEdit}
         onClose={() => {
           setModalEditPanitiaBuka(false);
           setPanitiaDiedit(null);
         }}
         onSubmit={handleSubmitEditPanitia}
-      />
-
-      {/* Modal Tambah / Edit Agenda */}
-      <ModalAgenda
-        isOpen={modalAgendaBuka || modalEditAgendaBuka}
-        isEdit={modalEditAgendaBuka}
-        isPending={isPending}
-        judulAgenda={judulAgenda}
-        jenisAgenda={jenisAgenda}
-        urutanAgenda={urutanAgenda}
-        tglAgenda={tglAgenda}
-        tglSelesaiAgenda={tglSelesaiAgenda}
-        waktuAgenda={waktuAgenda}
-        targetPeserta={targetPeserta}
-        lokasiAgenda={lokasiAgenda}
-        lokasiAgendaId={lokasiAgendaId}
-        radiusAgenda={radiusAgenda}
-        titikAgendaAktif={titikAgendaAktif}
-        daftarLokasi={daftarLokasi}
-        setJudulAgenda={setJudulAgenda}
-        setJenisAgenda={setJenisAgenda}
-        setUrutanAgenda={setUrutanAgenda}
-        setTglAgenda={setTglAgenda}
-        setTglSelesaiAgenda={setTglSelesaiAgenda}
-        setWaktuAgenda={setWaktuAgenda}
-        setTargetPeserta={setTargetPeserta}
-        setLokasiAgenda={setLokasiAgenda}
-        setRadiusAgenda={setRadiusAgenda}
-        setTitikAgenda={setTitikAgenda}
-        pilihLokasiMaster={pilihLokasiMaster}
-        onClose={() => {
-          setModalAgendaBuka(false);
-          setModalEditAgendaBuka(false);
-          resetFormAgenda();
-        }}
-        onSubmit={modalAgendaBuka ? handleSubmitTambahAgenda : handleSubmitEditAgenda}
       />
 
       {/* MODAL SESI PRESENSI (buat/ubah) */}

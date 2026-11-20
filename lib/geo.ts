@@ -31,3 +31,21 @@ export function hitungJarakHaversine(
 
   return Math.round(R * c);
 }
+
+/**
+ * Memvalidasi apakah posisi pengguna berada di dalam radius lokasi target.
+ * @returns { valid: boolean, jarakM: number }
+ */
+export function validasiRadius(
+  latUser: number,
+  lngUser: number,
+  latTarget: number,
+  lngTarget: number,
+  radiusM: number
+): { valid: boolean; jarakM: number } {
+  const jarakM = hitungJarakHaversine(latUser, lngUser, latTarget, lngTarget);
+  return {
+    valid: jarakM <= radiusM,
+    jarakM,
+  };
+}

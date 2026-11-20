@@ -2,7 +2,13 @@
 // Logika pengambilan statistik kehadiran & riwayat sesi presensi yang telah selesai
 import { prisma } from "./prisma";
 import { putuskanAkses } from "./akses";
-import { hitungPoin, tentukanKategori, type KategoriPoin } from "./poin";
+import {
+  hitungPoin,
+  tentukanKategori,
+  isKetuplakAtauWaketuplak,
+  BOBOT_POIN,
+  type KategoriPoin,
+} from "./poin";
 import { formatTanggalIndo, formatJamIndo } from "./waktu";
 import { StatusIzin, StatusVerifikasi } from "@prisma/client";
 
@@ -33,6 +39,7 @@ export interface StatistikSto {
   alpa: number;
   totalSesiWajib: number;
   totalPoin: number;
+  bonusPeran?: number;
   riwayat: RiwayatSesiSelesai[];
 }
 
@@ -72,7 +79,7 @@ export async function ambilStatistikSto(
       prokerId: { in: prokerIds },
       stoId,
     },
-    select: { prokerId: true, peran: true },
+    select: { prokerId: true, peran: true, divisiPanitia: true },
   });
 
   const peranByProker = new Map(kepanitiaanSto.map((k) => [k.prokerId, k.peran]));
@@ -192,10 +199,10 @@ export async function ambilStatistikSto(
       statusLabel = "Hadir Tepat Waktu";
     } else if (kategori === "terlambat_tanpa_izin" || kategori === "terlambat_dengan_izin") {
       terlambat += 1;
-      statusLabel = kategori === "terlambat_dengan_izin" ? "Terlambat (Izin)" : "Terlambat";
+      statusLabel = "Terlambat";
     } else if (kategori === "alpa_dengan_izin") {
       izin += 1;
-      statusLabel = `Izin (${iz?.jenis || "Disetujui"})`;
+      statusLabel = "Izin";
     } else {
       alpa += 1;
       statusLabel = "Tanpa Keterangan";
@@ -223,6 +230,15 @@ export async function ambilStatistikSto(
     });
   }
 
+  // 5. Bonus peran Ketuplak / Waketuplak
+  let bonusPeran = 0;
+  for (const k of kepanitiaanSto) {
+    if (isKetuplakAtauWaketuplak(k.peran, k.divisiPanitia)) {
+      bonusPeran += BOBOT_POIN.BONUS_KETUPLAK_WAKETUPLAK;
+    }
+  }
+  totalPoin += bonusPeran;
+
   return {
     tepatWaktu,
     terlambat,
@@ -230,6 +246,7 @@ export async function ambilStatistikSto(
     alpa,
     totalSesiWajib,
     totalPoin,
+    bonusPeran,
     riwayat,
   };
 }

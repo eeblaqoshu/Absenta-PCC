@@ -130,16 +130,23 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
             className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] p-1.5 z-50 overflow-hidden"
           >
             {/* Header / Info User */}
-            <div className="px-3 py-2.5 bg-surface/70 rounded-xl mb-1 border border-[#E2E8F0]/60">
-              <p className="text-xs font-bold text-navy truncate">
-                {adsek.nama}
-              </p>
-              <p className="text-[10px] text-slate-muted truncate mt-0.5">
-                {email}
-              </p>
-              <div className="mt-2 flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-secondary/15 text-secondary border border-secondary/25">
-                  <Shield className="w-3 h-3" />
+            <div className="px-3 py-2.5 bg-surface/70 rounded-xl mb-1 border border-[#E2E8F0]/60 space-y-2">
+              <div>
+                <p className="text-xs font-bold text-navy truncate">
+                  {adsek.nama}
+                </p>
+                <p className="text-[10px] text-slate-muted truncate mt-0.5">
+                  {email}
+                </p>
+              </div>
+              <div className="pt-2 border-t border-[#E2E8F0]/60 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-medium text-slate-muted shrink-0">
+                  Role / Jabatan
+                </span>
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-info/10 text-slated-muted border border-slated-muted/20 uppercase tracking-wider truncate max-w-[130px]"
+                  title={roleLabel}
+                >
                   {roleLabel}
                 </span>
               </div>
@@ -158,7 +165,7 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
               <User className="w-4 h-4 text-slate-muted" />
               <span>Profil Akun</span>
             </Link>
-            
+
             {/* Divider */}
             <div className="h-px bg-[#E2E8F0] my-1" />
 

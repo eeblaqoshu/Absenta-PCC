@@ -264,22 +264,20 @@ export function StoManager({
   return (
     <div className="space-y-6">
       {/* Header Banner Card */}
-      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse" />
-            <span className="text-xs font-semibold text-secondary">
-              Periode Aktif
-            </span>
-            <span className="text-xs text-slate-muted">•</span>
-            <span className="text-xs font-medium text-slate-muted">
-              {namaPeriode}
-            </span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5">
+            <div className="inline-flex items-center gap-1.5 shrink-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shrink-0" />
+              <span className="text-xs font-semibold text-secondary whitespace-nowrap">
+                {namaPeriode}
+              </span>
+            </div>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
             Data Kepengerusan STO
           </h2>
-          <p className="text-xs text-slate-muted mt-1">
+          <p className="text-xs text-slate-muted mt-1 leading-relaxed">
             Kelola master data pengurus organisasi terdaftar, divisi, jabatan,
             serta impor massal file CSV.
           </p>

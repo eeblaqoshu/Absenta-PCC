@@ -48,7 +48,6 @@ interface Props {
   now: Date | null;
   rekap: Record<number, RekapKehadiranSesi>;
   setTabStatus: (v: StatusAgendaDihitung) => void;
-  onEditAgenda: (agenda: AgendaItem) => void;
   onHapusAgenda: (id: number, judul: string) => void;
   onOpenModalSesi: (params: { agenda: AgendaItem; sesiAwal: SesiItem | null }) => void;
 }
@@ -63,7 +62,6 @@ export function AgendaSection({
   now,
   rekap,
   setTabStatus,
-  onEditAgenda,
   onHapusAgenda,
   onOpenModalSesi,
 }: Props) {
@@ -94,8 +92,8 @@ export function AgendaSection({
 
       {proker.agenda.length === 0 ? (
         <EmptyAgenda
-          judul="Belum ada agenda untuk proker ini"
-          deskripsi='Klik tombol "Tambah Agenda" untuk membuat jadwal rapat atau hari H kegiatan.'
+          judul="Belum ada kegiatan untuk proker ini"
+          deskripsi='Klik tombol "Tambah Kegiatan" untuk membuat jadwal rapat atau hari H pelaksanaan.'
         />
       ) : agendaTerlihat.length === 0 ? (
         <EmptyAgenda />
@@ -181,7 +179,7 @@ export function AgendaSection({
                       {!adaTitik && !sudahSelesai && (
                         <p className="text-[11px] text-amber-600 inline-flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
-                          Titik presensi belum diatur — atur di tombol edit agenda sebelum membuat sesi.
+                          Titik presensi belum diatur — atur di tombol edit kegiatan sebelum membuat sesi.
                         </p>
                       )}
                     </div>
@@ -189,17 +187,17 @@ export function AgendaSection({
                     <div className="flex items-center gap-2 shrink-0 sm:self-start">
                       {!isReadonly && !sudahSelesai && (
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => onEditAgenda(item)}
-                            title="Edit Agenda"
+                          <Link
+                            href={`/dashboard/proker/${proker.id}/agenda/${item.id}/edit`}
+                            title="Edit Kegiatan"
                             className="p-1.5 rounded-lg text-slate-muted hover:text-secondary hover:bg-secondary/10 transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Link>
                           <button
                             onClick={() => onHapusAgenda(item.id, item.judul)}
                             disabled={isPending}
-                            title="Hapus Agenda"
+                            title="Hapus Kegiatan"
                             className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
