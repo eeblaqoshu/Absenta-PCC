@@ -147,7 +147,6 @@ export function PeriodeManager({
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-secondary" />
             Kelola Periode Kepengurusan
           </h2>
           <p className="text-xs text-slate-muted mt-1">
