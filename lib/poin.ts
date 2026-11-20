@@ -3,26 +3,21 @@
 import { StatusPresensi } from "@prisma/client";
 
 /**
- * Bobot poin (ketentuan pemilik sistem).
- *
- * Kondisi dan poinnya:
- * - hadir tepat waktu (scan ≤ BATAS_TERLAMBAT_MENIT sejak buka) ............ 2
- * - hadir terlambat, tanpa izin disetujui ................................ -2
- * - hadir terlambat, ada izin disetujui ................................... 0
- * - tidak ada presensi (alpa), tanpa izin disetujui ...................... -2
- * - tidak ada presensi (alpa), ada izin disetujui ........................ 0
- *
- * `TERLAMBAT` (1) disimpan sebagai cadangan: kalau pemilik sistem memutuskan
- * "hadir terlambat tanpa izin = 1" (bukan -2), cukup ubah
- * `TERLAMBAT_TANPA_IZIN` menjadi `BOBOT_POIN.TERLAMBAT` di `hitungPoin`.
+ * Bobot poin (ketentuan pemilik sistem):
+ * - hadir tepat waktu (scan ≤ BATAS_TERLAMBAT_MENIT sejak buka) ............ +2
+ * - hadir namun terlambat (scan presensi terlambat) ....................... +1
+ * - tidak hadir / alpa, ada izin disetujui ................................ 0
+ * - tidak hadir / alpa, tanpa izin disetujui ............................. -2
+ * - bonus peran kepanitiaan Ketuplak & Waketuplak ........................ +2
  */
 export const BOBOT_POIN = {
   TEPAT_WAKTU: 2,
   TERLAMBAT: 1,
-  TERLAMBAT_TANPA_IZIN: -2,
-  TERLAMBAT_DENGAN_IZIN: 0,
-  ALPA_TANPA_IZIN: -2,
-  ALPA_DENGAN_IZIN: 0,
+  TERLAMBAT_TANPA_IZIN: 1, // Hadir namun terlambat tetap diakui hadir: +1
+  TERLAMBAT_DENGAN_IZIN: 1, // Hadir namun terlambat: +1
+  ALPA_TANPA_IZIN: -2,     // Tidak hadir / alpa tanpa izin: -2
+  ALPA_DENGAN_IZIN: 0,      // Izin disetujui: 0
+  BONUS_KETUPLAK_WAKETUPLAK: 2, // Bonus peran kepanitiaan awal: +2
 } as const;
 
 export type KategoriPoin =
@@ -55,25 +50,40 @@ export function tentukanKategori({
   return adaIzinDisetujui ? "terlambat_dengan_izin" : "terlambat_tanpa_izin";
 }
 
-/** Poin untuk satu kategori. */
+/** Poin untuk satu kategori kehadiran sesi. */
 export function poinDariKategori(kategori: KategoriPoin): number {
   switch (kategori) {
     case "tepat_waktu":
-      return BOBOT_POIN.TEPAT_WAKTU;
+      return BOBOT_POIN.TEPAT_WAKTU; // +2
     case "terlambat_tanpa_izin":
-      return BOBOT_POIN.TERLAMBAT_TANPA_IZIN;
+      return BOBOT_POIN.TERLAMBAT_TANPA_IZIN; // +1
     case "terlambat_dengan_izin":
-      return BOBOT_POIN.TERLAMBAT_DENGAN_IZIN;
+      return BOBOT_POIN.TERLAMBAT_DENGAN_IZIN; // +1
     case "alpa_tanpa_izin":
-      return BOBOT_POIN.ALPA_TANPA_IZIN;
+      return BOBOT_POIN.ALPA_TANPA_IZIN; // -2
     case "alpa_dengan_izin":
-      return BOBOT_POIN.ALPA_DENGAN_IZIN;
+      return BOBOT_POIN.ALPA_DENGAN_IZIN; // 0
   }
 }
 
 /** Poin untuk satu sesi presensi (satu STO). */
 export function hitungPoin(konteks: KonteksPoin): number {
   return poinDariKategori(tentukanKategori(konteks));
+}
+
+/** Mengecek apakah peran dalam kepanitiaan adalah Ketua Pelaksana atau Wakil Ketua Pelaksana */
+export function isKetuplakAtauWaketuplak(
+  peran: string | null | undefined,
+  divisiPanitia: string | null | undefined,
+): boolean {
+  if (peran === "ketua") return true;
+  const d = (divisiPanitia || "").toLowerCase();
+  return (
+    d.includes("ketua pelaksana") ||
+    d.includes("wakil ketua") ||
+    d.includes("ketuplak") ||
+    d.includes("waketuplak")
+  );
 }
 
 /** Label bahasa Indonesia untuk tiap kategori (dipakai di UI). */

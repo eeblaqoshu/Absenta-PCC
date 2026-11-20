@@ -3,7 +3,13 @@
 // Poin dihitung per sesi presensi yang sudah ditutup, memakai aturan di lib/poin.ts.
 import { prisma } from "./prisma";
 import { putuskanAkses } from "./akses";
-import { hitungPoin, tentukanKategori, type KategoriPoin } from "./poin";
+import {
+  hitungPoin,
+  tentukanKategori,
+  isKetuplakAtauWaketuplak,
+  BOBOT_POIN,
+  type KategoriPoin,
+} from "./poin";
 import { StatusIzin, StatusPeriode } from "@prisma/client";
 
 export interface BarisLeaderboard {
@@ -18,6 +24,7 @@ export interface BarisLeaderboard {
   alpa: number;
   izinTidakHadir: number;
   totalSesiWajib: number;
+  bonusPeran?: number;
 }
 
 export interface RekapPoin {
@@ -63,7 +70,7 @@ export async function hitungLeaderboard(
   const [kepanitiaan, agenda, sesiSelesai, izinDisetujui] = await Promise.all([
     prisma.kepanitiaan.findMany({
       where: { prokerId: { in: prokerIds } },
-      select: { prokerId: true, stoId: true, peran: true },
+      select: { prokerId: true, stoId: true, peran: true, divisiPanitia: true },
     }),
     prisma.agenda.findMany({
       where: { prokerId: { in: prokerIds } },
@@ -139,6 +146,16 @@ export async function hitungLeaderboard(
       }
     }
 
+    // 5. Bonus peran awal: ketuplak & waketuplak mendapat +2 poin
+    let bonusPeran = 0;
+    const peranKepanitiaanSto = kepanitiaan.filter((k) => k.stoId === sto.id);
+    for (const k of peranKepanitiaanSto) {
+      if (isKetuplakAtauWaketuplak(k.peran, k.divisiPanitia)) {
+        bonusPeran += BOBOT_POIN.BONUS_KETUPLAK_WAKETUPLAK;
+      }
+    }
+    poin += bonusPeran;
+
     return {
       peringkat: 0,
       stoId: sto.id,
@@ -151,6 +168,7 @@ export async function hitungLeaderboard(
       alpa,
       izinTidakHadir,
       totalSesiWajib,
+      bonusPeran,
     };
   });
 

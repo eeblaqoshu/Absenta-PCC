@@ -198,9 +198,6 @@ export default async function AdsekDashboardPage() {
           <p className="mt-1 text-xs text-slate-muted">
             {rekapPoin?.periodeNama ?? "Belum ada periode aktif"}
           </p>
-          <p className="text-[11px] text-slate-muted">
-            {rekapPoin?.totalSesiDihitung ?? 0} sesi ditutup dihitung
-          </p>
         </div>
 
         {topPoin.length === 0 ? (

@@ -43,24 +43,6 @@ export default async function StoStatistikPage() {
               kehadiran dihitung berdasarkan ketepatan waktu dan status perizinan resmi.
             </p>
           </div>
-
-          {/* Badge Poin Total */}
-          <div className="shrink-0 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-primary to-secondary text-white shadow-md shadow-primary/10 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center">
-              <Award className="w-6 h-6 text-accent" />
-            </div>
-            <div>
-              <p className="text-[11px] text-accent/90 uppercase tracking-wider font-bold">
-                Total Poin Anda
-              </p>
-              <p className="text-2xl sm:text-3xl font-black leading-none mt-0.5">
-                {statistik.totalPoin > 0 ? `+${statistik.totalPoin}` : statistik.totalPoin}
-              </p>
-              <p className="text-[10px] text-white/70 mt-1">
-                Dari {statistik.totalSesiWajib} sesi wajib
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* 4 Kartu Kategori Statistik Presensi */}
@@ -161,9 +143,6 @@ export default async function StoStatistikPage() {
                 Rekam jejak kehadiran Anda pada sesi agenda yang sudah ditutup.
               </p>
             </div>
-            <span className="text-xs font-semibold text-slate-muted">
-              Total {statistik.riwayat.length} sesi selesai
-            </span>
           </div>
 
           {statistik.riwayat.length === 0 ? (

@@ -222,13 +222,6 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
                   Batalkan
                 </button>
               )}
-
-              {status === StatusIzin.disetujui && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-slate-muted">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  Poin sesi ini: 0 (izin disetujui)
-                </span>
-              )}
             </div>
 
             {sedangBuka && (

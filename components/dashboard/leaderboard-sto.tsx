@@ -79,8 +79,10 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
           <div className="text-[11px] leading-relaxed text-slate-muted">
             <p className="font-semibold text-navy">Ketentuan poin</p>
             <p>+2 hadir tepat waktu (≤15 menit)</p>
-            <p>-2 terlambat tanpa izin &amp; alpa tanpa izin</p>
-            <p>0 terlambat dengan izin &amp; alpa dengan izin</p>
+            <p>+1 hadir terlambat (&gt;15 menit)</p>
+            <p>0 izin disetujui (tidak hadir)</p>
+            <p>-2 alpa / tidak hadir tanpa izin</p>
+            <p className="text-secondary font-medium">+2 bonus peran Ketuplak &amp; Waketuplak</p>
           </div>
         </div>
 
@@ -139,7 +141,17 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
                       {MEDALI[b.peringkat - 1] ?? b.peringkat}
                     </td>
                     <td className="py-2.5 pr-3">
-                      <p className="font-semibold text-navy">{b.nama}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-navy">{b.nama}</p>
+                        {Boolean(b.bonusPeran && b.bonusPeran > 0) && (
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-secondary/10 text-secondary border border-secondary/20"
+                            title={`Mendapat bonus +${b.bonusPeran} poin sebagai Ketuplak/Waketuplak`}
+                          >
+                            +{b.bonusPeran} Ketuplak
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-slate-muted">{b.nim}</p>
                     </td>
                     <td className="py-2.5 pr-3 text-slate-muted">{b.divisi ?? "Umum"}</td>

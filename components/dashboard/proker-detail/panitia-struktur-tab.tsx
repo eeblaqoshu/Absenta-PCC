@@ -359,48 +359,52 @@ export function PanitiaStrukturTab({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
-        <div className="text-xs text-navy">
-          <span className="font-semibold">Tambahkan panitia sekaligus</span>{" "}
-          tanpa perlu membuka-tutup form berulang kali.
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={terapkanPresetInti}
-            disabled={stoBelumMasuk.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-sm transition-all cursor-pointer disabled:opacity-50"
-            title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
-          >
-            Preset Pimpinan Inti
-          </button>
-        </div>
-      </div>
-
-      {barisStruktur.length === 0 ? (
-        <div className="p-8 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-surface/50">
-          <Users className="w-8 h-8 text-slate-muted mx-auto mb-2" />
-          <p className="text-xs font-semibold text-navy">
-            Belum ada baris panitia yang ditambahkan
-          </p>
-          <p className="text-[11px] text-slate-muted mt-0.5 mb-3">
-            Klik tombol di bawah untuk mulai menyusun kepanitiaan.
-          </p>
-          <div className="flex items-center justify-center gap-2">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+      {/* Bagian Atas Fixed: Banner & Tombol Preset */}
+      <div className="shrink-0 px-6 pt-4 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
+          <div className="text-xs text-navy">
+            <span className="font-semibold">Tambahkan panitia sekaligus</span>{" "}
+            tanpa perlu membuka-tutup form berulang kali.
+          </div>
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => tambahBaris()}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-white text-xs font-semibold cursor-pointer"
+              onClick={terapkanPresetInti}
+              disabled={stoBelumMasuk.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-secondary/30 bg-white hover:bg-secondary/10 text-secondary text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
             >
-              <Plus className="w-3.5 h-3.5" />
-              Tambah Baris Pertama
+              Preset Pimpinan Inti
             </button>
           </div>
         </div>
-      ) : (
-        <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-          {barisStruktur.map((baris, idx) => {
+      </div>
+
+      {/* Bagian Tengah Scrollable: List Data Panitia */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-2 space-y-2.5">
+        {barisStruktur.length === 0 ? (
+          <div className="p-8 text-center rounded-2xl border border-dashed border-[#CBD5E1] bg-surface/50 my-auto">
+            <Users className="w-8 h-8 text-slate-muted mx-auto mb-2" />
+            <p className="text-xs font-semibold text-navy">
+              Belum ada baris panitia yang ditambahkan
+            </p>
+            <p className="text-[11px] text-slate-muted mt-0.5 mb-3">
+              Klik tombol di bawah untuk mulai menyusun kepanitiaan.
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => tambahBaris()}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-secondary text-white text-xs font-semibold cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Tambah Baris Pertama
+              </button>
+            </div>
+          </div>
+        ) : (
+          barisStruktur.map((baris, idx) => {
             const selectedInOtherRows = new Set(
               barisStruktur
                 .filter((b) => b.tempId !== baris.tempId)
@@ -440,9 +444,30 @@ export function PanitiaStrukturTab({
                 }`}
               >
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                  {/* Kolom 1: Peran Kepanitiaan */}
                   <div className="md:col-span-4">
                     <label className="block text-[10px] font-semibold text-slate-muted mb-1">
-                      Pengurus STO #{idx + 1}
+                      Peran Kepanitiaan #{idx + 1}
+                    </label>
+                    <select
+                      value={baris.roleKey}
+                      onChange={(e) =>
+                        ubahBaris(baris.tempId, { roleKey: e.target.value })
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
+                    >
+                      {OPSI_PERAN_PANITIA.map((op) => (
+                        <option key={op.key} value={op.key}>
+                          {op.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Kolom 2: Nama Pengurus STO */}
+                  <div className="md:col-span-4">
+                    <label className="block text-[10px] font-semibold text-slate-muted mb-1">
+                      Pengurus STO
                     </label>
                     <select
                       value={baris.stoId}
@@ -468,25 +493,7 @@ export function PanitiaStrukturTab({
                     </select>
                   </div>
 
-                  <div className="md:col-span-4">
-                    <label className="block text-[10px] font-semibold text-slate-muted mb-1">
-                      Peran Kepanitiaan
-                    </label>
-                    <select
-                      value={baris.roleKey}
-                      onChange={(e) =>
-                        ubahBaris(baris.tempId, { roleKey: e.target.value })
-                      }
-                      className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
-                    >
-                      {OPSI_PERAN_PANITIA.map((op) => (
-                        <option key={op.key} value={op.key}>
-                          {op.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
+                  {/* Kolom 3: Divisi STO */}
                   <div className="md:col-span-3">
                     <label className="block text-[10px] font-semibold text-slate-muted mb-1">
                       Divisi STO
@@ -499,6 +506,7 @@ export function PanitiaStrukturTab({
                     />
                   </div>
 
+                  {/* Kolom 4: Hapus Baris */}
                   <div className="md:col-span-1 flex items-center justify-end pt-4 md:pt-0">
                     <button
                       type="button"
@@ -525,39 +533,42 @@ export function PanitiaStrukturTab({
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#E2E8F0]">
-        <div className="flex items-center gap-3">
+      {/* Bagian Bawah Fixed: Tombol Aksi Bawah */}
+      <div className="shrink-0 px-6 py-3.5 border-t border-[#E2E8F0] bg-white sm:bg-surface/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => tambahBaris()}
+              disabled={stoBelumMasuk.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white text-navy text-xs font-semibold hover:bg-surface shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Plus className="w-3.5 h-3.5 text-secondary" />
+              Tambah Baris Panitia
+            </button>
+            <span className="text-xs text-slate-muted">
+              Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)} STO belum masuk
+            </span>
+          </div>
+
           <button
             type="button"
-            onClick={() => tambahBaris()}
-            disabled={stoBelumMasuk.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white text-navy text-xs font-semibold hover:bg-surface shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            disabled={isPending || barisStruktur.length === 0}
+            onClick={handleSubmitBanyakPanitia}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 shadow-md shadow-secondary/25 transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 text-secondary" />
-            Tambah Baris Panitia
+            {isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            )}
+            Simpan Struktur Panitia ({barisStruktur.length})
           </button>
-          <span className="text-xs text-slate-muted">
-            Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)} STO belum masuk
-          </span>
         </div>
-
-        <button
-          type="button"
-          disabled={isPending || barisStruktur.length === 0}
-          onClick={handleSubmitBanyakPanitia}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 shadow-md shadow-secondary/25 transition-all cursor-pointer"
-        >
-          {isPending ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <CheckCircle2 className="w-3.5 h-3.5" />
-          )}
-          Simpan Struktur Panitia ({barisStruktur.length})
-        </button>
       </div>
     </div>
   );
