@@ -76,6 +76,8 @@ export default async function ProkerDetailPage({ params }: PageProps) {
       id: true,
       nama: true,
       nim: true,
+      emailGoogle: true,
+      jabatan: true,
       divisi: true,
     },
     orderBy: { nama: "asc" },

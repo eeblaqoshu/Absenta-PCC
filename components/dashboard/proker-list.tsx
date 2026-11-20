@@ -2,7 +2,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { buatProkerAction, ubahProkerAction, hapusProkerAction } from "@/lib/actions/proker";
+import {
+  buatProkerAction,
+  ubahProkerAction,
+  hapusProkerAction,
+} from "@/lib/actions/proker";
 import { motion, AnimatePresence } from "framer-motion";
 import { konfirmasiHapus } from "@/lib/swal";
 import {
@@ -44,7 +48,10 @@ export function ProkerList({
   isPeriodeAktif: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
+  const [pesan, setPesan] = useState<{
+    tipe: "sukses" | "error";
+    teks: string;
+  } | null>(null);
 
   // Modals
   const [modalBuka, setModalBuka] = useState(false);
@@ -135,11 +142,11 @@ export function ProkerList({
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-secondary" />
             Program Kerja (Proker)
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Kelola seluruh program kerja organisasi, susunan panitia (PI/PJ/Anggota), dan agenda kegiatan.
+            Kelola seluruh program kerja organisasi, susunan panitia
+            (PI/PJ/Anggota), dan agenda kegiatan.
           </p>
         </div>
 
@@ -233,7 +240,10 @@ export function ProkerList({
 
                 {/* Info pembuat */}
                 <p className="text-[11px] text-slate-muted mt-3">
-                  Dibuat oleh: <span className="font-medium text-navy">{item.pembuat.nama}</span>
+                  Dibuat oleh:{" "}
+                  <span className="font-medium text-navy">
+                    {item.pembuat.nama}
+                  </span>
                 </p>
 
                 {/* Stats */}
@@ -291,7 +301,9 @@ export function ProkerList({
             >
               <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between">
                 <h3 className="text-sm font-bold text-primary">
-                  {prokerDiedit ? "Edit Program Kerja" : "Buat Program Kerja Baru"}
+                  {prokerDiedit
+                    ? "Edit Program Kerja"
+                    : "Buat Program Kerja Baru"}
                 </h3>
                 <button
                   onClick={() => {
@@ -348,7 +360,9 @@ export function ProkerList({
                     disabled={isPending}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25"
                   >
-                    {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    {isPending && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
                     {prokerDiedit ? "Simpan Perubahan" : "Buat Proker"}
                   </button>
                 </div>

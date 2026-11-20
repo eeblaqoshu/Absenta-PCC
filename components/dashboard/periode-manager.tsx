@@ -142,13 +142,11 @@ export function PeriodeManager({
       <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Calendar className="w-4 h-4 text-secondary" />
             <span className="text-xs font-semibold text-slate-muted">
               Master Data Periode Organisasi
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-secondary" />
             Kelola Periode Kepengurusan
           </h2>
           <p className="text-xs text-slate-muted mt-1">

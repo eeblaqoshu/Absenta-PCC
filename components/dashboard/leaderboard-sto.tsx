@@ -31,7 +31,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-highlight/15">
               <Trophy className="h-4 w-4 text-[#B45309]" />
             </span>
-            Peringkat Teratas
+           3 STO Peringkat Teratas
           </h3>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {top3.map((b) => (
@@ -70,7 +70,6 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="inline-flex items-center gap-2 text-sm font-bold text-primary">
-              <Trophy className="h-4 w-4 text-[#B45309]" />
               Leaderboard Poin Kehadiran
             </h2>
             <p className="mt-0.5 text-xs text-slate-muted">

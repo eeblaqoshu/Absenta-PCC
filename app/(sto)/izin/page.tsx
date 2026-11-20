@@ -7,10 +7,15 @@ import {
   hitungStatusAgenda,
   jamDariWaktuAgenda,
 } from "@/lib/waktu";
-import { IzinSto, type AgendaIzin } from "@/components/izin-sto";
+import { IzinSto, type AgendaIzin } from "@/components/sto/izin-sto";
+import { StoNavbar } from "@/components/sto/sto-navbar";
 
 export default async function IzinPage() {
   const sto = await requireSto();
+  const periode = await prisma.periode.findUnique({
+    where: { id: sto.periodeId },
+    select: { nama: true },
+  });
   const sekarang = new Date();
   const agenda = await prisma.agenda.findMany({
     where: { proker: { periodeId: sto.periodeId } },
@@ -75,15 +80,21 @@ export default async function IzinPage() {
   });
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5">
-      <header>
-        <p className="text-xs font-medium text-slate-muted">Pengurus STO</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy">Pengajuan izin</h1>
-        <p className="mt-2 text-xs text-slate-muted">
-          Ajukan izin untuk agenda yang akan datang atau sedang berlangsung, meski sesi presensi belum dibuka.
-        </p>
-      </header>
-      <IzinSto daftar={daftar} />
-    </section>
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-navy">
+      <StoNavbar sto={sto} periodeNama={periode?.nama} />
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
+          <h1 className="inline-flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
+            Izin Tidak Hadir
+          </h1>
+          <p className="mt-1.5 text-xs text-slate-muted leading-relaxed">
+            Ajukan izin untuk agenda yang akan datang atau sedang berlangsung. Pengajuan dapat dikirim sebelum sesi presensi dibuat atau dibuka.
+          </p>
+        </div>
+
+        <IzinSto daftar={daftar} />
+      </main>
+    </div>
   );
 }

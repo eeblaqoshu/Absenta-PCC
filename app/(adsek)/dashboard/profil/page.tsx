@@ -14,14 +14,14 @@ import {
   Calendar,
   Clock,
   FileText,
+  MapPin,
   KeyRound,
   ShieldCheck,
 } from "lucide-react";
-import { LogoutButton } from "@/components/logout-button";
+import { LogoutButton } from "@/components/ui/logout-button";
 
 export default async function AdsekProfilPage() {
   const session = await getSession();
-
   if (!session || session.type !== "adsek" || !session.adsek) {
     redirect("/login");
   }
@@ -84,15 +84,9 @@ export default async function AdsekProfilPage() {
             Profil Akun Adsek
           </h1>
           <p className="text-xs text-slate-muted mt-1">
-            Informasi kredensial, peran kepengurusan, dan rekam aktivitas administrasi Anda.
+            Informasi kredensial, peran kepengurusan, dan rekam aktivitas
+            administrasi Anda.
           </p>
-        </div>
-
-        <div className="shrink-0 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
-            <Shield className="w-3.5 h-3.5 text-secondary" />
-            {roleLabel.toUpperCase()}
-          </span>
         </div>
       </div>
 
@@ -115,10 +109,6 @@ export default async function AdsekProfilPage() {
                   <ShieldCheck className="w-3.5 h-3.5" />
                 </div>
               </div>
-
-              <span className="px-3 py-1 rounded-full text-[10px] font-semibold bg-accent/20 text-primary border border-accent/40 shrink-0">
-                Pengurus Aktif
-              </span>
             </div>
 
             <div>
@@ -155,7 +145,9 @@ export default async function AdsekProfilPage() {
             <div className="p-3.5 rounded-2xl bg-surface border border-[#E2E8F0] text-xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-slate-muted">Metode Login</span>
-                <span className="font-semibold text-navy">Firebase Email/Pass</span>
+                <span className="font-semibold text-navy">
+                  Firebase Email/Pass
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-muted">Status Sesi</span>
@@ -181,7 +173,8 @@ export default async function AdsekProfilPage() {
                 Rekam Kontribusi Administrasi
               </h3>
               <p className="text-xs text-slate-muted mt-1">
-                Total data dan aksi kepengurusan yang tercatat dibuat atau ditinjau oleh akun Anda.
+                Total data dan aksi kepengurusan yang tercatat dibuat atau
+                ditinjau oleh akun Anda.
               </p>
             </div>
 
@@ -194,7 +187,9 @@ export default async function AdsekProfilPage() {
                 <p className="text-2xl font-bold text-primary">
                   {adsekDetail?._count.prokerDibuat ?? 0}
                 </p>
-                <p className="text-[10px] text-slate-muted mt-0.5">Program Kerja</p>
+                <p className="text-[10px] text-slate-muted mt-0.5">
+                  Program Kerja
+                </p>
               </div>
 
               <div className="p-4 rounded-2xl bg-accent/15 border border-accent/30">
@@ -205,7 +200,9 @@ export default async function AdsekProfilPage() {
                 <p className="text-2xl font-bold text-primary">
                   {adsekDetail?._count.agendaDibuat ?? 0}
                 </p>
-                <p className="text-[10px] text-slate-muted mt-0.5">Agenda Kegiatan</p>
+                <p className="text-[10px] text-slate-muted mt-0.5">
+                  Agenda Kegiatan
+                </p>
               </div>
 
               <div className="p-4 rounded-2xl bg-highlight/15 border border-highlight/30">
@@ -216,7 +213,9 @@ export default async function AdsekProfilPage() {
                 <p className="text-2xl font-bold text-[#B45309]">
                   {adsekDetail?._count.sesiDibuat ?? 0}
                 </p>
-                <p className="text-[10px] text-slate-muted mt-0.5">Sesi Dibuat</p>
+                <p className="text-[10px] text-slate-muted mt-0.5">
+                  Sesi Dibuat
+                </p>
               </div>
 
               <div className="p-4 rounded-2xl bg-surface border border-[#E2E8F0]">
@@ -227,7 +226,9 @@ export default async function AdsekProfilPage() {
                 <p className="text-2xl font-bold text-primary">
                   {adsekDetail?._count.izinDitinjau ?? 0}
                 </p>
-                <p className="text-[10px] text-slate-muted mt-0.5">Tinjauan Izin</p>
+                <p className="text-[10px] text-slate-muted mt-0.5">
+                  Tinjauan Izin
+                </p>
               </div>
             </div>
           </div>
@@ -241,29 +242,24 @@ export default async function AdsekProfilPage() {
 
             <div className="space-y-3 text-xs divide-y divide-[#E2E8F0]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-2">
-                <span className="text-slate-muted font-medium">Tipe Akun Pengelola</span>
+                <span className="text-slate-muted font-medium">
+                  Tipe Akun Pengelola
+                </span>
                 <span className="font-semibold text-navy">
                   Adsek (Admin / Sekretaris Organisasi)
                 </span>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1 pt-3">
-                <span className="text-slate-muted font-medium shrink-0">Lingkup Wewenang</span>
-                <span className="font-medium text-navy text-left sm:text-right max-w-md">
-                  {isAdmin
-                    ? "Wewenang Penuh: Kelola Periode Kepengurusan, Master STO & CSV, Master Lokasi Presensi, Program Kerja, Agenda, Sesi Presensi, Verifikasi Radius, dan Izin."
-                    : "Wewenang Operasional: Kelola Program Kerja, Susunan Panitia, Agenda Kegiatan, Sesi Presensi, Verifikasi Radius, dan Peninjauan Izin."}
-                </span>
-              </div>
-
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-3">
-                <span className="text-slate-muted font-medium">Periode Kepengurusan Aktif</span>
+                <span className="text-slate-muted font-medium">
+                  Periode Kepengurusan Aktif
+                </span>
                 <span className="font-semibold text-primary">
                   {periodeAktif ? periodeAktif.nama : "Tidak ada periode aktif"}
                 </span>
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-3">
+              {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pt-3">
                 <span className="text-slate-muted font-medium">ID Pengguna Firebase (UID)</span>
                 <span className="font-mono text-[11px] text-slate-muted bg-surface px-2.5 py-1 rounded-lg border border-[#E2E8F0] truncate max-w-xs">
                   {firebaseUid || adsekDetail?.firebaseUid || "-"}
@@ -276,7 +272,7 @@ export default async function AdsekProfilPage() {
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Cookie Terenkripsi (HttpOnly, SameSite=Lax, Secure)
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
         </section>

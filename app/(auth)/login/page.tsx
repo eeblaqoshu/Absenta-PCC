@@ -148,7 +148,7 @@ export default function LoginPage() {
         {/* Header Section */}
         <div className="px-8 pt-8 pb-5 text-center">
           {/* Logo Resmi UKM PCC */}
-          <div className="relative w-12 h-12 rounded-2xl overflow-hidden border border-[#E2E8F0] bg-white p-0.5 mx-auto mb-3.5 shadow-sm">
+          <div className="relative w-12 overflow-hidden p-0.5 mx-auto mb-3.5">
             <Image
               src="/logo-pcc.png"
               alt="Logo UKM PCC"
@@ -160,7 +160,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-lg font-bold tracking-tight text-primary">
-            Sistem Presensi STO
+            Absenta PCC
           </h1>
           <p className="text-xs text-slate-muted mt-1 font-normal">
             Polytechnic Computer Club • Polines
@@ -180,7 +180,7 @@ export default function LoginPage() {
                     : "text-slate-muted hover:text-navy"
                 }`}
               >
-                Pengurus STO
+                STO
               </span>
               {activeTab === "sto" && (
                 <motion.div
@@ -203,7 +203,7 @@ export default function LoginPage() {
                     : "text-slate-muted hover:text-navy"
                 }`}
               >
-                Adsek / Inti
+                Adsek / PI
               </span>
               {activeTab === "adsek" && (
                 <motion.div
@@ -351,8 +351,7 @@ export default function LoginPage() {
                       </>
                     ) : (
                       <>
-                        <span>Masuk ke Dashboard</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>Login</span>
                       </>
                     )}
                   </motion.button>

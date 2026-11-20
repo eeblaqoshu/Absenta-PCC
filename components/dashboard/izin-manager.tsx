@@ -108,9 +108,6 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
     <div className="space-y-6">
       <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
         <h1 className="inline-flex items-center gap-2 text-xl font-bold text-primary tracking-tight">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/10">
-            <FileText className="h-5 w-5 text-secondary" />
-          </span>
           Peninjauan Izin
         </h1>
         <p className="mt-1 text-xs text-slate-muted">
@@ -122,7 +119,6 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
         className="flex items-center gap-1.5 overflow-x-auto rounded-full border border-[#E2E8F0] bg-surface p-1.5 shadow-sm scrollbar-none"
         data-lenis-prevent
       >
-        <Filter className="ml-1.5 h-3.5 w-3.5 shrink-0 text-slate-muted" />
         {tab.map((t) => (
           <button
             key={t.nilai}
