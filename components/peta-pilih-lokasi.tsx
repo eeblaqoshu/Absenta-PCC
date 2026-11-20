@@ -164,7 +164,7 @@ export function PetaPilihLokasi({ lat, lng, radiusM, onPilih, tinggi = "260px" }
       <div
         ref={containerRef}
         style={{ height: tinggi }}
-        className="peta-leaflet relative z-0 w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-surface"
+        className="peta-leaflet relative z-0 isolate w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-surface"
       >
         {!siap && (
           <div className="w-full h-full flex items-center justify-center text-xs text-slate-muted">

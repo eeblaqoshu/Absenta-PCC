@@ -119,7 +119,7 @@ export function DashboardHeader({
   return (
     <>
       {/* Top Navbar Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(11,42,91,0.04)]">
+      <header className="sticky top-0 z-[1001] bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(11,42,91,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center justify-between h-16">
             {/* Left: Brand Logo & Name */}
@@ -181,7 +181,7 @@ export function DashboardHeader({
       {/* Mobile Sidebar Drawer (Slide-Over dari Kanan) */}
       <AnimatePresence>
         {sidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
+          <div className="fixed inset-0 z-[1100] lg:hidden flex justify-end">
             {/* Backdrop Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
