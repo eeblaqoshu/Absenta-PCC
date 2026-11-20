@@ -5,6 +5,7 @@ import { adminAuth } from "@/lib/firebase-admin";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE_NAME } from "@/lib/auth";
 import { StatusPeriode } from "@prisma/client";
+import { cekBatasLaju } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -14,8 +15,31 @@ const loginSchema = z.object({
 // Durasi session cookie: 5 hari (dalam milidetik)
 const EXPIRES_IN = 5 * 24 * 60 * 60 * 1000;
 
+// Batas percobaan login per IP: maksimal 10 permintaan per menit
+const MAKS_LOGIN_PER_MENIT = 10;
+const JENDELA_LOGIN_MS = 60_000;
+
 export async function POST(req: NextRequest) {
   try {
+    // 0. Pembatasan laju (rate limiting) berbasis IP
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown-ip";
+
+    if (!cekBatasLaju(`login:${ip}`, MAKS_LOGIN_PER_MENIT, JENDELA_LOGIN_MS)) {
+      return NextResponse.json(
+        {
+          error: {
+            kode: "TERLALU_SERING",
+            pesan:
+              "Terlalu banyak percobaan masuk dari perangkat ini. Silakan tunggu beberapa saat sebelum mencoba lagi.",
+          },
+        },
+        { status: 429 }
+      );
+    }
+
     if (!adminAuth) {
       return NextResponse.json(
         {
@@ -25,11 +49,11 @@ export async function POST(req: NextRequest) {
               "Konfigurasi Firebase Admin di server belum lengkap. Silakan hubungi Tim Kelola",
           },
         },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const parsed = loginSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -40,7 +64,7 @@ export async function POST(req: NextRequest) {
             pesan: parsed.error.issues[0]?.message || "Input tidak valid",
           },
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -60,7 +84,21 @@ export async function POST(req: NextRequest) {
               "Sesi login kedaluwarsa atau token tidak valid. Silakan login kembali.",
           },
         },
-        { status: 401 },
+        { status: 401 }
+      );
+    }
+
+    // Validasi Temuan 1: Pastikan email telah terverifikasi oleh provider autentikasi
+    if (!decodedToken.email_verified) {
+      return NextResponse.json(
+        {
+          error: {
+            kode: "EMAIL_BELUM_VERIFIKASI",
+            pesan:
+              "Alamat email belum diverifikasi oleh provider autentikasi. Silakan verifikasi email Anda terlebih dahulu.",
+          },
+        },
+        { status: 403 }
       );
     }
 
@@ -75,7 +113,7 @@ export async function POST(req: NextRequest) {
             pesan: "Akun Anda tidak memiliki alamat email yang valid.",
           },
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -90,6 +128,20 @@ export async function POST(req: NextRequest) {
     if (adsek) {
       role = "adsek";
       redirectUrl = "/dashboard";
+
+      // Validasi Temuan 1: Cek kecocokan UID jika akun sudah memiliki firebaseUid terdaftar
+      if (adsek.firebaseUid && adsek.firebaseUid !== uid) {
+        return NextResponse.json(
+          {
+            error: {
+              kode: "UID_MISMATCH",
+              pesan:
+                "Identitas akun Firebase tidak sesuai dengan data terdaftar.",
+            },
+          },
+          { status: 403 }
+        );
+      }
 
       // Sinkronisasi firebase_uid jika belum terisi
       if (!adsek.firebaseUid) {
@@ -113,7 +165,7 @@ export async function POST(req: NextRequest) {
                 "Saat ini belum ada periode kepengurusan yang berstatus aktif.",
             },
           },
-          { status: 403 },
+          { status: 403 }
         );
       }
 
@@ -127,6 +179,20 @@ export async function POST(req: NextRequest) {
       if (sto) {
         role = "sto";
         redirectUrl = "/home";
+
+        // Validasi Temuan 1: Cek kecocokan UID jika STO sudah memiliki firebaseUid terdaftar
+        if (sto.firebaseUid && sto.firebaseUid !== uid) {
+          return NextResponse.json(
+            {
+              error: {
+                kode: "UID_MISMATCH",
+                pesan:
+                  "Identitas akun Firebase tidak sesuai dengan data terdaftar.",
+              },
+            },
+            { status: 403 }
+          );
+        }
 
         // Sinkronisasi firebase_uid saat login pertama
         if (!sto.firebaseUid) {
@@ -148,7 +214,7 @@ export async function POST(req: NextRequest) {
               "Email Anda belum terdaftar sebagai pengurus STO periode aktif atau adsek.",
           },
         },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -184,7 +250,7 @@ export async function POST(req: NextRequest) {
           pesan: "Terjadi kesalahan internal saat memproses autentikasi.",
         },
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

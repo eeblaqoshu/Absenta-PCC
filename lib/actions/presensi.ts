@@ -334,11 +334,11 @@ export async function catatStatusKehadiranManualAction(
       await prisma.presensi.deleteMany({
         where: { sesiId, stoId },
       });
-      // Catat / update izin disetujui langsung oleh adsek
+      // Catat / update izin disetujui langsung oleh adsek pada agenda
       await prisma.izin.upsert({
-        where: { sesiId_stoId: { sesiId, stoId } },
+        where: { agendaId_stoId: { agendaId: sesi.agendaId, stoId } },
         create: {
-          sesiId,
+          agendaId: sesi.agendaId,
           stoId,
           jenis: JenisIzin.izin,
           alasan: "Dicatat manual oleh Adsek",
@@ -360,13 +360,13 @@ export async function catatStatusKehadiranManualAction(
         where: { sesiId, stoId },
       });
       await prisma.izin.deleteMany({
-        where: { sesiId, stoId },
+        where: { agendaId: sesi.agendaId, stoId },
       });
     } else {
       // Status 'hadir' atau 'terlambat'
       // Hapus izin bila ada sebelumnya
       await prisma.izin.deleteMany({
-        where: { sesiId, stoId },
+        where: { agendaId: sesi.agendaId, stoId },
       });
 
       let menit = 0;

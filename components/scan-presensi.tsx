@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Navigation,
   CircleDot,
-  ImageUp,
   LocateFixed,
   LogIn,
 } from "lucide-react";
@@ -30,7 +29,6 @@ import {
   pesanGalatGps,
   ambilPosisiSekarang,
   pesanGalatKamera,
-  dekodeQrDariBerkas,
 } from "./scan-presensi/scan-helpers";
 import { ScanLeafletMap } from "./scan-presensi/scan-leaflet-map";
 import { ModalSuksesScan } from "./scan-presensi/modal-sukses-scan";
@@ -51,8 +49,6 @@ export function ScanPresensi({ daftarSesi }: Props) {
   const [memproses, setMemproses] = useState(false);
   const [pesanProses, setPesanProses] = useState<string | null>(null);
   const [hasil, setHasil] = useState<HasilScan | null>(null);
-  const [galatGambar, setGalatGambar] = useState<string | null>(null);
-  const [namaBerkas, setNamaBerkas] = useState<string | null>(null);
   const [modalSukses, setModalSukses] = useState(false);
 
   // Salinan status presensi per sesi
@@ -112,7 +108,6 @@ export function ScanPresensi({ daftarSesi }: Props) {
       sedangKirim.current = true;
       setMemproses(true);
       setHasil(null);
-      setGalatGambar(null);
 
       try {
         let koordinat = posisiRef.current;
@@ -130,7 +125,12 @@ export function ScanPresensi({ daftarSesi }: Props) {
         const res = await fetch("/api/presensi/scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ qr: payload, lat: koordinat.lat, lng: koordinat.lng }),
+          body: JSON.stringify({
+            qr: payload,
+            lat: koordinat.lat,
+            lng: koordinat.lng,
+            akurasi: koordinat.akurasi,
+          }),
         });
 
         let json: {
@@ -204,40 +204,6 @@ export function ScanPresensi({ daftarSesi }: Props) {
       }
     },
     [simpanPosisi]
-  );
-
-  const prosesGambarQr = useCallback(
-    async (berkas: File) => {
-      setHasil(null);
-      setGalatGambar(null);
-      setMemproses(true);
-      setPesanProses("Membaca QR dari gambar…");
-
-      try {
-        const teks = await dekodeQrDariBerkas(berkas);
-
-        if (!teks) {
-          setHasil(null);
-          setGalatGambar(
-            "QR tidak terbaca dari gambar ini. Pastikan gambar tidak blur, tidak terpotong, dan QR memenuhi sebagian besar gambar."
-          );
-          return;
-        }
-
-        setPesanProses(null);
-        setMemproses(false);
-        payloadTerakhir.current = "";
-        await kirimPresensi(teks);
-      } catch (err) {
-        setGalatGambar(err instanceof Error ? err.message : "Gagal membaca berkas gambar.");
-      } finally {
-        if (!sedangKirim.current) {
-          setMemproses(false);
-          setPesanProses(null);
-        }
-      }
-    },
-    [kirimPresensi]
   );
 
   const ambilLokasiManual = useCallback(async () => {
@@ -375,49 +341,11 @@ export function ScanPresensi({ daftarSesi }: Props) {
           </div>
 
           {kameraGalat && (
-            <p className="mt-2 text-[11px] text-[#8a6500] inline-flex items-start gap-1">
+            <p className="mt-2 text-[11px] text-rose-600 inline-flex items-start gap-1">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
-              {kameraGalat} Anda tetap bisa mengunggah gambar QR di bawah.
+              {kameraGalat} Pastikan izin kamera aktif untuk memindai QR langsung.
             </p>
           )}
-
-          {/* Unggah gambar QR dari galeri */}
-          <div className="mt-4 pt-4 border-t border-[#E2E8F0] space-y-2">
-            <label className="block text-xs font-semibold text-navy">
-              Atau unggah gambar QR dari galeri
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              id="berkas-qr"
-              className="hidden"
-              onChange={(e) => {
-                const berkas = e.target.files?.[0];
-                if (!berkas) return;
-                setNamaBerkas(berkas.name);
-                prosesGambarQr(berkas);
-                e.target.value = "";
-              }}
-            />
-            <label
-              htmlFor="berkas-qr"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#CBD5E1] text-xs font-semibold text-navy hover:bg-surface cursor-pointer transition-colors"
-            >
-              <ImageUp className="w-3.5 h-3.5" />
-              Pilih gambar QR
-            </label>
-            <p className="text-[11px] text-slate-muted">
-              Berguna kalau kamera tidak bisa dipakai. Gambar harus masih dalam jendela QR
-              (maksimal 14 menit sejak QR ditampilkan).
-            </p>
-            {namaBerkas && <p className="text-[11px] text-slate-muted">Berkas: {namaBerkas}</p>}
-            {galatGambar && (
-              <p className="text-[11px] text-rose-600 inline-flex items-start gap-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
-                {galatGambar}
-              </p>
-            )}
-          </div>
 
           {memproses && (
             <p className="mt-3 text-xs text-slate-muted inline-flex items-center gap-2">

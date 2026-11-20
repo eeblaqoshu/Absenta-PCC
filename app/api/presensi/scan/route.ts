@@ -13,8 +13,17 @@ import { z } from "zod";
 
 const scanSchema = z.object({
   qr: z.string().min(1, "Payload QR tidak boleh kosong"),
-  lat: z.coerce.number().min(-90, "Latitude tidak valid").max(90, "Latitude tidak valid"),
-  lng: z.coerce.number().min(-180, "Longitude tidak valid").max(180, "Longitude tidak valid"),
+  lat: z.coerce
+    .number()
+    .min(-90, "Latitude tidak valid")
+    .max(90, "Latitude tidak valid")
+    .refine((v) => Number.isFinite(v), "Koordinat latitude tidak valid"),
+  lng: z.coerce
+    .number()
+    .min(-180, "Longitude tidak valid")
+    .max(180, "Longitude tidak valid")
+    .refine((v) => Number.isFinite(v), "Koordinat longitude tidak valid"),
+  akurasi: z.coerce.number().positive().optional(),
 });
 
 /** Maksimal 12 percobaan scan per menit per STO. */
@@ -48,7 +57,25 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return tolak(400, "VALIDASI_GAGAL", parsed.error.issues[0].message);
     }
-    const { qr, lat, lng } = parsed.data;
+    const { qr, lat, lng, akurasi } = parsed.data;
+
+    // Tolak koordinat Null Island (0, 0)
+    if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) {
+      return tolak(
+        400,
+        "GPS_TIDAK_VALID",
+        "Koordinat GPS tidak valid. Pastikan GPS perangkat Anda telah mendapatkan sinyal lokasi nyata."
+      );
+    }
+
+    // Tolak jika akurasi GPS terlalu rendah/buruk (> 1000 m)
+    if (akurasi !== undefined && akurasi > 1000) {
+      return tolak(
+        400,
+        "GPS_TIDAK_AKURAT",
+        `Akurasi sinyal GPS perangkat Anda terlalu rendah (±${Math.round(akurasi)} m). Silakan tunggu hingga sinyal GPS stabil.`
+      );
+    }
 
     // ── 2. Payload QR & token valid ───────────────────────────────────────────
     const isiQr = parsePayloadQr(qr);

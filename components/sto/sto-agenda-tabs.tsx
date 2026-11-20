@@ -93,7 +93,7 @@ export function StoAgendaTabs({
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-primary uppercase tracking-wide border border-accent/30">
-                      {agenda.jenis.replace("_", " ")}
+                      {agenda.jenis ? agenda.jenis.replace(/_/g, " ") : "Agenda"}
                     </span>
                     <span className="text-xs text-slate-muted">•</span>
                     <span className="text-xs font-semibold text-secondary">

@@ -23,7 +23,6 @@ import {
   Globe,
   UserCheck,
   SlidersHorizontal,
-  Building2,
 } from "lucide-react";
 import { JenisAgenda, TargetPeserta } from "@prisma/client";
 import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";

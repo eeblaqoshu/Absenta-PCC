@@ -208,45 +208,6 @@ export default async function StoKepanitiaanPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* Section Susunan Rekan Panitia Lainnya */}
-                  {rekanPanitia.length > 0 && (
-                    <div className="p-6 sm:p-7 bg-white space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-secondary" />
-                          Susunan Panitia Lainnya ({rekanPanitia.length})
-                        </h4>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                        {rekanPanitia.map((p) => {
-                          const badge = getPeranBadge(p.peran, p.divisiPanitia);
-                          return (
-                            <div
-                              key={p.id}
-                              className="p-3 rounded-2xl border border-[#E2E8F0] bg-surface/30 flex items-center justify-between gap-2"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-navy truncate">
-                                  {p.sto.nama}
-                                </p>
-                                <p className="text-[11px] text-slate-muted truncate">
-                                  {p.sto.nim}
-                                  {p.sto.divisi ? ` • ${p.sto.divisi}` : ""}
-                                </p>
-                              </div>
-                              <span
-                                className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-lg border ${badge.bg}`}
-                              >
-                                {badge.label}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
