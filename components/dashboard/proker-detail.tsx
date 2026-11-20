@@ -237,8 +237,8 @@ export function ProkerDetail({
               Daftar Proker
             </Link>
             <span className="hidden sm:inline text-slate-muted text-xs">•</span>
-            <span className="text-xs font-medium text-slate-muted">
-              Periode {proker.periode.nama}
+            <span className="sm:hidden text-xs font-medium text-slate-muted">
+              {proker.periode.nama}
             </span>
           </div>
 

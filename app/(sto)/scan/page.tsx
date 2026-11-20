@@ -106,7 +106,7 @@ export default async function ScanPage() {
             Scan Presensi
           </h1>
           <p className="text-xs text-slate-muted mt-1 leading-relaxed">
-            Presensi di luar radius tetap tercatat dan akan diverifikasi adsek. Pastikan sesi presensi masih berstatus dibuka.
+            Pastikan Anda berada di dalam radius lokasi kegiatan dan sesi presensi masih berstatus dibuka.
           </p>
         </div>
 

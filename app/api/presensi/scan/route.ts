@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
-import { hitungJarakHaversine } from "@/lib/geo";
+import { hitungJarakHaversine, validasiRadius } from "@/lib/geo";
 import { parsePayloadQr, verifyQrToken } from "@/lib/qr-token";
 import { hitungMenitTerlambat, statusDariMenitTerlambat } from "@/lib/waktu";
 import { cekBatasLaju } from "@/lib/rate-limit";
@@ -109,10 +109,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Jarak Haversine: dicatat, bukan penolakan ─────────────────────────
+    // ── 4. Jarak Haversine & Validasi Radius ────────────────────────────────
     // Titik presensi diambil dari AGENDA (sesi memakai titik agenda).
-    // Presensi tetap diterima walau di luar radius. Jarak disimpan supaya adsek
-    // bisa memverifikasi (status `menunggu` sampai ditinjau).
+    // Jika melebihi radius presensi, proses absensi gagal.
     if (sesi.agenda.lat === null || sesi.agenda.lng === null) {
       return tolak(
         409,
@@ -121,13 +120,22 @@ export async function POST(req: NextRequest) {
       );
     }
     const radiusM = sesi.agenda.radiusM ?? 500;
-    const jarakM = hitungJarakHaversine(
+    const { valid: dalamRadius, jarakM } = validasiRadius(
       lat,
       lng,
       Number(sesi.agenda.lat),
-      Number(sesi.agenda.lng)
+      Number(sesi.agenda.lng),
+      radiusM
     );
-    const diLuarRadius = jarakM > radiusM;
+
+    if (!dalamRadius) {
+      return tolak(
+        400,
+        "DI_LUAR_RADIUS",
+        `Anda berada di luar radius presensi (${jarakM} meter dari lokasi kegiatan, batas maksimal ${radiusM} meter). Presensi gagal.`,
+        { jarakM, radiusM }
+      );
+    }
 
     // ── 5. STO berhak atas agenda (aturan target_peserta) ────────────────────
     const akses = await bolehAkses(sto.id, sesi.agendaId);
@@ -148,17 +156,16 @@ export async function POST(req: NextRequest) {
         lng,
         jarakM,
         status,
-        diLuarRadius,
-        statusVerifikasi: diLuarRadius ? "menunggu" : "diterima",
+        diLuarRadius: false,
+        statusVerifikasi: "diterima",
         menitTerlambat,
       },
     });
 
     return NextResponse.json({
       sukses: true,
-      pesan: diLuarRadius
-        ? `Presensi tercatat. Anda berada ${jarakM} m dari titik presensi (di luar radius ${radiusM} m) dan adsek akan memverifikasi.`
-        : status === "hadir"
+      pesan:
+        status === "hadir"
           ? "Presensi berhasil. Status: hadir."
           : "Presensi berhasil. Status: terlambat.",
       sesiId: sesi.id,
@@ -166,7 +173,7 @@ export async function POST(req: NextRequest) {
       waktuScan: presensi.waktuScan,
       jarakM,
       radiusM,
-      diLuarRadius,
+      diLuarRadius: false,
       statusVerifikasi: presensi.statusVerifikasi,
       agendaJudul: sesi.agenda.judul,
     });
