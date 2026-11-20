@@ -52,19 +52,30 @@ const app =
     : getApps()[0];
 
 const auth = getAuth(app);
-import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const targetEmail = process.argv[2] || "admin@pcc.polines.ac.id";
-  // Temuan 9: Hindari default password lemah (admin123). Hasilkan password acak kuat jika tidak diisi.
-  const targetPassword =
-    process.argv[3] || `${crypto.randomBytes(10).toString("base64url")}#Pcc${crypto.randomInt(10, 99)}`;
-  const targetNama = "Admin Utama PCC";
+  const targetEmail = process.argv[2]?.trim().toLowerCase();
+  const targetPassword = process.argv[3];
+  const targetNama = process.argv[4] || "Administrator PCC";
+  const targetRoleArg = process.argv[5]?.toLowerCase();
+  const targetRole =
+    targetRoleArg === "sekretaris_umum"
+      ? RoleAdsek.sekretaris_umum
+      : targetRoleArg === "sekretaris_inti"
+        ? RoleAdsek.sekretaris_inti
+        : RoleAdsek.admin;
+
+  if (!targetEmail || !targetPassword) {
+    console.error("\n❌ Argumen email dan password wajib diisi demi keamanan!");
+    console.error("   Format: npx tsx scripts/create-adsek.ts <email> <password> [nama] [role]");
+    console.error("   Contoh: npx tsx scripts/create-adsek.ts admin@organisasi.id SandiKuat123# \"Admin Utama\" admin\n");
+    process.exit(1);
+  }
 
   console.log(`\n🔐 Menyiapkan akun Adsek: ${targetEmail}`);
-  console.log(`🔑 Password yang akan disetel: ${targetPassword}\n`);
+  console.log(`🔑 Password telah disetel untuk akun tersebut.\n`);
 
   try {
     // 1. Cek apakah user sudah ada di Firebase Auth
@@ -94,12 +105,13 @@ async function main() {
       where: { email: targetEmail },
       update: {
         firebaseUid: user.uid,
+        role: targetRole,
       },
       create: {
         nama: targetNama,
         email: targetEmail,
         firebaseUid: user.uid,
-        role: RoleAdsek.admin,
+        role: targetRole,
       },
     });
 

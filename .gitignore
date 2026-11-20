@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+*.zip
+*.tar.gz
+deploy-update.zip
 
 # debug
 npm-debug.log*
@@ -52,3 +55,4 @@ ehthumbs.db
 .claude
 .cursor
 .devin
+deplo

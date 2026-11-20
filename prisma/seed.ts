@@ -45,24 +45,36 @@ async function main() {
   });
   console.log(`✅ Periode dibuat: ${periode.nama}`);
 
-  // 3. Buat Akun Adsek
-  const adminUser = await prisma.akunAdsek.create({
-    data: {
-      nama: "Admin Utama PCC",
-      email: "admin@pcc.polines.ac.id",
-      role: RoleAdsek.admin,
-    },
+  // 3. Akun Adsek untuk relasi data seed (menggunakan akun yang sudah ada atau placeholder non-publik)
+  let adminUser = await prisma.akunAdsek.findFirst({
+    where: { role: RoleAdsek.admin },
   });
 
-  const sekumUser = await prisma.akunAdsek.create({
-    data: {
-      nama: "Sekretaris Umum",
-      email: "sekum@pcc.polines.ac.id",
-      role: RoleAdsek.sekretaris_umum,
-    },
+  if (!adminUser) {
+    adminUser = await prisma.akunAdsek.create({
+      data: {
+        nama: "Administrator Sistem",
+        email: "adsek.system@local.test",
+        role: RoleAdsek.admin,
+      },
+    });
+  }
+
+  let sekumUser = await prisma.akunAdsek.findFirst({
+    where: { role: RoleAdsek.sekretaris_umum },
   });
 
-  console.log("✅ Akun Adsek dibuat (admin & sekum)");
+  if (!sekumUser) {
+    sekumUser = await prisma.akunAdsek.create({
+      data: {
+        nama: "Sekretaris Umum Sistem",
+        email: "sekum.system@local.test",
+        role: RoleAdsek.sekretaris_umum,
+      },
+    });
+  }
+
+  console.log(`✅ Penanggung jawab seed: ${adminUser.email} & ${sekumUser.email}`);
 
   // 4. Buat Data STO (Pengurus Organisasi)
   const sto1 = await prisma.sto.create({

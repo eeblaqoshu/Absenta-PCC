@@ -36,11 +36,18 @@ export default function LoginPage() {
       body: JSON.stringify({ idToken }),
     });
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(
+        "Gagal memproses respon dari server. Pastikan server aktif dan kredensial Firebase di .env sudah lengkap."
+      );
+    }
 
     if (!res.ok) {
       throw new Error(
-        data.error?.pesan || "Terjadi kesalahan saat memverifikasi sesi",
+        data?.error?.pesan || "Terjadi kesalahan saat memverifikasi sesi",
       );
     }
 
