@@ -52,11 +52,15 @@ const app =
     : getApps()[0];
 
 const auth = getAuth(app);
+import crypto from "crypto";
+
 const prisma = new PrismaClient();
 
 async function main() {
   const targetEmail = process.argv[2] || "admin@pcc.polines.ac.id";
-  const targetPassword = process.argv[3] || "admin123";
+  // Temuan 9: Hindari default password lemah (admin123). Hasilkan password acak kuat jika tidak diisi.
+  const targetPassword =
+    process.argv[3] || `${crypto.randomBytes(10).toString("base64url")}#Pcc${crypto.randomInt(10, 99)}`;
   const targetNama = "Admin Utama PCC";
 
   console.log(`\n🔐 Menyiapkan akun Adsek: ${targetEmail}`);
@@ -71,6 +75,7 @@ async function main() {
       await auth.updateUser(user.uid, {
         password: targetPassword,
         displayName: targetNama,
+        emailVerified: true,
       });
       console.log("✅ Password Firebase berhasil diperbarui!");
     } catch {
@@ -79,6 +84,7 @@ async function main() {
         email: targetEmail,
         password: targetPassword,
         displayName: targetNama,
+        emailVerified: true,
       });
       console.log(`✅ User Firebase baru berhasil dibuat! (UID: ${user.uid})`);
     }

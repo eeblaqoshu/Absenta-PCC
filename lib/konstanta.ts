@@ -7,8 +7,8 @@ export const BATAS_TERLAMBAT_MENIT = 15;
 /** Radius default validasi lokasi presensi dalam meter */
 export const RADIUS_DEFAULT_M = 500;
 
-/** Durasi satu jendela waktu QR dinamis dalam detik (14 menit = 840 detik) */
-export const QR_WINDOW_SECONDS = 14 * 60;
+/** Durasi satu jendela waktu QR dinamis dalam detik (standar anti-cheat: 30 detik) */
+export const QR_WINDOW_SECONDS = 30;
 
 /** Nama cookie sesi Firebase (HTTP-only) */
 export const SESSION_COOKIE_NAME = "__session";

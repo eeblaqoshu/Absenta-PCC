@@ -1,5 +1,5 @@
 // components/dashboard/layar-qr.tsx
-// Layar proyektor: QR dinamis (berputar tiap 14 menit) + daftar hadir langsung.
+// Layar proyektor: QR dinamis (berputar tiap 30 detik) + daftar hadir langsung.
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";

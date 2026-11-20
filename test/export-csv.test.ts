@@ -2,7 +2,10 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 function sel(nilai: string | number | null | undefined): string {
-  const teks = nilai === null || nilai === undefined ? "" : String(nilai);
+  let teks = nilai === null || nilai === undefined ? "" : String(nilai);
+  if (/^[=+\-@\t\r]/.test(teks)) {
+    teks = "'" + teks;
+  }
   return `"${teks.replace(/"/g, '""')}"`;
 }
 
@@ -13,6 +16,13 @@ describe("Ekspor Format CSV Presensi Sederhana", () => {
     assert.equal(sel(15), '"15"');
     assert.equal(sel(null), '""');
     assert.equal(sel(undefined), '""');
+  });
+
+  it("sel menetralkan formula injection (CWE-1236) dengan prefix kutip tunggal", () => {
+    assert.equal(sel('=cmd|"/C calc"!A0'), `"'=cmd|""/C calc""!A0"`);
+    assert.equal(sel("+12345"), `"'+12345"`);
+    assert.equal(sel("-200"), `"'-200"`);
+    assert.equal(sel("@SUM(1,2)"), `"'@SUM(1,2)"`);
   });
 
   it("header CSV berisi kolom yang diminta secara tepat", () => {

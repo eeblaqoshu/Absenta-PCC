@@ -1,5 +1,4 @@
 // components/scan-presensi/scan-helpers.ts
-import jsQR from "jsqr";
 import type { Koordinat } from "./types";
 
 /** Menerjemahkan galat Geolocation API menjadi kalimat yang bisa ditindaklanjuti. */
@@ -52,49 +51,4 @@ export function pesanGalatKamera(kind?: string): string {
     default:
       return "Kamera tidak dapat dibuka.";
   }
-}
-
-/**
- * Dekode QR dari berkas gambar (screenshot / foto / PNG hasil unduhan adsek).
- * Dicoba beberapa skala karena jsQR kesulitan pada gambar yang terlalu besar.
- */
-export async function dekodeQrDariBerkas(berkas: File): Promise<string | null> {
-  const gambar = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const url = URL.createObjectURL(berkas);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Berkas tidak bisa dibaca sebagai gambar. Gunakan PNG atau JPG."));
-    };
-    img.src = url;
-  });
-
-  const sisiTerpanjang = Math.max(gambar.naturalWidth, gambar.naturalHeight);
-  if (!sisiTerpanjang) return null;
-
-  const targetSkala = [1400, 1000, 700, 500];
-  for (const target of targetSkala) {
-    const skala = sisiTerpanjang > target ? target / sisiTerpanjang : 1;
-    const lebar = Math.max(1, Math.round(gambar.naturalWidth * skala));
-    const tinggi = Math.max(1, Math.round(gambar.naturalHeight * skala));
-
-    const kanvas = document.createElement("canvas");
-    kanvas.width = lebar;
-    kanvas.height = tinggi;
-    const konteks = kanvas.getContext("2d", { willReadFrequently: true });
-    if (!konteks) throw new Error("Kanvas tidak tersedia di browser ini.");
-    konteks.drawImage(gambar, 0, 0, lebar, tinggi);
-
-    const piksel = konteks.getImageData(0, 0, lebar, tinggi);
-    const kode = jsQR(piksel.data, lebar, tinggi, { inversionAttempts: "attemptBoth" });
-    if (kode?.data) return kode.data;
-
-    if (skala === 1 && sisiTerpanjang <= 500) break;
-  }
-
-  return null;
 }

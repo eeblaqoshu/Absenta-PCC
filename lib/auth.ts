@@ -1,6 +1,7 @@
 // lib/auth.ts
 // Verifikasi session cookie server dan pengambilan data pengguna (Adsek / STO)
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { adminAuth } from "./firebase-admin";
 import { prisma } from "./prisma";
 import { RoleAdsek, StatusPeriode } from "@prisma/client";
@@ -46,6 +47,12 @@ export async function getSession(): Promise<UserSession | null> {
       sessionCookie,
       true
     );
+
+    // Temuan 1: Validasi status verifikasi email
+    if (decodedClaims.email_verified === false) {
+      return null;
+    }
+
     const email = decodedClaims.email?.toLowerCase();
     const uid = decodedClaims.uid;
 
@@ -57,6 +64,11 @@ export async function getSession(): Promise<UserSession | null> {
     });
 
     if (adsek) {
+      // Temuan 1: Validasi kecocokan Firebase UID
+      if (adsek.firebaseUid && adsek.firebaseUid !== uid) {
+        return null;
+      }
+
       // Hubungkan firebaseUid jika belum tersimpan
       if (!adsek.firebaseUid) {
         await prisma.akunAdsek.update({
@@ -92,6 +104,11 @@ export async function getSession(): Promise<UserSession | null> {
     });
 
     if (sto) {
+      // Temuan 1: Validasi kecocokan Firebase UID
+      if (sto.firebaseUid && sto.firebaseUid !== uid) {
+        return null;
+      }
+
       // Hubungkan firebaseUid jika belum tersimpan
       if (!sto.firebaseUid) {
         await prisma.sto.update({
@@ -125,28 +142,36 @@ export async function getSession(): Promise<UserSession | null> {
 }
 
 /**
- * Wajib adsek (lempar exception/null jika bukan adsek)
+ * Wajib adsek. Jika bukan adsek, lakukan navigasi/redirect secara mulus (Temuan 10).
  */
 export async function requireAdsek(allowedRoles?: RoleAdsek[]) {
   const session = await getSession();
-  if (!session || session.type !== "adsek" || !session.adsek) {
-    throw new Error("Akses ditolak: Hanya untuk pengurus adsek");
+  if (!session) {
+    redirect("/login");
+  }
+  if (session.type !== "adsek" || !session.adsek) {
+    // Pengguna STO yang mencoba mengakses halaman adsek diarahkan ke portal STO
+    redirect("/home");
   }
 
   if (allowedRoles && !allowedRoles.includes(session.adsek.role)) {
-    throw new Error("Akses ditolak: Anda tidak memiliki wewenang untuk tindakan ini");
+    redirect("/dashboard");
   }
 
   return session.adsek;
 }
 
 /**
- * Wajib STO (lempar exception/null jika bukan STO)
+ * Wajib STO. Jika bukan STO, lakukan navigasi/redirect secara mulus (Temuan 10).
  */
 export async function requireSto() {
   const session = await getSession();
-  if (!session || session.type !== "sto" || !session.sto) {
-    throw new Error("Akses ditolak: Hanya untuk pengurus STO");
+  if (!session) {
+    redirect("/login");
+  }
+  if (session.type !== "sto" || !session.sto) {
+    // Pengguna Adsek yang mencoba mengakses halaman STO diarahkan ke dashboard adsek
+    redirect("/dashboard");
   }
 
   return session.sto;

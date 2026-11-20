@@ -14,9 +14,16 @@ const LABEL_STATUS_KEHADIRAN: Record<StatusKehadiran, string> = {
   ditolak: "Ditolak",
 };
 
-/** Bungkus nilai agar aman di dalam format CSV (RFC 4180). */
+/** 
+ * Bungkus nilai agar aman di dalam format CSV (RFC 4180)
+ * dan netralkan karakter pemicu CSV/Formula Injection (CWE-1236).
+ */
 function sel(nilai: string | number | null | undefined): string {
-  const teks = nilai === null || nilai === undefined ? "" : String(nilai);
+  let teks = nilai === null || nilai === undefined ? "" : String(nilai);
+  // Netralkan karakter pemicu formula Excel/Spreadsheet (=, +, -, @, \t, \r)
+  if (/^[=+\-@\t\r]/.test(teks)) {
+    teks = "'" + teks;
+  }
   return `"${teks.replace(/"/g, '""')}"`;
 }
 
