@@ -2,9 +2,9 @@
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StatusPeriode } from "@prisma/client";
+import { Calendar, FolderKanban, Users, ShieldCheck, ArrowRight, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
 import { hitungLeaderboard } from "@/lib/rekap-poin";
-import { StatCard } from "@/components/ui/stat-card";
 
 export default async function AdsekDashboardPage() {
   const adsek = await requireAdsek();
@@ -36,98 +36,233 @@ export default async function AdsekDashboardPage() {
   const rekapPoin = periodeAktif ? await hitungLeaderboard(periodeAktif.id) : null;
   const topPoin = rekapPoin?.baris.slice(0, 3) ?? [];
 
-  const adminLinks = adsek.role === "admin"
-    ? [
-        { href: "/dashboard/sto", label: "Data STO" },
-        { href: "/dashboard/periode", label: "Periode" },
-        { href: "/dashboard/lokasi", label: "Lokasi" },
-      ]
-    : [];
-
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      {/* Banner Periode Aktif */}
+      <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-medium capitalize text-slate-muted">
-            {adsek.role.replaceAll("_", " ")}
+          <div className="flex items-center gap-2 mb-1">
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                periodeAktif ? "bg-accent animate-pulse" : "bg-highlight"
+              }`}
+            />
+            <span
+              className={`text-xs font-semibold ${
+                periodeAktif
+                  ? "text-secondary"
+                  : "text-[#B45309]"
+              }`}
+            >
+              {periodeAktif ? "Periode Aktif Berjalan" : "Tidak Ada Periode Aktif"}
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
+            {periodeAktif?.nama || "Sistem Belum Memiliki Periode Aktif"}
+          </h2>
+          <p className="text-xs text-slate-muted mt-1">
+            {periodeAktif
+              ? `Dimulai: ${new Date(periodeAktif.tglMulai).toLocaleDateString("id-ID")} • Selesai: ${new Date(
+                  periodeAktif.tglSelesai
+                ).toLocaleDateString("id-ID")}`
+              : "Silakan buka periode baru melalui menu Kelola Periode (Admin)."}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy">
-            {periodeAktif?.nama ?? "Ringkasan"}
-          </h1>
         </div>
-        <span className={`rounded-full px-3 py-1 text-xs font-medium ${periodeAktif ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-          {periodeAktif ? "Periode aktif" : "Belum ada periode aktif"}
-        </span>
-      </header>
+      </div>
 
-      <section aria-label="Statistik periode" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard label="Pengurus STO" value={totalSto} />
-        <StatCard label="Program kerja" value={totalProker} />
-        <StatCard label="Agenda" value={totalAgenda} />
-      </section>
-
-      <div className="grid items-start gap-5 lg:grid-cols-12">
-        <section className="space-y-4 lg:col-span-8">
-          <div className="rounded-xl border border-[#E2E8F0] bg-white p-5 sm:p-6">
-            <h2 className="text-sm font-semibold text-navy">Periode kepengurusan</h2>
-            {periodeAktif ? (
-              <p className="mt-2 text-xs text-slate-muted">
-                {new Date(periodeAktif.tglMulai).toLocaleDateString("id-ID")} – {new Date(periodeAktif.tglSelesai).toLocaleDateString("id-ID")}
-              </p>
-            ) : (
-              <p className="mt-2 text-xs text-slate-muted">
-                Periode aktif belum tersedia.
-                {adsek.role === "admin" && (
-                  <> Buka periode melalui <Link href="/dashboard/periode" className="font-medium text-secondary hover:text-primary">menu Periode</Link>.</>
-                )}
-              </p>
-            )}
+      {/* Statistik & Modul (kiri) berdampingan dengan Top 3 (kanan) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-8">
+      {/* Ringkasan Angka Statistik */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-muted">Total Pengurus STO</p>
+            <p className="text-2xl font-bold text-primary mt-1">
+              {totalSto}
+            </p>
           </div>
+          <div className="w-11 h-11 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
+            <Users className="w-5 h-5" />
+          </div>
+        </div>
 
-          {adminLinks.length > 0 && (
-            <section className="rounded-xl border border-[#E2E8F0] bg-white p-5 sm:p-6">
-              <h2 className="text-sm font-semibold text-navy">Administrasi</h2>
-              <div className="mt-3 divide-y divide-[#E2E8F0]">
-                {adminLinks.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex min-h-11 items-center justify-between gap-3 py-2 text-sm text-slate-muted transition-colors hover:text-primary"
-                  >
-                    {item.label}
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                ))}
+        <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-muted">Program Kerja (Proker)</p>
+            <p className="text-2xl font-bold text-primary mt-1">
+              {totalProker}
+            </p>
+          </div>
+          <div className="w-11 h-11 rounded-2xl bg-accent/15 text-primary flex items-center justify-center">
+            <FolderKanban className="w-5 h-5 text-secondary" />
+          </div>
+        </div>
+
+        <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-slate-muted">Total Agenda Kegiatan</p>
+            <p className="text-2xl font-bold text-primary mt-1">
+              {totalAgenda}
+            </p>
+          </div>
+          <div className="w-11 h-11 rounded-2xl bg-highlight/15 text-[#B45309] flex items-center justify-center">
+            <Clock className="w-5 h-5 text-[#B45309]" />
+          </div>
+        </div>
+      </div>
+
+      {/* Menu Cepat Navigasi Modul Master Data */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold text-navy">
+          Modul Master Data Organisasi
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Link
+            href="/dashboard/proker"
+            className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-11 h-11 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                <FolderKanban className="w-5 h-5" />
               </div>
-            </section>
+              <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
+                Program Kerja & Agenda
+              </h4>
+              <p className="text-xs text-slate-muted mt-1">
+                Kelola proker, kepanitiaan (PI/PJ/Anggota), serta agenda kegiatan.
+              </p>
+            </div>
+            <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-secondary">
+              Buka Proker <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+
+          {adsek.role === "admin" && (
+            <>
+              <Link
+                href="/dashboard/sto"
+                className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-11 h-11 rounded-2xl bg-accent/20 text-primary flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <Users className="w-5 h-5 text-secondary" />
+                  </div>
+                  <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
+                    Data Pengurus STO
+                  </h4>
+                  <p className="text-xs text-slate-muted mt-1">
+                    Kelola data pengurus STO manual dan impor massal dari file CSV.
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-secondary">
+                  Kelola STO <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+
+              <Link
+                href="/dashboard/periode"
+                className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-11 h-11 rounded-2xl bg-highlight/20 text-[#B45309] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <Calendar className="w-5 h-5 text-primary" />
+                  </div>
+                  <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
+                    Kelola Periode
+                  </h4>
+                  <p className="text-xs text-slate-muted mt-1">
+                    Buka periode kepengurusan baru atau tutup periode (read-only).
+                  </p>
+                </div>
+                <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-secondary">
+                  Kelola Periode <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            </>
           )}
-        </section>
+        </div>
+      </div>
+        </div>
 
-        <aside className="rounded-xl border border-[#E2E8F0] bg-white p-5 sm:p-6 lg:col-span-4">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-semibold text-navy">Poin kehadiran</h2>
-            <Link href="/dashboard/leaderboard" className="text-xs font-medium text-secondary hover:text-primary">
-              Semua
-            </Link>
-          </div>
-          <p className="mt-1 text-xs text-slate-muted">{rekapPoin?.totalSesiDihitung ?? 0} sesi ditutup</p>
+        <aside className="lg:col-span-4">
+      {/* Top 3 Poin Kehadiran */}
+      <div className="flex h-full flex-col rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+        <div className="mb-4">
+          <h3 className="inline-flex items-center gap-2 text-sm font-bold text-primary">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-highlight/15">
+              <Trophy className="h-4 w-4 text-[#B45309]" />
+            </span>
+            Top 3 Poin Kehadiran
+          </h3>
+          <p className="mt-1 text-xs text-slate-muted">
+            {rekapPoin?.periodeNama ?? "Belum ada periode aktif"}
+          </p>
+          <p className="text-[11px] text-slate-muted">
+            {rekapPoin?.totalSesiDihitung ?? 0} sesi ditutup dihitung
+          </p>
+        </div>
 
-          {topPoin.length === 0 ? (
-            <p className="mt-5 text-xs text-slate-muted">Belum ada sesi yang selesai dihitung.</p>
-          ) : (
-            <ol className="mt-4 divide-y divide-[#E2E8F0]">
-              {topPoin.map((baris) => (
-                <li key={baris.stoId} className="flex items-center gap-3 py-3">
-                  <span className="w-5 shrink-0 text-xs text-slate-muted">{baris.peringkat}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-medium text-navy">{baris.nama}</span>
-                    <span className="mt-0.5 block truncate text-[11px] text-slate-muted">{baris.divisi ?? "Umum"}</span>
+        {topPoin.length === 0 ? (
+          <p className="py-6 text-center text-xs text-slate-muted">
+            Belum ada sesi presensi yang selesai pada periode ini.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {topPoin.map((b) => {
+              const gayaPeringkat =
+                [
+                  "border-highlight/50 bg-highlight/10",
+                  "border-[#E2E8F0] bg-white",
+                  "border-accent/30 bg-accent/10",
+                ][b.peringkat - 1] ?? "border-[#E2E8F0] bg-white";
+              const warnaMedali =
+                [
+                  "bg-highlight/25",
+                  "bg-surface",
+                  "bg-accent/20",
+                ][b.peringkat - 1] ?? "bg-surface";
+
+              return (
+                <div
+                  key={b.stoId}
+                  className={`flex items-center gap-3 rounded-2xl border p-3 ${gayaPeringkat}`}
+                >
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${warnaMedali}`}
+                  >
+                    {["🥇", "🥈", "🥉"][b.peringkat - 1] ?? `#${b.peringkat}`}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-navy">{b.nama}</p>
+                    <p className="truncate text-[11px] text-slate-muted">{b.divisi ?? "Umum"}</p>
+                    <p className="text-[10px] text-slate-muted">Peringkat {b.peringkat}</p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-lg px-2 py-1 text-xs font-bold ${
+                      b.poin > 0
+                        ? "bg-emerald-100 text-emerald-700"
+                        : b.poin < 0
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-surface text-slate-muted"
+                    }`}
+                  >
+                    {b.poin} poin
                   </span>
-                  <span className="shrink-0 text-xs font-semibold text-navy">{baris.poin}</span>
-                </li>
-              ))}
-            </ol>
-          )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <Link
+          href="/dashboard/leaderboard"
+          className="mt-auto inline-flex items-center gap-1 pt-4 text-xs font-semibold text-secondary transition-colors hover:text-primary"
+        >
+          Lihat leaderboard lengkap
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
         </aside>
       </div>
     </div>

@@ -4,6 +4,9 @@ import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { ScanPresensi, type SesiTersedia } from "@/components/scan-presensi";
+import { LogoutButton } from "@/components/ui/logout-button";
+import Link from "next/link";
+import { ArrowLeft, QrCode } from "lucide-react";
 
 export default async function ScanPage() {
   const sto = await requireSto();
@@ -72,15 +75,43 @@ export default async function ScanPage() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5">
-      <header>
-        <p className="text-xs font-medium text-slate-muted">Pengurus STO</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy">Scan presensi</h1>
-        <p className="mt-2 text-xs text-slate-muted">
-          Presensi di luar radius tetap tercatat dan menunggu verifikasi adsek.
-        </p>
+    <div className="min-h-screen bg-surface font-sans text-primary">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-[#E2E8F0]">
+        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke Home
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:block text-xs font-bold text-navy">
+              {sto.nama}
+            </span>
+            <LogoutButton />
+          </div>
+        </div>
       </header>
-      <ScanPresensi daftarSesi={daftarSesi} />
-    </section>
+
+      <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+        <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <QrCode className="w-4 h-4 text-secondary" />
+            <span className="text-xs font-semibold text-slate-muted">
+              Portal Kehadiran Pengurus STO
+            </span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-primary flex items-center gap-2">
+            Scan Presensi
+          </h1>
+          <p className="text-xs text-slate-muted mt-1 leading-relaxed">
+            Presensi di luar radius tetap tercatat dan akan diverifikasi adsek. Pastikan sesi presensi masih berstatus dibuka.
+          </p>
+        </div>
+
+        <ScanPresensi daftarSesi={daftarSesi} />
+      </main>
+    </div>
   );
 }

@@ -1,11 +1,11 @@
 // components/ui/modal.tsx
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, type LucideIcon } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 
-type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
+type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 
 const UKURAN: Record<ModalSize, string> = {
   sm: "max-w-sm",
@@ -13,6 +13,8 @@ const UKURAN: Record<ModalSize, string> = {
   lg: "max-w-lg",
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
+  "4xl": "max-w-4xl",
 };
 
 interface ModalProps {
@@ -76,7 +78,7 @@ export function Modal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.94, y: 16 }}
         transition={{ type: "spring", damping: 28, stiffness: 360 }}
-        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl scrollbar-none`}
+        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full ${UKURAN[size]} flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-2xl`}
       >
         {children}
       </motion.div>
@@ -137,8 +139,7 @@ interface ModalBodyProps {
 export function ModalBody({ children, className = "" }: ModalBodyProps) {
   return (
     <div
-      data-lenis-prevent
-      className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 scrollbar-none ${className}`}
+      className={`min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-6 ${className}`}
     >
       {children}
     </div>

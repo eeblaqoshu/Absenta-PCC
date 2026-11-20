@@ -12,6 +12,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/home") ||
     pathname.startsWith("/scan") ||
     pathname.startsWith("/izin") ||
+    pathname.startsWith("/statistik") ||
     pathname.startsWith("/profil");
 
   // Jika mencoba mengakses rute terproteksi tanpa cookie sesi -> arahkan ke login
@@ -31,6 +32,7 @@ export const config = {
     "/home/:path*",
     "/scan/:path*",
     "/izin/:path*",
+    "/statistik/:path*",
     "/profil/:path*",
     "/login",
   ],

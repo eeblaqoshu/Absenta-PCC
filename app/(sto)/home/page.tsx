@@ -4,14 +4,23 @@ import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import {
   formatTanggalIndo,
-  formatJamIndo,
   hitungStatusAgenda,
   jamDariWaktuAgenda,
 } from "@/lib/waktu";
-import { StoAgendaTabs, type AgendaItem } from "@/components/sto-agenda-tabs";
-import { StoProfilePanel } from "@/components/sto-profile-panel";
-import { StoLocationPanel, type TitikAgendaSto } from "@/components/sto-location-panel";
-import { Clock } from "lucide-react";
+import { ambilStatistikSto } from "@/lib/statistik-sto";
+import { StoNavbar } from "@/components/sto/sto-navbar";
+import { StoAgendaTabs, type AgendaItem } from "@/components/sto/sto-agenda-tabs";
+import {
+  QrCode,
+  CheckCircle2,
+  Clock,
+  FileText,
+  XCircle,
+  ArrowRight,
+  History,
+  Calendar,
+} from "lucide-react";
+import Link from "next/link";
 
 export default async function StoHomePage() {
   const sto = await requireSto();
@@ -31,7 +40,7 @@ export default async function StoHomePage() {
     },
     include: {
       proker: { select: { nama: true } },
-      // Sesi yang sedang dibuka sekarang (satu agenda boleh punya banyak sesi).
+      // Sesi yang sedang dibuka sekarang
       sesi: {
         where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
         orderBy: { bukaAt: "asc" },
@@ -49,24 +58,12 @@ export default async function StoHomePage() {
     }
   }
 
-  const titikAgenda: TitikAgendaSto[] = agendaAkses
-    .filter((agenda) => agenda.lat !== null && agenda.lng !== null)
-    .map((agenda) => ({
-      id: agenda.id,
-      judul: agenda.judul,
-      lokasi: agenda.lokasiNama,
-      lat: Number(agenda.lat),
-      lng: Number(agenda.lng),
-      radiusM: agenda.radiusM ?? 500,
-    }));
-
   // 4. Hitung Status Real-Time dan Pisahkan ke 3 Kategori
   const now = new Date();
   const akanDatang: AgendaItem[] = [];
   const sedangBerlangsung: AgendaItem[] = [];
   const selesai: AgendaItem[] = [];
 
-  // Presensi STO pada sesi-sesi agenda tersebut (untuk status "sudah presensi").
   const sesiIdsSemua = agendaAkses.flatMap((ag) => ag.sesi.map((s) => s.id));
   const presensiSto =
     sesiIdsSemua.length > 0
@@ -87,14 +84,14 @@ export default async function StoHomePage() {
       ag.tglPelaksanaan,
       ag.waktuPelaksanaan,
       ag.tglSelesai,
-      now
+      now,
     );
 
-    // Sesi yang sedang dibuka sekarang (bisa lebih dari satu).
     const sesiAktif = ag.sesi[0] ?? null;
     const adaSesiAktif = Boolean(sesiAktif);
-
-    const presensiSesi = sesiAktif ? presensiBySesi.get(sesiAktif.id) ?? null : null;
+    const presensiSesi = sesiAktif
+      ? (presensiBySesi.get(sesiAktif.id) ?? null)
+      : null;
 
     const item: AgendaItem = {
       id: ag.id,
@@ -126,110 +123,246 @@ export default async function StoHomePage() {
 
   // Semua sesi yang sedang berlangsung sudah diabsen STO ini?
   const sudahPresensiSemuaBerlangsung =
-    sedangBerlangsung.length > 0 && sedangBerlangsung.every((a) => a.sudahPresensi);
+    sedangBerlangsung.length > 0 &&
+    sedangBerlangsung.every((a) => a.sudahPresensi);
 
-  // 5. Hitung Riwayat Kehadiran STO
-  const riwayat = await prisma.presensi.findMany({
-    where: { stoId: sto.id },
-    orderBy: { waktuScan: "desc" },
-    take: 6,
-    include: {
-      sesi: {
-        include: {
-          agenda: {
-            select: {
-              judul: true,
-              proker: { select: { nama: true } },
-            },
-          },
-        },
-      },
-    },
-  });
-  const seluruhRiwayat = await prisma.presensi.groupBy({
-    by: ["status"],
-    where: { stoId: sto.id, statusVerifikasi: { not: "ditolak" } },
-    _count: { _all: true },
-  });
-  const hadirCount = seluruhRiwayat.find((r) => r.status === "hadir")?._count._all ?? 0;
-  const telatCount = seluruhRiwayat.find((r) => r.status === "terlambat")?._count._all ?? 0;
-
-  // Inisial Nama untuk Avatar Placeholder jika foto belum ada
-  const inisialNama = sto.nama
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
+  // 5. Ambil Statistik Kehadiran & Sesi Selesai STO
+  const statistik = await ambilStatistikSto(sto.id, sto.periodeId, now);
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium text-slate-muted">{periode?.nama ?? "Periode aktif"}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy">Assalamu’alaikum, {sto.nama}</h1>
-        </div>
-        <span className="text-xs text-slate-muted">Dashboard STO</span>
-      </header>
+    <div className="min-h-screen bg-surface font-sans text-navy antialiased pb-20">
+      {/* Top Navbar Terpusat (Home, Izin, Statistik) */}
+      <StoNavbar sto={sto} periodeNama={periode?.nama} />
 
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(17rem,1fr)]">
-        <StoLocationPanel titikAgenda={titikAgenda} />
-        <StoProfilePanel
-          nama={sto.nama}
-          nim={sto.nim}
-          jabatan={sto.jabatan}
-          divisi={sto.divisi}
-          foto={sto.foto}
-          inisial={inisialNama}
-          hadir={hadirCount}
-          terlambat={telatCount}
-          sudahPresensiBerjalan={sudahPresensiSemuaBerlangsung}
-        />
-      </div>
-
-      <section className="min-w-0 space-y-4">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight text-navy">Agenda</h2>
-          <p className="mt-0.5 text-xs text-slate-muted">Agenda yang dapat diikuti pada periode ini.</p>
-        </div>
-        <StoAgendaTabs
-          akanDatang={akanDatang}
-          sedangBerlangsung={sedangBerlangsung}
-          selesai={selesai}
-        />
-      </section>
-
-      <section className="overflow-hidden rounded-xl border border-[#E2E8F0] bg-white">
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
-          <div>
-            <h2 className="text-sm font-semibold text-navy">Riwayat presensi</h2>
-            <p className="mt-0.5 text-xs text-slate-muted">Presensi terbaru Anda.</p>
-          </div>
-          <Clock className="h-4 w-4 text-slate-muted" aria-hidden="true" />
-        </div>
-        {riwayat.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-muted">Belum ada riwayat presensi.</p>
-        ) : (
-          <div className="divide-y divide-[#E2E8F0]">
-            {riwayat.map((item) => (
-              <div key={item.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-navy">{item.sesi.agenda.judul}</p>
-                  <p className="mt-0.5 truncate text-xs text-slate-muted">{item.sesi.agenda.proker.nama}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                  <span className="text-slate-muted">{formatTanggalIndo(item.waktuScan)} · {formatJamIndo(item.waktuScan)} WIB</span>
-                  <span className={`font-medium ${item.statusVerifikasi === "ditolak" ? "text-rose-600" : item.status === "hadir" ? "text-emerald-700" : "text-amber-700"}`}>
-                    {item.statusVerifikasi === "ditolak" ? "Ditolak" : item.status === "hadir" ? "Hadir" : "Terlambat"}
-                    {item.statusVerifikasi === "menunggu" ? " · Menunggu verifikasi" : ""}
-                  </span>
+      {/* Main Responsive Grid Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Kolom Kiri: Profil, Quick Actions & Statistik (Desktop 4/12, Mobile Full) */}
+          <aside className="lg:col-span-4 space-y-5">
+            {/* Kartu Profil STO */}
+            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-bold text-primary tracking-tight">
+                    {sto.nama}
+                  </h2>
+                  <p className="text-xs text-slate-muted mt-0.5 font-mono">
+                    {sto.nim}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+
+              <div className="pt-3.5 border-t border-[#E2E8F0] grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-[11px] text-slate-muted">
+                    Divisi / Departemen
+                  </p>
+                  <p className="font-semibold text-navy mt-0.5 truncate">
+                    {sto.divisi || "Pengurus Harian"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-muted">Jabatan</p>
+                  <p className="font-semibold text-navy mt-0.5 truncate">
+                    {sto.jabatan || "Pengurus"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+                <span className="text-[11px] text-slate-muted flex items-center gap-1.5">
+                  Periode
+                </span>
+                <span className="font-semibold text-primary font-mono text-[11px] bg-surface px-2.5 py-0.5 rounded-lg border border-[#E2E8F0]">
+                  {periode?.nama || "Periode Aktif"}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Action 1: Scan QR Presensi */}
+            {sudahPresensiSemuaBerlangsung ? (
+              <div className="p-5 rounded-3xl bg-accent/15 border border-accent/40 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-secondary text-white flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold tracking-tight text-primary">
+                        Sudah Presensi
+                      </h3>
+                      <p className="text-[11px] text-slate-muted mt-0.5">
+                        Semua sesi yang sedang berlangsung sudah Anda absen
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/scan"
+                    className="text-[11px] font-semibold text-secondary underline shrink-0"
+                  >
+                    Lihat
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <Link
+                href="/scan"
+                className="group block p-5 rounded-3xl bg-primary hover:bg-secondary text-white shadow-md shadow-primary/20 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center text-white">
+                      <QrCode className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold tracking-tight">
+                        Scan QR Presensi
+                      </h3>
+                      <p className="text-[11px] text-accent/90 mt-0.5">
+                        Buka scanner kamera & GPS
+                      </p>
+                    </div>
+                  </div>
+                  <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center text-xs font-semibold group-hover:translate-x-1 transition-transform">
+                    →
+                  </span>
+                </div>
+              </Link>
+            )}
+
+            {/* Quick Action 2: Pengajuan Izin (Card Serupa di Bawah Presensi) */}
+            <Link
+              href="/izin"
+              className="group block p-5 rounded-3xl bg-white hover:bg-surface border border-[#E2E8F0] hover:border-secondary shadow-sm hover:shadow-md transition-all text-navy"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold tracking-tight text-primary">
+                      Pengajuan Izin
+                    </h3>
+                    <p className="text-[11px] text-slate-muted mt-0.5">
+                      Ajukan izin tidak hadir atau sakit
+                    </p>
+                  </div>
+                </div>
+                <span className="w-7 h-7 rounded-full bg-surface border border-[#E2E8F0] flex items-center justify-center text-xs font-semibold text-slate-muted group-hover:text-secondary group-hover:translate-x-1 transition-all">
+                  →
+                </span>
+              </div>
+            </Link>
+
+            {/* Ringkasan Statistik Presensi (4 Kategori) */}
+            <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-muted uppercase tracking-wider">
+                  Statistik Kehadiran
+                </h4>
+              </div>
+
+              {/* 4 Kategori Grid */}
+              <div className="grid grid-cols-2 gap-2.5 pt-1">
+                {/* 1. Tepat Waktu */}
+                <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100">
+                  <div className="flex items-center gap-1 text-emerald-700 text-[11px] mb-0.5 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tepat Waktu</span>
+                  </div>
+                  <p className="text-xl font-black text-emerald-800">
+                    {statistik.tepatWaktu}
+                  </p>
+                </div>
+
+                {/* 2. Terlambat */}
+                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-100">
+                  <div className="flex items-center gap-1 text-amber-700 text-[11px] mb-0.5 font-bold">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Terlambat</span>
+                  </div>
+                  <p className="text-xl font-black text-amber-800">
+                    {statistik.terlambat}
+                  </p>
+                </div>
+
+                {/* 3. Jumlah Izin */}
+                <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-100">
+                  <div className="flex items-center gap-1 text-blue-700 text-[11px] mb-0.5 font-bold">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Izin</span>
+                  </div>
+                  <p className="text-xl font-black text-blue-800">
+                    {statistik.izin}
+                  </p>
+                </div>
+
+                {/* 4. Tanpa Keterangan */}
+                <div className="p-3 rounded-2xl bg-rose-50/70 border border-rose-100">
+                  <div className="flex items-center gap-1 text-rose-700 text-[11px] mb-0.5 font-bold">
+                    <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Tanpa Ket.</span>
+                  </div>
+                  <p className="text-xl font-black text-rose-800">
+                    {statistik.alpa}
+                  </p>
+                </div>
+              </div>
+
+              {/* Tautan ke Riwayat Sesi Berakhir */}
+              <Link
+                href="/statistik"
+                className="pt-2 border-t border-[#E2E8F0] flex items-center justify-start gap-2 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
+              >
+                <span>
+                  Lihat Data Sesi Selesai
+                </span>
+                <span>→</span>
+              </Link>
+            </div>
+          </aside>
+
+          {/* Kolom Kanan: Daftar Agenda Kegiatan (Desktop 8/12, Mobile Full) */}
+          <section className="lg:col-span-8 space-y-6">
+            {/* Banner Salam & Status Periode */}
+            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-slate-muted">
+                    Portal Kehadiran Pengurus
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold tracking-tight text-primary">
+                  Agenda Kepengurusan PCC
+                </h2>
+                <p className="text-xs text-slate-muted mt-1">
+                  Daftar agenda kegiatan yang disesuaikan dengan divisi dan
+                  kepanitiaan Anda.
+                </p>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-2">
+                <Link
+                  href="/statistik"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-surface border border-[#E2E8F0] text-navy text-xs font-bold hover:border-secondary hover:text-secondary transition-colors"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Statistik & Riwayat
+                </Link>
+              </div>
+            </div>
+
+            {/* Komponen 3 Tab Agenda (Mobile-Friendly & Desktop-Ready) */}
+            <StoAgendaTabs
+              akanDatang={akanDatang}
+              sedangBerlangsung={sedangBerlangsung}
+              selesai={selesai}
+            />
+
+          </section>
+        </div>
+      </main>
     </div>
   );
 }

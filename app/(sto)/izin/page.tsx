@@ -5,10 +5,16 @@ import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { formatJamIndo, tanggalWib } from "@/lib/waktu";
-import { IzinSto, type SesiIzin } from "@/components/izin-sto";
+import { IzinSto, type SesiIzin } from "@/components/sto/izin-sto";
+import { StoNavbar } from "@/components/sto/sto-navbar";
+import { FileText } from "lucide-react";
 
 export default async function IzinPage() {
   const sto = await requireSto();
+  const periode = await prisma.periode.findUnique({
+    where: { id: sto.periodeId },
+    select: { nama: true },
+  });
   const sekarang = new Date();
 
   // Sesi yang masih bisa diizinkan: belum ditutup (tutup_at > sekarang).
@@ -58,15 +64,32 @@ export default async function IzinPage() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl space-y-5">
-      <header>
-        <p className="text-xs font-medium text-slate-muted">Pengurus STO</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-navy">Pengajuan izin</h1>
-        <p className="mt-2 text-xs text-slate-muted">
-          Pilih sesi yang belum ditutup untuk mengajukan izin.
-        </p>
-      </header>
-      <IzinSto daftar={daftar} />
-    </section>
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-navy">
+      <StoNavbar sto={sto} periodeNama={periode?.nama} />
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold text-slate-muted">
+              Pengajuan Perizinan STO
+            </span>
+          </div>
+          <h1 className="inline-flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
+            Izin Tidak Hadir
+          </h1>
+          <p className="mt-1.5 text-xs text-slate-muted leading-relaxed">
+            Ajukan izin per <strong className="font-semibold text-navy">sesi presensi</strong>. Izin
+            yang disetujui adsek membuat poin sesi itu menjadi 0 (tidak mengurangi poin) walau Anda
+            tidak hadir atau datang terlambat.
+          </p>
+          <p className="mt-1 text-xs text-slate-muted">
+            Hanya sesi yang <strong className="font-semibold text-navy">belum ditutup</strong> yang
+            tampil di sini; sesi yang sudah lewat tidak bisa diajukan izin.
+          </p>
+        </div>
+
+        <IzinSto daftar={daftar} />
+      </main>
+    </div>
   );
 }
