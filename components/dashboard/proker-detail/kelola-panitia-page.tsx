@@ -391,7 +391,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
-            Kelola Susunan Panitia
+            Tambah Panitia Baru
           </h1>
           <p className="text-xs text-slate-muted mt-1">
             {proker.nama} • Periode {proker.periode.nama}
@@ -473,7 +473,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-secondary/30 bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
                 title="Terapkan 7 peran: Ketua, Wakil, Sekretaris Inti & Pelaksana, Bendahara Inti & Pelaksana, serta Litbang Pengawas"
               >
-                Preset Pimpinan Inti
+                Preset Panitia Inti
               </button>
             </div>
           </div>

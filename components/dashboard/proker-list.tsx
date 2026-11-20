@@ -137,7 +137,7 @@ export function ProkerList({
             </div>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            Program Kerja (Proker)
+            Program Kerja dan Agenda
           </h2>
           <p className="text-xs text-slate-muted mt-1 leading-relaxed">
             Kelola seluruh program kerja organisasi, susunan panitia
@@ -154,7 +154,7 @@ export function ProkerList({
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 self-start sm:self-auto"
           >
             <Plus className="w-4 h-4" />
-            Buat Proker Baru
+            Buat Baru
           </button>
         )}
       </div>

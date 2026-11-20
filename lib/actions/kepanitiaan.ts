@@ -495,11 +495,58 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
       };
     }
 
-    if (isDivisiLitbang(kepanitiaan.sto) && !isPeranLitbangPengawas(null, divisiPanitia)) {
+    // Periksa apakah STO diubah
+    const stoIdInput = formData.get("stoId");
+    const newStoId = stoIdInput ? parseInt(String(stoIdInput), 10) : kepanitiaan.stoId;
+    if (isNaN(newStoId) || newStoId <= 0) {
       return {
         error: {
           kode: "VALIDASI_GAGAL",
-          pesan: `Pengurus dari Divisi Litbang (${kepanitiaan.sto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+          pesan: "ID STO tidak valid",
+        },
+      };
+    }
+
+    let targetSto = kepanitiaan.sto;
+    if (newStoId !== kepanitiaan.stoId) {
+      const stoBaru = await prisma.sto.findUnique({
+        where: { id: newStoId },
+      });
+      if (!stoBaru || stoBaru.periodeId !== kepanitiaan.proker.periodeId) {
+        return {
+          error: {
+            kode: "STO_TIDAK_DITEMUKAN",
+            pesan: "Pengurus STO baru tidak ditemukan atau bukan bagian dari periode aktif ini",
+          },
+        };
+      }
+
+      // Pastikan STO baru belum terdaftar di kepanitiaan proker ini
+      const duplikat = await prisma.kepanitiaan.findUnique({
+        where: {
+          prokerId_stoId: {
+            prokerId: kepanitiaan.prokerId,
+            stoId: newStoId,
+          },
+        },
+      });
+      if (duplikat && duplikat.id !== kepanitiaanId) {
+        return {
+          error: {
+            kode: "STO_SUDAH_PANITIA",
+            pesan: `Pengurus ${stoBaru.nama} sudah terdaftar dalam susunan panitia proker ini`,
+          },
+        };
+      }
+
+      targetSto = stoBaru;
+    }
+
+    if (isDivisiLitbang(targetSto) && !isPeranLitbangPengawas(null, divisiPanitia)) {
+      return {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: `Pengurus dari Divisi Litbang (${targetSto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
         },
       };
     }
@@ -507,6 +554,7 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
     await prisma.kepanitiaan.update({
       where: { id: kepanitiaanId },
       data: {
+        stoId: targetSto.id,
         peran,
         divisiPanitia,
       },

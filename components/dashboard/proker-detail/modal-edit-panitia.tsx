@@ -3,14 +3,24 @@
 
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
 import { Users, Loader2, AlertCircle } from "lucide-react";
-import { OPSI_PERAN_PANITIA, isDivisiLitbang, type PanitiaItem } from "./types";
+import {
+  OPSI_PERAN_PANITIA,
+  isDivisiLitbang,
+  isSekretarisUmum,
+  type PanitiaItem,
+  type StoOption,
+} from "./types";
 
 interface Props {
   isOpen: boolean;
   panitiaDiedit: PanitiaItem | null;
+  availableStos: StoOption[];
+  existingPanitiaStoIds: Set<number>;
+  selectedStoIdEdit: number;
   selectedRoleKeyEdit: string;
   divisiPanitiaEdit: string;
   isPending: boolean;
+  setSelectedStoIdEdit: (v: number) => void;
   setSelectedRoleKeyEdit: (v: string) => void;
   onClose: () => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -19,27 +29,73 @@ interface Props {
 export function ModalEditPanitia({
   isOpen,
   panitiaDiedit,
+  availableStos,
+  existingPanitiaStoIds,
+  selectedStoIdEdit,
   selectedRoleKeyEdit,
   divisiPanitiaEdit,
   isPending,
+  setSelectedStoIdEdit,
   setSelectedRoleKeyEdit,
   onClose,
   onSubmit,
 }: Props) {
   if (!isOpen || !panitiaDiedit) return null;
 
+  const stoTerpilih =
+    availableStos.find((s) => s.id === selectedStoIdEdit) || panitiaDiedit.sto;
+  const isLitbang = isDivisiLitbang(stoTerpilih);
+  const isSekum = isSekretarisUmum(stoTerpilih);
+
   return (
-    <Modal onClose={onClose} ariaLabel="Ubah Peran Panitia" size="md">
+    <Modal onClose={onClose} ariaLabel="Ubah Panitia" size="md">
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalHeader
-          title="Ubah Peran Panitia"
-          description={`Pengurus: ${panitiaDiedit.sto.nama}`}
-          icon={Users}
+          title="Ubah Anggota & Peran Panitia"
+          description="Sesuaikan pengurus STO atau peran kepanitiaan pada program kerja ini."
           onClose={onClose}
         />
         <ModalBody>
           <div className="space-y-4">
-            {isDivisiLitbang(panitiaDiedit.sto) && (
+            {/* Pilihan Pengurus STO */}
+            <div>
+              <label className="block text-xs font-semibold text-navy mb-1">
+                Pengurus STO
+              </label>
+              <select
+                value={selectedStoIdEdit}
+                onChange={(e) => {
+                  const newId = Number(e.target.value);
+                  setSelectedStoIdEdit(newId);
+                  const found = availableStos.find((s) => s.id === newId);
+                  if (found && isDivisiLitbang(found)) {
+                    setSelectedRoleKeyEdit("litbang_pengawas");
+                  }
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+              >
+                {/* STO saat ini */}
+                <option value={panitiaDiedit.sto.id}>
+                  {panitiaDiedit.sto.nama} (Saat ini)
+                </option>
+
+                {/* STO lain yang belum masuk dalam kepanitiaan proker ini */}
+                {availableStos
+                  .filter(
+                    (s) =>
+                      s.id !== panitiaDiedit.sto.id &&
+                      !existingPanitiaStoIds.has(s.id),
+                  )
+                  .map((sto) => (
+                    <option key={sto.id} value={sto.id}>
+                      {sto.nama}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            {/* Peringatan Divisi Litbang */}
+            {isLitbang && (
               <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                 <div>
@@ -49,9 +105,21 @@ export function ModalEditPanitia({
               </div>
             )}
 
+            {/* Peringatan Sekretaris Umum */}
+            {isSekum && (
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                  <span className="font-bold">Pengurus Sekretaris Umum:</span>{" "}
+                  Sekretaris Umum tidak dapat ditugaskan sebagai <strong>Sekretaris Inti</strong>.
+                </div>
+              </div>
+            )}
+
+            {/* Pilihan Peran / Posisi Panitia */}
             <div>
               <label className="block text-xs font-semibold text-navy mb-1">
-                Peran / Posisi Panitia Baru
+                Peran / Posisi Panitia
               </label>
               <select
                 value={selectedRoleKeyEdit}
@@ -61,26 +129,31 @@ export function ModalEditPanitia({
                 <optgroup label="Pimpinan Inti (PI)">
                   {OPSI_PERAN_PANITIA.filter((o) =>
                     o.kategori.includes("PI"),
-                  ).map((opsi) => (
-                    <option
-                      key={opsi.key}
-                      value={opsi.key}
-                      disabled={isDivisiLitbang(panitiaDiedit.sto)}
-                    >
-                      {opsi.label}
-                      {isDivisiLitbang(panitiaDiedit.sto)
-                        ? " (Tidak diizinkan untuk Litbang)"
-                        : ""}
-                    </option>
-                  ))}
+                  ).map((opsi) => {
+                    const isDisabled =
+                      isLitbang || (isSekum && opsi.key === "sekretaris_inti");
+                    return (
+                      <option
+                        key={opsi.key}
+                        value={opsi.key}
+                        disabled={isDisabled}
+                      >
+                        {opsi.label}
+                        {isLitbang
+                          ? " (Tidak diizinkan untuk Litbang)"
+                          : isSekum && opsi.key === "sekretaris_inti"
+                            ? " (Tidak diizinkan untuk Sekum)"
+                            : ""}
+                      </option>
+                    );
+                  })}
                 </optgroup>
                 <optgroup label="Penanggung Jawab (PJ) & Pengawas">
                   {OPSI_PERAN_PANITIA.filter((o) =>
                     o.kategori.includes("PJ"),
                   ).map((opsi) => {
                     const isDisabled =
-                      isDivisiLitbang(panitiaDiedit.sto) &&
-                      opsi.key !== "litbang_pengawas";
+                      isLitbang && opsi.key !== "litbang_pengawas";
                     return (
                       <option
                         key={opsi.key}
@@ -100,48 +173,28 @@ export function ModalEditPanitia({
                     <option
                       key={opsi.key}
                       value={opsi.key}
-                      disabled={isDivisiLitbang(panitiaDiedit.sto)}
+                      disabled={isLitbang}
                     >
                       {opsi.label}
-                      {isDivisiLitbang(panitiaDiedit.sto)
-                        ? " (Tidak diizinkan untuk Litbang)"
-                        : ""}
+                      {isLitbang ? " (Tidak diizinkan untuk Litbang)" : ""}
                     </option>
                   ))}
                 </optgroup>
               </select>
             </div>
 
+            {/* Divisi Asal Pengurus */}
             <div>
               <label className="block text-xs font-semibold text-navy mb-1">
-                Divisi / Departemen
+                Divisi Asal STO
               </label>
               <input
                 type="text"
                 readOnly
-                value={divisiPanitiaEdit}
+                value={stoTerpilih.divisi || "Umum"}
                 placeholder="Divisi pengurus"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-slate-50 text-xs text-navy focus:outline-none cursor-default"
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-navy mb-1">
-                Nama Pengurus STO
-              </label>
-              <div className="p-3.5 rounded-xl bg-surface border border-[#E2E8F0] flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shrink-0">
-                  {panitiaDiedit.sto.nama.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-navy truncate">
-                    {panitiaDiedit.sto.nama}
-                  </p>
-                  <p className="text-[10px] text-slate-muted truncate">
-                    {panitiaDiedit.sto.nim} • {panitiaDiedit.sto.emailGoogle}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         </ModalBody>

@@ -129,6 +129,7 @@ export function ProkerDetail({
   // Modal edit panitia tunggal
   const [modalEditPanitiaBuka, setModalEditPanitiaBuka] = useState(false);
   const [panitiaDiedit, setPanitiaDiedit] = useState<PanitiaItem | null>(null);
+  const [selectedStoIdEdit, setSelectedStoIdEdit] = useState<number>(0);
   const [selectedRoleKeyEdit, setSelectedRoleKeyEdit] = useState<string>("ketua_pelaksana");
   const [divisiPanitiaEdit, setDivisiPanitiaEdit] = useState<string>("");
 
@@ -154,6 +155,7 @@ export function ProkerDetail({
   // Handler Edit Panitia Tunggal
   const handleOpenEditPanitia = (item: PanitiaItem) => {
     setPanitiaDiedit(item);
+    setSelectedStoIdEdit(item.sto.id);
     if (isDivisiLitbang(item.sto)) {
       setSelectedRoleKeyEdit("litbang_pengawas");
     } else {
@@ -174,13 +176,16 @@ export function ProkerDetail({
     if (!panitiaDiedit) return;
     setPesan(null);
 
+    const targetSto =
+      availableStos.find((s) => s.id === selectedStoIdEdit) || panitiaDiedit.sto;
+
     if (
-      isDivisiLitbang(panitiaDiedit.sto) &&
+      isDivisiLitbang(targetSto) &&
       selectedRoleKeyEdit !== "litbang_pengawas"
     ) {
       setPesan({
         tipe: "error",
-        teks: `Pengurus dari Divisi Litbang (${panitiaDiedit.sto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+        teks: `Pengurus dari Divisi Litbang (${targetSto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
       });
       return;
     }
@@ -190,6 +195,7 @@ export function ProkerDetail({
       OPSI_PERAN_PANITIA[0];
 
     const formData = new FormData();
+    formData.append("stoId", String(selectedStoIdEdit));
     formData.append("peran", roleDef.peran);
     formData.append("divisiPanitia", roleDef.label);
 
@@ -394,7 +400,7 @@ export function ProkerDetail({
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Users className="w-4 h-4" />
-                  Kelola Panitia (Banyak / CSV)
+                  Tambah Panitia Baru
                 </Link>
               ) : (
                 <button
@@ -509,9 +515,13 @@ export function ProkerDetail({
       <ModalEditPanitia
         isOpen={modalEditPanitiaBuka}
         panitiaDiedit={panitiaDiedit}
+        availableStos={availableStos}
+        existingPanitiaStoIds={new Set(proker.kepanitiaan.map((k) => k.sto.id))}
+        selectedStoIdEdit={selectedStoIdEdit}
         selectedRoleKeyEdit={selectedRoleKeyEdit}
         divisiPanitiaEdit={divisiPanitiaEdit}
         isPending={isPending}
+        setSelectedStoIdEdit={setSelectedStoIdEdit}
         setSelectedRoleKeyEdit={setSelectedRoleKeyEdit}
         onClose={() => {
           setModalEditPanitiaBuka(false);

@@ -51,7 +51,7 @@ export function PanitiaSection({
         <table className="w-full text-left text-xs">
           <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
             <tr>
-              <th className="px-6 py-3.5">Nama & NIM STO</th>
+              <th className="px-6 py-3.5">Nama STO</th>
               <th className="px-6 py-3.5">Peran Kepanitiaan</th>
               <th className="px-6 py-3.5">Divisi / Departemen</th>
               {!isReadonly && <th className="px-6 py-3.5 text-right">Aksi</th>}
@@ -68,9 +68,6 @@ export function PanitiaSection({
                     <div className="flex items-center gap-3">
                       <div>
                         <div className="font-semibold text-navy">{item.sto.nama}</div>
-                        <div className="text-[11px] text-slate-muted">
-                          {item.sto.nim} • {item.sto.emailGoogle}
-                        </div>
                       </div>
                     </div>
                   </td>
