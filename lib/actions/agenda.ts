@@ -104,7 +104,10 @@ export async function buatAgendaAction(prevState: unknown, formData: FormData) {
   try {
     const adsek = await requireAdsek();
 
-    const prokerIdMentah = Number(formData.get("prokerId"));
+    let prokerIdMentah = Number(formData.get("prokerId"));
+    if ((!Number.isInteger(prokerIdMentah) || prokerIdMentah <= 0) && typeof prevState === "number") {
+      prokerIdMentah = prevState;
+    }
     if (!Number.isInteger(prokerIdMentah) || prokerIdMentah <= 0) {
       return { error: { kode: "VALIDASI_GAGAL", pesan: "Proker tidak valid" } };
     }

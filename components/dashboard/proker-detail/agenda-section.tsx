@@ -48,7 +48,6 @@ interface Props {
   now: Date;
   rekap: Record<number, RekapKehadiranSesi>;
   setTabStatus: (v: StatusAgendaDihitung) => void;
-  onEditAgenda: (agenda: AgendaItem) => void;
   onHapusAgenda: (id: number, judul: string) => void;
   onOpenModalSesi: (params: { agenda: AgendaItem; sesiAwal: SesiItem | null }) => void;
 }
@@ -63,7 +62,6 @@ export function AgendaSection({
   now,
   rekap,
   setTabStatus,
-  onEditAgenda,
   onHapusAgenda,
   onOpenModalSesi,
 }: Props) {
@@ -189,13 +187,13 @@ export function AgendaSection({
                     <div className="flex items-center gap-2 shrink-0 sm:self-start">
                       {!isReadonly && (
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => onEditAgenda(item)}
+                          <Link
+                            href={`/dashboard/proker/${proker.id}/agenda/${item.id}/edit`}
                             title="Edit Agenda"
                             className="p-1.5 rounded-lg text-slate-muted hover:text-secondary hover:bg-secondary/10 transition-colors cursor-pointer"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Link>
                           <button
                             onClick={() => onHapusAgenda(item.id, item.judul)}
                             disabled={isPending}

@@ -140,7 +140,7 @@ export function DashboardHeader({
                 </div>
                 <div>
                   <h1 className="text-sm font-bold tracking-tight text-primary leading-tight">
-                    Absenta
+                    Absenta PCC
                   </h1>
                   <p className="text-[10px] text-secondary uppercase tracking-wider font-semibold">
                     {roleLabel}

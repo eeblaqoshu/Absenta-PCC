@@ -40,6 +40,13 @@ enum PeranPanitia {
   @@map("peran_panitia")
 }
 
+enum KategoriProker {
+  proker
+  agenda
+
+  @@map("kategori_proker")
+}
+
 enum JenisAgenda {
   rapat_pj
   rapat_besar
@@ -154,8 +161,9 @@ model Sto {
 // ─────────────────────────────────────────────
 
 model Proker {
-  id         Int      @id @default(autoincrement())
-  periodeId  Int      @map("periode_id")
+  id         Int            @id @default(autoincrement())
+  periodeId  Int            @map("periode_id")
+  kategori   KategoriProker @default(proker)
   nama       String
   deskripsi  String?
   dibuatOleh Int      @map("dibuat_oleh")

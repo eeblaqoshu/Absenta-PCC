@@ -101,7 +101,7 @@ export default async function AdsekDashboardPage() {
 
         <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-muted">Total Agenda Kegiatan</p>
+            <p className="text-xs font-medium text-slate-muted">Total Kegiatan</p>
             <p className="text-2xl font-bold text-primary mt-1">
               {totalAgenda}
             </p>
