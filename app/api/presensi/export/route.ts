@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rekapKehadiranSesi, type StatusKehadiran } from "@/lib/kehadiran";
 
-const LABEL_KEHADIRAN: Record<StatusKehadiran, string> = {
+const LABEL_STATUS_KEHADIRAN: Record<StatusKehadiran, string> = {
   hadir: "Hadir",
   terlambat: "Terlambat",
   izin_disetujui: "Izin",
@@ -14,10 +14,19 @@ const LABEL_KEHADIRAN: Record<StatusKehadiran, string> = {
   ditolak: "Ditolak",
 };
 
-/** Bungkus nilai agar aman di dalam CSV. */
+/** Bungkus nilai agar aman di dalam format CSV (RFC 4180). */
 function sel(nilai: string | number | null | undefined): string {
   const teks = nilai === null || nilai === undefined ? "" : String(nilai);
   return `"${teks.replace(/"/g, '""')}"`;
+}
+
+/** Membersihkan string agar aman sebagai nama file */
+function sanitasiNamaFile(teks: string): string {
+  return teks
+    .replace(/[^\w\d\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "_")
+    .substring(0, 30);
 }
 
 export async function GET(req: NextRequest) {
@@ -59,16 +68,10 @@ export async function GET(req: NextRequest) {
   const baris: string[] = [
     [
       "Nama",
-      "NIM",
-      "Divisi",
+      "Divisi / Departemen",
       "Status Kehadiran",
       "Menit Terlambat",
       "Jarak (m)",
-      "Di Luar Radius",
-      "Verifikasi",
-      "Jenis Izin",
-      "Status Izin",
-      "Poin",
       "Diinput Manual",
     ]
       .map(sel)
@@ -76,19 +79,25 @@ export async function GET(req: NextRequest) {
   ];
 
   for (const b of rekap.baris) {
+    // Format menit terlambat
+    let menitTerlambatStr = "-";
+    if (b.statusKehadiran === "terlambat") {
+      menitTerlambatStr = String(b.menitTerlambat);
+    } else if (b.statusKehadiran === "hadir") {
+      menitTerlambatStr = "0";
+    }
+
+    // Format jarak (m)
+    const jarakStr =
+      b.jarakM !== null && b.jarakM !== undefined ? String(b.jarakM) : "-";
+
     baris.push(
       [
         b.nama,
-        b.nim,
-        b.divisi,
-        LABEL_KEHADIRAN[b.statusKehadiran],
-        b.presensiId ? b.menitTerlambat : "",
-        b.jarakM ?? "",
-        b.diLuarRadius ? "Ya" : "Tidak",
-        b.statusVerifikasi ?? "",
-        b.izin?.jenis ?? "",
-        b.izin?.status ?? "",
-        rekap.sesiSudahDitutup ? b.poin : "",
+        b.divisi || "-",
+        LABEL_STATUS_KEHADIRAN[b.statusKehadiran] ?? b.statusKehadiran,
+        menitTerlambatStr,
+        jarakStr,
         b.manual ? "Ya" : "Tidak",
       ]
         .map(sel)
@@ -96,8 +105,12 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const csv = "\uFEFF" + baris.join("\r\n"); // BOM supaya Excel membaca UTF-8
-  const namaFile = `kehadiran-sesi${sesiId}.csv`;
+  // BOM (\uFEFF) di awal string agar Microsoft Excel membaca format UTF-8 dengan benar
+  const csv = "\uFEFF" + baris.join("\r\n");
+
+  const prokerSlug = sanitasiNamaFile(rekap.namaProker);
+  const agendaSlug = sanitasiNamaFile(rekap.judulAgenda);
+  const namaFile = `kehadiran_${prokerSlug}_${agendaSlug}_sesi${sesiId}.csv`;
 
   return new NextResponse(csv, {
     headers: {
