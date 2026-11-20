@@ -231,6 +231,29 @@ export function isSekretarisUmum(sto: StoOption | null | undefined): boolean {
   );
 }
 
+export function isDivisiLitbang(
+  sto: { divisi?: string | null; jabatan?: string | null } | null | undefined,
+): boolean {
+  if (!sto) return false;
+  const div = (sto.divisi || "").toLowerCase();
+  const jab = (sto.jabatan || "").toLowerCase();
+  return (
+    div.includes("litbang") ||
+    div.includes("penelitian dan pengembangan") ||
+    jab.includes("litbang")
+  );
+}
+
+export function isPeranLitbangPengawas(
+  roleKey?: string | null,
+  divisiPanitia?: string | null,
+): boolean {
+  if (roleKey === "litbang_pengawas") return true;
+  const d = (divisiPanitia || "").toLowerCase();
+  const r = (roleKey || "").toLowerCase();
+  return d.includes("litbang") || r.includes("litbang");
+}
+
 export function getPeranBadge(peran: PeranPanitia, roleName?: string | null) {
   const isNamaDivisi =
     roleName &&

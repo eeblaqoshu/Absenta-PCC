@@ -7,6 +7,8 @@ import {
   type StoOption,
   type ProkerData,
   type CsvBarisPanitia,
+  isDivisiLitbang,
+  isPeranLitbangPengawas,
 } from "./types";
 import { imporCsvPanitiaAction } from "@/lib/actions/kepanitiaan";
 
@@ -146,6 +148,12 @@ export function PanitiaCsvTab({
         } else if (seenNims.has(nim)) {
           valid = false;
           pesanError = "Duplikasi NIM di dalam file";
+        } else if (
+          isDivisiLitbang(matchedSto) &&
+          !isPeranLitbangPengawas(peran, divisi)
+        ) {
+          valid = false;
+          pesanError = `${matchedSto.nama} (Divisi Litbang) hanya dapat ditugaskan sebagai Litbang Pengawas`;
         }
 
         seenNims.add(nim);

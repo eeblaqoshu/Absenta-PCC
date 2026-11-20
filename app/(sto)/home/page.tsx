@@ -19,6 +19,7 @@ import {
   ArrowRight,
   History,
   Calendar,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -230,22 +231,22 @@ export default async function StoHomePage() {
               </Link>
             )}
 
-            {/* Quick Action 2: Pengajuan Izin (Card Serupa di Bawah Presensi) */}
+            {/* Quick Action 2: Kepanitiaan Saya */}
             <Link
-              href="/izin"
+              href="/kepanitiaan"
               className="group block p-5 rounded-3xl bg-white hover:bg-surface border border-[#E2E8F0] hover:border-secondary shadow-sm hover:shadow-md transition-all text-navy"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3.5">
                   <div className="w-11 h-11 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
-                    <FileText className="w-5 h-5" />
+                    <Users className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold tracking-tight text-primary">
-                      Pengajuan Izin
+                      Kepanitiaan Saya
                     </h3>
                     <p className="text-[11px] text-slate-muted mt-0.5">
-                      Ajukan izin tidak hadir atau sakit
+                      Lihat susunan proker &amp; divisi kepanitiaan Anda
                     </p>
                   </div>
                 </div>

@@ -70,18 +70,18 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
       isActive: pathname.startsWith("/dashboard/proker"),
     },
     {
-      href: "/dashboard/izin",
-      label: "Izin",
-      icon: FileText,
-      isActive: pathname.startsWith("/dashboard/izin"),
+      href: "/dashboard/leaderboard",
+      label: "Leaderboard",
+      icon: Trophy,
     },
   ];
 
   const masterDataItems = [
     {
-      href: "/dashboard/leaderboard",
-      label: "Leaderboard",
-      icon: Trophy,
+      href: "/dashboard/izin",
+      label: "Izin",
+      icon: FileText,
+      isActive: pathname.startsWith("/dashboard/izin"),
     },
     {
       href: "/dashboard/sto",
@@ -101,7 +101,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
   ];
 
   const isMasterDataActive = masterDataItems.some(
-    (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+    (item) => pathname === item.href || pathname.startsWith(item.href + "/"),
   );
 
   if (mobile) {
@@ -186,7 +186,8 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
                 {masterDataItems.map((sub) => {
                   const SubIcon = sub.icon;
                   const isSubActive =
-                    pathname === sub.href || pathname.startsWith(sub.href + "/");
+                    pathname === sub.href ||
+                    pathname.startsWith(sub.href + "/");
                   return (
                     <Link
                       key={sub.href}

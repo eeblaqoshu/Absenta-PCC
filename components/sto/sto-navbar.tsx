@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, FileText, BarChart3 } from "lucide-react";
+import { Home, Users, BarChart3 } from "lucide-react";
 import { StoUserDropdown } from "@/components/sto/sto-user-dropdown";
 import { LogoutButton } from "@/components/ui/logout-button";
 
@@ -34,10 +34,10 @@ export function StoNavbar({ sto, periodeNama }: StoNavbarProps) {
       isActive: pathname === "/home",
     },
     {
-      label: "Izin",
-      href: "/izin",
-      icon: FileText,
-      isActive: pathname.startsWith("/izin"),
+      label: "Kepanitiaan",
+      href: "/kepanitiaan",
+      icon: Users,
+      isActive: pathname.startsWith("/kepanitiaan"),
     },
     {
       label: "Statistik Absensi",

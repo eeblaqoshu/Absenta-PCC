@@ -144,7 +144,6 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-semibold text-navy">{b.nama}</p>
                       </div>
-                      <p className="text-[11px] text-slate-muted">{b.nim}</p>
                     </td>
                     <td className="py-2.5 pr-3 text-slate-muted">{b.divisi ?? "Umum"}</td>
                     <td className="py-2.5 pr-3 text-center text-emerald-600">{b.tepatWaktu}</td>

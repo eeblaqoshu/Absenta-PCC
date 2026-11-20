@@ -6,7 +6,12 @@ import { requireAdsek } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { StatusPeriode, PeranPanitia } from "@prisma/client";
-import type { BarisPanitiaInput, CsvBarisPanitia } from "@/components/dashboard/proker-detail/types";
+import {
+  isDivisiLitbang,
+  isPeranLitbangPengawas,
+  type BarisPanitiaInput,
+  type CsvBarisPanitia,
+} from "@/components/dashboard/proker-detail/types";
 
 const TambahPanitiaSchema = z.object({
   prokerId: z.coerce.number(),
@@ -48,6 +53,29 @@ export async function tambahPanitiaAction(formData: FormData) {
         error: {
           kode: "PERIODE_READ_ONLY",
           pesan: "Tidak dapat mengubah kepanitiaan pada periode yang sudah selesai",
+        },
+      };
+    }
+
+    const sto = await prisma.sto.findUnique({
+      where: { id: stoId },
+      select: { id: true, nama: true, divisi: true, jabatan: true },
+    });
+
+    if (!sto) {
+      return {
+        error: {
+          kode: "STO_TIDAK_DITEMUKAN",
+          pesan: "Pengurus STO tidak ditemukan.",
+        },
+      };
+    }
+
+    if (isDivisiLitbang(sto) && !isPeranLitbangPengawas(null, divisiPanitia)) {
+      return {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: `Pengurus dari Divisi Litbang (${sto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
         },
       };
     }
@@ -137,9 +165,10 @@ export async function tambahBanyakPanitiaAction(
         periodeId: proker.periodeId,
         id: { in: panitiaList.map((p) => p.stoId) },
       },
-      select: { id: true, nama: true },
+      select: { id: true, nama: true, divisi: true, jabatan: true },
     });
     const validStoMap = new Map(validStos.map((s) => [s.id, s.nama]));
+    const validStoObjMap = new Map(validStos.map((s) => [s.id, s]));
 
     const seenInBatch = new Set<number>();
     const dataValid: {
@@ -161,8 +190,14 @@ export async function tambahBanyakPanitiaAction(
       }
 
       const namaSto = validStoMap.get(item.stoId);
-      if (!namaSto) {
+      const stoObj = validStoObjMap.get(item.stoId);
+      if (!namaSto || !stoObj) {
         pesanGagal.push(`Baris ${no}: Pengurus tidak valid atau bukan pengurus di periode aktif ini.`);
+        continue;
+      }
+
+      if (isDivisiLitbang(stoObj) && !isPeranLitbangPengawas(null, item.divisiPanitia)) {
+        pesanGagal.push(`Baris ${no}: Pengurus dari Divisi Litbang (${stoObj.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`);
         continue;
       }
 
@@ -333,7 +368,7 @@ export async function imporCsvPanitiaAction(
 
     const allStos = await prisma.sto.findMany({
       where: { periodeId: proker.periodeId },
-      select: { id: true, nama: true, nim: true, emailGoogle: true },
+      select: { id: true, nama: true, nim: true, emailGoogle: true, divisi: true, jabatan: true },
     });
 
     const stoByNim = new Map<string, typeof allStos[0]>();
@@ -386,6 +421,11 @@ export async function imporCsvPanitiaAction(
 
       const { peran, divisiPanitia } = normalisasiPeranPanitia(row.peran, row.divisiPanitia);
 
+      if (isDivisiLitbang(stoMatch) && !isPeranLitbangPengawas(row.peran, divisiPanitia)) {
+        pesanGagal.push(`Baris ${noBaris}: Pengurus dari Divisi Litbang (${stoMatch.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`);
+        continue;
+      }
+
       seenStoId.add(stoMatch.id);
       dataValid.push({
         prokerId,
@@ -428,7 +468,10 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
 
     const kepanitiaan = await prisma.kepanitiaan.findUnique({
       where: { id: kepanitiaanId },
-      include: { proker: { include: { periode: true } } },
+      include: {
+        proker: { include: { periode: true } },
+        sto: true,
+      },
     });
 
     if (!kepanitiaan || kepanitiaan.proker.periode.status === StatusPeriode.selesai) {
@@ -448,6 +491,15 @@ export async function ubahPanitiaAction(kepanitiaanId: number, formData: FormDat
         error: {
           kode: "PERAN_TIDAK_VALID",
           pesan: "Peran panitia tidak valid",
+        },
+      };
+    }
+
+    if (isDivisiLitbang(kepanitiaan.sto) && !isPeranLitbangPengawas(null, divisiPanitia)) {
+      return {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: `Pengurus dari Divisi Litbang (${kepanitiaan.sto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
         },
       };
     }

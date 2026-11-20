@@ -13,6 +13,7 @@ import {
 import {
   OPSI_PERAN_PANITIA,
   isSekretarisUmum,
+  isDivisiLitbang,
   type BarisFormPanitia,
   type StoOption,
   type ProkerData,
@@ -42,7 +43,10 @@ export function PanitiaStrukturTab({
 
   const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>(() => {
     const firstAvailable = availableStos.find(
-      (s) => !panitiaStoIdSet.has(s.id) && !isSekretarisUmum(s),
+      (s) =>
+        !panitiaStoIdSet.has(s.id) &&
+        !isSekretarisUmum(s) &&
+        !isDivisiLitbang(s),
     );
     return [
       {
@@ -59,9 +63,6 @@ export function PanitiaStrukturTab({
       ...panitiaStoIdSet,
       ...barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
     ]);
-    const firstAvailable = availableStos.find(
-      (s) => !usedIds.has(s.id) && !isSekretarisUmum(s),
-    );
 
     let roleKey = preset?.roleKey;
     if (!roleKey) {
@@ -75,6 +76,15 @@ export function PanitiaStrukturTab({
         roleKey = OPSI_PERAN_PANITIA[0].key;
       }
     }
+
+    const firstAvailable = availableStos.find((s) => {
+      if (usedIds.has(s.id)) return false;
+      if (isSekretarisUmum(s)) return false;
+      if (roleKey === "litbang_pengawas") {
+        return isDivisiLitbang(s);
+      }
+      return !isDivisiLitbang(s);
+    }) || availableStos.find((s) => !usedIds.has(s.id) && !isSekretarisUmum(s));
 
     setBarisStruktur((prev) => [
       ...prev,
@@ -157,22 +167,24 @@ export function PanitiaStrukturTab({
     ) => {
       if (!kriteria) return true;
       if (isSekretarisUmum(sto)) return false;
+      if (kriteria === "litbang") {
+        return isDivisiLitbang(sto);
+      }
+      if (isDivisiLitbang(sto)) return false;
       const jab = (sto.jabatan || "").toLowerCase();
       const div = (sto.divisi || "").toLowerCase();
       return jab.includes(kriteria) || div.includes(kriteria);
     };
 
     const isSpecializedSto = (sto: StoOption) => {
-      if (isSekretarisUmum(sto)) return true;
+      if (isSekretarisUmum(sto) || isDivisiLitbang(sto)) return true;
       const jab = (sto.jabatan || "").toLowerCase();
       const div = (sto.divisi || "").toLowerCase();
       return (
         jab.includes("sekretaris") ||
         div.includes("sekretaris") ||
         jab.includes("bendahara") ||
-        div.includes("bendahara") ||
-        jab.includes("litbang") ||
-        div.includes("litbang")
+        div.includes("bendahara")
       );
     };
 
@@ -204,7 +216,10 @@ export function PanitiaStrukturTab({
       }
 
       const fallbackMatch = availableStos.find(
-        (s) => !currentUsedIds.has(s.id) && !isSekretarisUmum(s),
+        (s) =>
+          !currentUsedIds.has(s.id) &&
+          !isSekretarisUmum(s) &&
+          !isDivisiLitbang(s),
       );
       if (fallbackMatch) {
         currentUsedIds.add(fallbackMatch.id);
@@ -314,19 +329,33 @@ export function PanitiaStrukturTab({
       }
     }
 
-    const barisSekretarisInti = barisStruktur.find(
-      (b) => b.roleKey === "sekretaris_inti",
-    );
-    if (barisSekretarisInti && barisSekretarisInti.stoId) {
-      const stoDipilih = availableStos.find(
-        (s) => String(s.id) === String(barisSekretarisInti.stoId),
-      );
-      if (stoDipilih && isSekretarisUmum(stoDipilih)) {
-        setPesan({
-          tipe: "error",
-          teks: `Pengurus "${stoDipilih.nama}" menjabat sebagai Sekretaris Umum dan tidak dapat ditugaskan sebagai Sekretaris Inti kepanitiaan.`,
-        });
-        return;
+    for (const baris of barisStruktur) {
+      if (baris.stoId) {
+        const stoDipilih = availableStos.find(
+          (s) => String(s.id) === String(baris.stoId),
+        );
+        if (
+          baris.roleKey === "sekretaris_inti" &&
+          stoDipilih &&
+          isSekretarisUmum(stoDipilih)
+        ) {
+          setPesan({
+            tipe: "error",
+            teks: `Pengurus "${stoDipilih.nama}" menjabat sebagai Sekretaris Umum dan tidak dapat ditugaskan sebagai Sekretaris Inti kepanitiaan.`,
+          });
+          return;
+        }
+        if (
+          stoDipilih &&
+          isDivisiLitbang(stoDipilih) &&
+          baris.roleKey !== "litbang_pengawas"
+        ) {
+          setPesan({
+            tipe: "error",
+            teks: `Pengurus "${stoDipilih.nama}" dari Divisi Litbang hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+          });
+          return;
+        }
       }
     }
 
@@ -433,12 +462,18 @@ export function PanitiaStrukturTab({
             const isSekumSebagaiSekretarisInti =
               baris.roleKey === "sekretaris_inti" &&
               isSekretarisUmum(stoDipilih);
+            const isLitbangBukanPengawas =
+              baris.roleKey !== "litbang_pengawas" &&
+              isDivisiLitbang(stoDipilih);
 
             return (
               <div
                 key={baris.tempId}
                 className={`p-3 rounded-2xl border transition-all ${
-                  isDuplikat || isDuplikatPeran || isSekumSebagaiSekretarisInti
+                  isDuplikat ||
+                  isDuplikatPeran ||
+                  isSekumSebagaiSekretarisInti ||
+                  isLitbangBukanPengawas
                     ? "border-rose-300 bg-rose-50/40"
                     : "border-[#E2E8F0] bg-white hover:border-secondary/40"
                 }`}
@@ -484,12 +519,25 @@ export function PanitiaStrukturTab({
                           const isRowIni = String(s.id) === String(baris.stoId);
                           return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
                         })
-                        .map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.nama} ({s.nim})
-                            {s.divisi ? ` - ${s.divisi}` : ""}
-                          </option>
-                        ))}
+                        .map((s) => {
+                          const isLitbang = isDivisiLitbang(s);
+                          const disabledLitbang =
+                            baris.roleKey !== "litbang_pengawas" && isLitbang;
+                          return (
+                            <option
+                              key={s.id}
+                              value={s.id}
+                              disabled={disabledLitbang}
+                            >
+                              {s.nama} ({s.nim})
+                              {disabledLitbang
+                                ? " - Khusus Litbang Pengawas"
+                                : s.divisi
+                                  ? ` - ${s.divisi}`
+                                  : ""}
+                            </option>
+                          );
+                        })}
                     </select>
                   </div>
 
@@ -529,6 +577,12 @@ export function PanitiaStrukturTab({
                   <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
                     <AlertCircle className="w-3 h-3 shrink-0" />
                     Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris Inti.
+                  </p>
+                )}
+                {isLitbangBukanPengawas && (
+                  <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    Pengurus dari Divisi Litbang ({stoDipilih?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.
                   </p>
                 )}
               </div>

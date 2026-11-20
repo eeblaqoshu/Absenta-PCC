@@ -95,12 +95,6 @@ export function DashboardHeader({
 
   const masterDataItems = [
     {
-      href: "/dashboard/izin",
-      label: "Izin",
-      icon: FileText,
-      isActive: pathname.startsWith("/dashboard/izin"),
-    },
-    {
       href: "/dashboard/sto",
       label: "Data STO",
       icon: Users,
@@ -252,7 +246,7 @@ export function DashboardHeader({
                     <span className="text-[10px] font-semibold text-slate-muted">
                       Jabatan :
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-info/10 text-info border border-secondary/20">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-info/10 text-info">
                       {roleLabel}
                     </span>
                   </div>

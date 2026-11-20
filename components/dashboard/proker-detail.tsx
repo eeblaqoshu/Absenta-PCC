@@ -33,6 +33,7 @@ import {
 import Link from "next/link";
 import {
   OPSI_PERAN_PANITIA,
+  isDivisiLitbang,
   langgananDetak,
   cuplikanDetak,
   keTanggalWib,
@@ -153,13 +154,17 @@ export function ProkerDetail({
   // Handler Edit Panitia Tunggal
   const handleOpenEditPanitia = (item: PanitiaItem) => {
     setPanitiaDiedit(item);
-    const byLabelOrPeran =
-      OPSI_PERAN_PANITIA.find(
-        (o) => o.label.toLowerCase() === item.divisiPanitia?.toLowerCase(),
-      ) || OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
-    setSelectedRoleKeyEdit(
-      byLabelOrPeran ? byLabelOrPeran.key : OPSI_PERAN_PANITIA[0].key,
-    );
+    if (isDivisiLitbang(item.sto)) {
+      setSelectedRoleKeyEdit("litbang_pengawas");
+    } else {
+      const byLabelOrPeran =
+        OPSI_PERAN_PANITIA.find(
+          (o) => o.label.toLowerCase() === item.divisiPanitia?.toLowerCase(),
+        ) || OPSI_PERAN_PANITIA.find((o) => o.peran === item.peran);
+      setSelectedRoleKeyEdit(
+        byLabelOrPeran ? byLabelOrPeran.key : OPSI_PERAN_PANITIA[0].key,
+      );
+    }
     setDivisiPanitiaEdit(item.sto.divisi || "Umum");
     setModalEditPanitiaBuka(true);
   };
@@ -168,6 +173,17 @@ export function ProkerDetail({
     e.preventDefault();
     if (!panitiaDiedit) return;
     setPesan(null);
+
+    if (
+      isDivisiLitbang(panitiaDiedit.sto) &&
+      selectedRoleKeyEdit !== "litbang_pengawas"
+    ) {
+      setPesan({
+        tipe: "error",
+        teks: `Pengurus dari Divisi Litbang (${panitiaDiedit.sto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+      });
+      return;
+    }
 
     const roleDef =
       OPSI_PERAN_PANITIA.find((r) => r.key === selectedRoleKeyEdit) ||

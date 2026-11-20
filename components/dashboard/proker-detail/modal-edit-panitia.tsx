@@ -2,8 +2,8 @@
 "use client";
 
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
-import { Users, Loader2 } from "lucide-react";
-import { OPSI_PERAN_PANITIA, type PanitiaItem } from "./types";
+import { Users, Loader2, AlertCircle } from "lucide-react";
+import { OPSI_PERAN_PANITIA, isDivisiLitbang, type PanitiaItem } from "./types";
 
 interface Props {
   isOpen: boolean;
@@ -39,6 +39,16 @@ export function ModalEditPanitia({
         />
         <ModalBody>
           <div className="space-y-4">
+            {isDivisiLitbang(panitiaDiedit.sto) && (
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+                <div>
+                  <span className="font-bold">Pengurus Divisi Litbang:</span>{" "}
+                  Sesuai kebijakan organisasi, pengurus dari Divisi Litbang hanya dapat ditugaskan sebagai <strong>Litbang Pengawas</strong> pada seluruh program kerja.
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-semibold text-navy mb-1">
                 Peran / Posisi Panitia Baru
@@ -52,26 +62,50 @@ export function ModalEditPanitia({
                   {OPSI_PERAN_PANITIA.filter((o) =>
                     o.kategori.includes("PI"),
                   ).map((opsi) => (
-                    <option key={opsi.key} value={opsi.key}>
+                    <option
+                      key={opsi.key}
+                      value={opsi.key}
+                      disabled={isDivisiLitbang(panitiaDiedit.sto)}
+                    >
                       {opsi.label}
+                      {isDivisiLitbang(panitiaDiedit.sto)
+                        ? " (Tidak diizinkan untuk Litbang)"
+                        : ""}
                     </option>
                   ))}
                 </optgroup>
                 <optgroup label="Penanggung Jawab (PJ) & Pengawas">
                   {OPSI_PERAN_PANITIA.filter((o) =>
                     o.kategori.includes("PJ"),
-                  ).map((opsi) => (
-                    <option key={opsi.key} value={opsi.key}>
-                      {opsi.label}
-                    </option>
-                  ))}
+                  ).map((opsi) => {
+                    const isDisabled =
+                      isDivisiLitbang(panitiaDiedit.sto) &&
+                      opsi.key !== "litbang_pengawas";
+                    return (
+                      <option
+                        key={opsi.key}
+                        value={opsi.key}
+                        disabled={isDisabled}
+                      >
+                        {opsi.label}
+                        {isDisabled ? " (Tidak diizinkan untuk Litbang)" : ""}
+                      </option>
+                    );
+                  })}
                 </optgroup>
                 <optgroup label="Anggota Panitia">
                   {OPSI_PERAN_PANITIA.filter((o) =>
                     o.kategori.includes("Anggota"),
                   ).map((opsi) => (
-                    <option key={opsi.key} value={opsi.key}>
+                    <option
+                      key={opsi.key}
+                      value={opsi.key}
+                      disabled={isDivisiLitbang(panitiaDiedit.sto)}
+                    >
                       {opsi.label}
+                      {isDivisiLitbang(panitiaDiedit.sto)
+                        ? " (Tidak diizinkan untuk Litbang)"
+                        : ""}
                     </option>
                   ))}
                 </optgroup>
