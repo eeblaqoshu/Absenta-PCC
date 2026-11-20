@@ -119,7 +119,7 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] p-1.5 z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] p-1.5 z-40 overflow-hidden"
           >
             {/* Header / Info User */}
             <div className="px-3 py-2.5 bg-surface/70 rounded-xl mb-1 border border-[#E2E8F0]/60 space-y-2">

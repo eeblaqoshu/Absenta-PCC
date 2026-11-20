@@ -122,7 +122,7 @@ export function StoLocationPanel({ titikAgenda }: Props) {
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-[#E2E8F0] bg-white">
+    <section className="relative z-0 isolate overflow-hidden rounded-xl border border-[#E2E8F0] bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
         <div>
           <h2 className="text-sm font-semibold text-navy">Lokasi agenda</h2>
@@ -140,7 +140,7 @@ export function StoLocationPanel({ titikAgenda }: Props) {
           {memuat ? "Mencari lokasi" : "Cek lokasi saya"}
         </button>
       </div>
-      <div ref={containerRef} className="h-56 w-full bg-slate-100 sm:h-64" aria-label="Peta lokasi agenda" />
+      <div ref={containerRef} className="relative z-0 isolate h-56 w-full bg-slate-100 sm:h-64" aria-label="Peta lokasi agenda" />
       {pesan && <p role="status" className="px-4 py-2 text-xs text-rose-600">{pesan}</p>}
       {titikAgenda.length > 0 && (
         <div className="flex gap-2 overflow-x-auto border-t border-[#E2E8F0] px-4 py-2.5 scrollbar-none sm:px-5">

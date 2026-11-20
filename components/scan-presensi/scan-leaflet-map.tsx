@@ -108,7 +108,7 @@ export function ScanLeafletMap({ sesiDipilih, posisi }: Props) {
     <div
       ref={containerRef}
       style={{ height: "260px" }}
-      className="peta-leaflet relative z-0 w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-surface"
+      className="peta-leaflet relative z-0 isolate w-full rounded-xl overflow-hidden border border-[#E2E8F0] bg-surface"
     />
   );
 }
