@@ -198,10 +198,10 @@ export async function ambilStatistikSto(
       statusLabel = "Hadir Tepat Waktu";
     } else if (kategori === "terlambat_tanpa_izin" || kategori === "terlambat_dengan_izin") {
       terlambat += 1;
-      statusLabel = kategori === "terlambat_dengan_izin" ? "Terlambat (Izin)" : "Terlambat";
+      statusLabel = "Terlambat";
     } else if (kategori === "alpa_dengan_izin") {
       izin += 1;
-      statusLabel = `Izin (${iz?.jenis || "Disetujui"})`;
+      statusLabel = "Izin";
     } else {
       alpa += 1;
       statusLabel = "Tanpa Keterangan";
