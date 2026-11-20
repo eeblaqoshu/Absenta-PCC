@@ -338,14 +338,14 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-muted hover:text-navy transition-colors focus:outline-none cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-navy transition-colors focus:outline-none cursor-pointer z-10"
                         title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                         aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
                       >
                         {showPassword ? (
-                          <EyeOff className="w-3.5 h-3.5" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-4 h-4" />
                         )}
                       </button>
                     </div>
