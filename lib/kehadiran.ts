@@ -1,7 +1,7 @@
 // lib/kehadiran.ts
 // Rekap kehadiran peserta sah sebuah SESI presensi: siapa sudah absen, terlambat
-// berapa menit, izin, atau alpa. Satu agenda bisa punya banyak sesi, jadi rekap,
-// izin, dan poin dihitung per sesi.
+// berapa menit, izin, atau alpa. Izin melekat pada agenda dan berlaku untuk
+// seluruh sesi pada agenda tersebut; poin tetap dihitung per sesi.
 import { prisma } from "./prisma";
 import { ambilPesertaAgenda, type PesertaAgenda } from "./peserta";
 import { hitungPoin } from "./poin";
@@ -79,7 +79,7 @@ export function ringkasKehadiran(baris: BarisKehadiran[]): RingkasanKehadiran {
 
 /**
  * Rekap kehadiran satu sesi presensi. Pesertanya diambil dari aturan akses agenda
- * (`lib/akses.ts`), izin & presensi dipetakan per sesi.
+ * (`lib/akses.ts`), izin agenda berlaku pada seluruh sesi agenda tersebut.
  */
 export async function rekapKehadiranSesi(
   sesiId: number,
@@ -121,7 +121,7 @@ export async function rekapKehadiranSesi(
       },
     }),
     prisma.izin.findMany({
-      where: { sesiId },
+      where: { agendaId: sesi.agendaId },
       select: { id: true, stoId: true, jenis: true, status: true, alasan: true },
     }),
   ]);

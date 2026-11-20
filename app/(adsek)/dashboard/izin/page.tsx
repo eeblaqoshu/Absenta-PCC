@@ -1,9 +1,9 @@
 // app/(adsek)/dashboard/izin/page.tsx
-// Peninjauan izin STO (adsek) pada periode aktif.
+// Peninjauan izin STO per agenda pada periode aktif.
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { IzinManager, type BarisIzin } from "@/components/dashboard/izin-manager";
-import { formatJamIndo, formatTanggalIndo } from "@/lib/waktu";
+import { formatTanggalIndo, jamDariWaktuAgenda } from "@/lib/waktu";
 import { StatusPeriode } from "@prisma/client";
 import { AlertCircle } from "lucide-react";
 
@@ -27,20 +27,17 @@ export default async function IzinAdsekPage() {
   }
 
   const izin = await prisma.izin.findMany({
-    where: { sesi: { agenda: { proker: { periodeId: periodeAktif.id } } } },
+    where: { agenda: { proker: { periodeId: periodeAktif.id } } },
     include: {
       sto: { select: { nama: true, nim: true, divisi: true } },
       peninjau: { select: { nama: true } },
-      sesi: {
+      agenda: {
         select: {
-          bukaAt: true,
-          tutupAt: true,
-          agenda: {
-            select: {
-              judul: true,
-              proker: { select: { nama: true } },
-            },
-          },
+          judul: true,
+          tglPelaksanaan: true,
+          tglSelesai: true,
+          waktuPelaksanaan: true,
+          proker: { select: { nama: true } },
         },
       },
     },
@@ -56,12 +53,12 @@ export default async function IzinAdsekPage() {
     ditinjauAt: i.ditinjauAt ? i.ditinjauAt.toISOString() : null,
     namaPeninjau: i.peninjau?.nama ?? null,
     sto: { nama: i.sto.nama, nim: i.sto.nim, divisi: i.sto.divisi },
-    sesi: {
-      judul: i.sesi.agenda.judul,
-      namaProker: i.sesi.agenda.proker.nama,
-      jadwal: `${formatTanggalIndo(i.sesi.bukaAt)} • ${formatJamIndo(i.sesi.bukaAt)}–${formatJamIndo(
-        i.sesi.tutupAt
-      )} WIB`,
+    agenda: {
+      judul: i.agenda.judul,
+      namaProker: i.agenda.proker.nama,
+      jadwal: `${formatTanggalIndo(i.agenda.tglPelaksanaan)}${
+        i.agenda.tglSelesai ? ` – ${formatTanggalIndo(i.agenda.tglSelesai)}` : ""
+      } • ${jamDariWaktuAgenda(i.agenda.waktuPelaksanaan)} WIB`,
     },
   }));
 

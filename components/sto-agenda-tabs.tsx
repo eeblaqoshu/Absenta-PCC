@@ -22,6 +22,11 @@ export interface AgendaItem {
   statusPresensi: "hadir" | "terlambat" | null;
   diLuarRadius: boolean;
   statusVerifikasi: "menunggu" | "diterima" | "ditolak" | null;
+  izin: {
+    jenis: "terlambat" | "sakit" | "izin" | "lainnya";
+    status: "menunggu" | "disetujui" | "ditolak";
+    alasan: string;
+  } | null;
 }
 
 export function StoAgendaTabs({
@@ -106,6 +111,20 @@ export function StoAgendaTabs({
                     ) : (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-highlight/15 text-[#8a6500]">
                         Belum mulai
+                      </span>
+                    )}
+                    {agenda.izin && (
+                      <span
+                        title={agenda.izin.alasan}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          agenda.izin.status === "disetujui"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : agenda.izin.status === "menunggu"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-rose-50 text-rose-700"
+                        }`}
+                      >
+                        Izin {agenda.izin.status === "menunggu" ? "menunggu" : agenda.izin.status}
                       </span>
                     )}
                   </div>

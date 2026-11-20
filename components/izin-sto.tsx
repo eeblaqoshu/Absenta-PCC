@@ -1,5 +1,5 @@
 // components/izin-sto.tsx
-// Pengajuan izin STO per SESI presensi (satu izin per sesi), ditinjau adsek.
+// Pengajuan izin STO per agenda, ditinjau adsek.
 "use client";
 
 import { useState, useTransition } from "react";
@@ -17,17 +17,14 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
-  QrCode,
 } from "lucide-react";
 
-export interface SesiIzin {
-  sesiId: number;
+export interface AgendaIzin {
+  agendaId: number;
   judul: string;
   namaProker: string;
-  /** Hari pelaksanaan sesi (ISO, tengah malam lokal). */
-  tanggal: string;
-  /** "07:00–08:00 WIB" */
-  jamLabel: string;
+  jadwal: string;
+  statusAgenda: "akan_datang" | "sedang_berlangsung" | "selesai";
   izin: { id: number; jenis: JenisIzin; status: StatusIzin; alasan: string } | null;
 }
 
@@ -57,17 +54,17 @@ const GAYA_STATUS: Record<StatusIzin, string> = {
   ditolak: "bg-rose-100 text-rose-700",
 };
 
-export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
+export function IzinSto({ daftar }: { daftar: AgendaIzin[] }) {
   const [isPending, startTransition] = useTransition();
   const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
   const [terbuka, setTerbuka] = useState<number | null>(null);
   const [jenis, setJenis] = useState<JenisIzin>(JenisIzin.izin);
   const [alasan, setAlasan] = useState("");
 
-  function kirim(sesiId: number) {
+  function kirim(agendaId: number) {
     setPesan(null);
     const formData = new FormData();
-    formData.append("sesiId", String(sesiId));
+    formData.append("agendaId", String(agendaId));
     formData.append("jenis", jenis);
     formData.append("alasan", alasan);
 
@@ -109,12 +106,9 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
     return (
       <div className="rounded-3xl border border-dashed border-[#CBD5E1] bg-white p-10 text-center">
         <FileText className="mx-auto mb-3 h-10 w-10 text-slate-muted" />
-        <p className="text-sm font-semibold text-navy">
-          Belum ada sesi presensi yang bisa diajukan izin
-        </p>
+        <p className="text-sm font-semibold text-navy">Belum ada agenda yang bisa diajukan izin</p>
         <p className="mt-1 text-xs text-slate-muted">
-          Izin diajukan per sesi. Sesi akan tampil di sini setelah adsek membuat sesi presensi pada
-          agenda Anda dan sesinya belum ditutup.
+          Agenda yang dapat diakses akan muncul di sini sebelum atau selama agenda berlangsung.
         </p>
       </div>
     );
@@ -141,11 +135,11 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
 
       {daftar.map((item) => {
         const status = item.izin?.status ?? null;
-        const sedangBuka = terbuka === item.sesiId;
+        const sedangBuka = terbuka === item.agendaId;
 
         return (
           <div
-            key={item.sesiId}
+            key={item.agendaId}
             className="rounded-3xl border border-[#E2E8F0] bg-white p-5 shadow-sm transition-all hover:border-secondary hover:shadow-md"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -153,17 +147,12 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
                 <h3 className="text-sm font-bold text-primary">{item.judul}</h3>
                 <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-slate-muted">
                   <Calendar className="h-3.5 w-3.5 text-secondary" />
-                  {item.namaProker} •{" "}
-                  {new Date(item.tanggal).toLocaleDateString("id-ID", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {item.namaProker} • {item.jadwal}
                 </p>
-                <p className="mt-0.5 inline-flex items-center gap-1.5 text-xs text-slate-muted">
-                  <QrCode className="h-3.5 w-3.5 text-slate-muted" />
-                  Sesi {item.jamLabel}
+                <p className="mt-1">
+                  <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${item.statusAgenda === "selesai" ? "bg-surface text-slate-muted" : item.statusAgenda === "sedang_berlangsung" ? "bg-emerald-50 text-emerald-700" : "bg-secondary/10 text-secondary"}`}>
+                    {item.statusAgenda === "selesai" ? "Agenda selesai" : item.statusAgenda === "sedang_berlangsung" ? "Sedang berlangsung" : "Belum mulai"}
+                  </span>
                 </p>
               </div>
 
@@ -197,7 +186,7 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
               {status !== StatusIzin.disetujui && (
                 <button
                   onClick={() => {
-                    setTerbuka(sedangBuka ? null : item.sesiId);
+                    setTerbuka(sedangBuka ? null : item.agendaId);
                     setAlasan(item.izin?.alasan ?? "");
                     setJenis(item.izin?.jenis ?? JenisIzin.izin);
                   }}
@@ -226,7 +215,7 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
               {status === StatusIzin.disetujui && (
                 <span className="inline-flex items-center gap-1.5 text-xs text-slate-muted">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  Poin sesi ini: 0 (izin disetujui)
+                  Poin pada sesi agenda ini: 0 (izin disetujui)
                 </span>
               )}
             </div>
@@ -257,7 +246,7 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
                 />
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => kirim(item.sesiId)}
+                    onClick={() => kirim(item.agendaId)}
                     disabled={isPending || alasan.trim().length < 5}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-secondary hover:bg-primary px-4 py-2 text-xs font-semibold text-white shadow-md shadow-secondary/25 transition-all cursor-pointer disabled:opacity-60"
                   >

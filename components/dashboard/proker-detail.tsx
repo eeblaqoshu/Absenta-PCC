@@ -993,7 +993,7 @@ export function ProkerDetail({
                             </div>
                           </div>
 
-                          {!adaTitik && (
+                          {!adaTitik && !sudahSelesai && (
                             <p className="text-[11px] text-amber-600 inline-flex items-center gap-1">
                               <AlertCircle className="w-3 h-3" />
                               Titik presensi belum diatur — atur di tombol edit
@@ -1003,7 +1003,7 @@ export function ProkerDetail({
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0 sm:self-start">
-                          {!isReadonly && (
+                          {!isReadonly && !sudahSelesai && (
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleOpenEditAgenda(item)}

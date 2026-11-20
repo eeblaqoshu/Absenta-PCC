@@ -31,6 +31,10 @@ export default async function StoHomePage() {
     },
     include: {
       proker: { select: { nama: true } },
+      izin: {
+        where: { stoId: sto.id },
+        select: { jenis: true, status: true, alasan: true },
+      },
       // Sesi yang sedang dibuka sekarang (satu agenda boleh punya banyak sesi).
       sesi: {
         where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
@@ -113,6 +117,13 @@ export default async function StoHomePage() {
       statusPresensi: presensiSesi?.status ?? null,
       diLuarRadius: presensiSesi?.diLuarRadius ?? false,
       statusVerifikasi: presensiSesi?.statusVerifikasi ?? null,
+      izin: ag.izin[0]
+        ? {
+            jenis: ag.izin[0].jenis,
+            status: ag.izin[0].status,
+            alasan: ag.izin[0].alasan,
+          }
+        : null,
     };
 
     if (statusDihitung === "sedang_berlangsung") {

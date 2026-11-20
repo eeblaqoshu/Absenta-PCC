@@ -76,9 +76,9 @@ export async function hitungLeaderboard(
     prisma.izin.findMany({
       where: {
         status: StatusIzin.disetujui,
-        sesi: { agenda: { prokerId: { in: prokerIds } } },
+        agenda: { prokerId: { in: prokerIds } },
       },
-      select: { sesiId: true, stoId: true },
+      select: { agendaId: true, stoId: true },
     }),
   ]);
 
@@ -86,7 +86,7 @@ export async function hitungLeaderboard(
   const peranByKunci = new Map(
     kepanitiaan.map((k) => [`${k.prokerId}:${k.stoId}`, k.peran])
   );
-  const izinSet = new Set(izinDisetujui.map((i) => `${i.sesiId}:${i.stoId}`));
+  const izinSet = new Set(izinDisetujui.map((i) => `${i.agendaId}:${i.stoId}`));
 
   const sesiIds = sesiSelesai.map((s) => s.id);
   const presensi =
@@ -125,7 +125,7 @@ export async function hitungLeaderboard(
 
       totalSesiWajib += 1;
       const status = statusByKunci.get(`${sesi.id}:${sto.id}`) ?? null;
-      const adaIzin = izinSet.has(`${sesi.id}:${sto.id}`);
+      const adaIzin = izinSet.has(`${sesi.agendaId}:${sto.id}`);
 
       poin += hitungPoin({ status, adaIzinDisetujui: adaIzin });
 

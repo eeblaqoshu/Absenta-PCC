@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Circle, Map as LeafletMap, Marker } from "leaflet";
 import { LocateFixed, LoaderCircle, MapPin } from "lucide-react";
+import "leaflet/dist/leaflet.css";
 
 export interface TitikAgendaSto {
   id: number;
