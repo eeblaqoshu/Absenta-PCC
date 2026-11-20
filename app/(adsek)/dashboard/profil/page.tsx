@@ -6,17 +6,14 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   User,
-  Shield,
   Mail,
   CheckCircle2,
   ArrowLeft,
   FolderKanban,
   Calendar,
   Clock,
-  FileText,
   MapPin,
   KeyRound,
-  ShieldCheck,
 } from "lucide-react";
 import { LogoutButton } from "@/components/ui/logout-button";
 
@@ -26,7 +23,7 @@ export default async function AdsekProfilPage() {
     redirect("/login");
   }
 
-  const { adsek, email, firebaseUid } = session;
+  const { adsek, email } = session;
   const isAdmin = adsek.role === "admin";
   const roleLabel = adsek.role.replace(/_/g, " ");
 
@@ -50,13 +47,6 @@ export default async function AdsekProfilPage() {
   const periodeAktif = await prisma.periode.findFirst({
     where: { status: StatusPeriode.aktif },
   });
-
-  const initials = adsek.nama
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
 
   return (
     <div className="space-y-6">
@@ -94,31 +84,18 @@ export default async function AdsekProfilPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Kolom Kiri: Kartu Identitas & Sesi */}
         <aside className="lg:col-span-4 space-y-5">
-          {/* Kartu Profil Utama */}
-          <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-5">
-            <div className="flex items-start justify-between gap-4">
-              {/* Avatar Slot */}
-              <div className="relative group">
-                <div className="w-20 h-20 rounded-2xl border-2 border-[#CBD5E1] bg-gradient-to-br from-primary to-secondary text-white font-bold text-2xl flex items-center justify-center shadow-md shadow-primary/20 select-none">
-                  <span>{initials || "A"}</span>
-                </div>
-                <div
-                  title="Akun Adsek Terverifikasi"
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-secondary text-white flex items-center justify-center shadow-md border-2 border-white"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                </div>
+          {/* Kartu Profil Utama (Gaya Komponen Card STO Home) */}
+          <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-primary tracking-tight">
+                  {adsek.nama}
+                </h2>
+                <p className="text-xs text-slate-muted mt-0.5 flex items-center gap-1.5 font-mono">
+                  <Mail className="w-3.5 h-3.5 text-slate-muted shrink-0" />
+                  <span className="truncate">{email}</span>
+                </p>
               </div>
-            </div>
-
-            <div>
-              <h2 className="text-lg font-bold text-primary tracking-tight">
-                {adsek.nama}
-              </h2>
-              <p className="text-xs text-slate-muted mt-0.5 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-slate-muted shrink-0" />
-                <span className="truncate">{email}</span>
-              </p>
             </div>
 
             <div className="pt-3.5 border-t border-[#E2E8F0] grid grid-cols-2 gap-3 text-xs">
@@ -134,6 +111,15 @@ export default async function AdsekProfilPage() {
                   {isAdmin ? "Admin Penuh" : "Sekretaris"}
                 </p>
               </div>
+            </div>
+
+            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+              <span className="text-[11px] text-slate-muted flex items-center gap-1.5">
+                Periode
+              </span>
+              <span className="font-semibold text-primary font-mono text-[11px] bg-surface px-2.5 py-0.5 rounded-lg border border-[#E2E8F0]">
+                {periodeAktif?.nama || "Periode Aktif"}
+              </span>
             </div>
           </div>
 
@@ -220,14 +206,14 @@ export default async function AdsekProfilPage() {
 
               <div className="p-4 rounded-2xl bg-surface border border-[#E2E8F0]">
                 <div className="flex items-center gap-1.5 text-navy text-xs mb-1">
-                  <FileText className="w-3.5 h-3.5 text-secondary" />
-                  <span className="font-semibold">Izin Ditinjau</span>
+                  <MapPin className="w-3.5 h-3.5 text-secondary" />
+                  <span className="font-semibold">Master Lokasi</span>
                 </div>
                 <p className="text-2xl font-bold text-primary">
-                  {adsekDetail?._count.izinDitinjau ?? 0}
+                  {adsekDetail?._count.lokasiDibuat ?? 0}
                 </p>
                 <p className="text-[10px] text-slate-muted mt-0.5">
-                  Tinjauan Izin
+                  Titik Lokasi
                 </p>
               </div>
             </div>

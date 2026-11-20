@@ -527,7 +527,6 @@ export function ProkerDetail({
         isPending={isPending}
         judulAgenda={judulAgenda}
         jenisAgenda={jenisAgenda}
-        urutanAgenda={urutanAgenda}
         tglAgenda={tglAgenda}
         tglSelesaiAgenda={tglSelesaiAgenda}
         waktuAgenda={waktuAgenda}
@@ -539,7 +538,6 @@ export function ProkerDetail({
         daftarLokasi={daftarLokasi}
         setJudulAgenda={setJudulAgenda}
         setJenisAgenda={setJenisAgenda}
-        setUrutanAgenda={setUrutanAgenda}
         setTglAgenda={setTglAgenda}
         setTglSelesaiAgenda={setTglSelesaiAgenda}
         setWaktuAgenda={setWaktuAgenda}

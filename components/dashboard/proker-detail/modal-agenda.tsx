@@ -13,7 +13,6 @@ interface Props {
   isPending: boolean;
   judulAgenda: string;
   jenisAgenda: JenisAgenda;
-  urutanAgenda: number;
   tglAgenda: string;
   tglSelesaiAgenda: string;
   waktuAgenda: string;
@@ -25,7 +24,6 @@ interface Props {
   daftarLokasi: LokasiOption[];
   setJudulAgenda: (v: string) => void;
   setJenisAgenda: (v: JenisAgenda) => void;
-  setUrutanAgenda: (v: number) => void;
   setTglAgenda: (v: string) => void;
   setTglSelesaiAgenda: (v: string) => void;
   setWaktuAgenda: (v: string) => void;
@@ -44,7 +42,6 @@ export function ModalAgenda({
   isPending,
   judulAgenda,
   jenisAgenda,
-  urutanAgenda,
   tglAgenda,
   tglSelesaiAgenda,
   waktuAgenda,
@@ -56,7 +53,6 @@ export function ModalAgenda({
   daftarLokasi,
   setJudulAgenda,
   setJenisAgenda,
-  setUrutanAgenda,
   setTglAgenda,
   setTglSelesaiAgenda,
   setWaktuAgenda,
@@ -94,34 +90,20 @@ export function ModalAgenda({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-navy mb-1">
-                Jenis Agenda
-              </label>
-              <select
-                value={jenisAgenda}
-                onChange={(e) => setJenisAgenda(e.target.value as JenisAgenda)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-              >
-                <option value={JenisAgenda.rapat_pj}>Rapat PJ & PI</option>
-                <option value={JenisAgenda.rapat_besar}>Rapat Besar</option>
-                <option value={JenisAgenda.rapat_koordinasi}>Rapat Koordinasi</option>
-                <option value={JenisAgenda.hari_h}>Hari H Pelaksanaan</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-navy mb-1">
-                Urutan Agenda
-              </label>
-              <input
-                type="number"
-                min={1}
-                value={urutanAgenda}
-                onChange={(e) => setUrutanAgenda(parseInt(e.target.value) || 1)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-navy mb-1">
+              Jenis Agenda
+            </label>
+            <select
+              value={jenisAgenda}
+              onChange={(e) => setJenisAgenda(e.target.value as JenisAgenda)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+            >
+              <option value={JenisAgenda.rapat_pj}>Rapat PJ & PI</option>
+              <option value={JenisAgenda.rapat_besar}>Rapat Besar</option>
+              <option value={JenisAgenda.rapat_koordinasi}>Rapat Koordinasi</option>
+              <option value={JenisAgenda.hari_h}>Hari H Pelaksanaan</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

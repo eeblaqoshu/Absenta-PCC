@@ -80,9 +80,8 @@ export default async function StoKepanitiaanPage() {
         {/* Banner Header Halaman */}
         <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-secondary">
-              <ShieldCheck className="w-4 h-4 text-secondary" />
-              Susunan Organisasi &amp; Proker
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-muted">
+              Susunan Organisasi & Proker
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
               Kepanitiaan Saya
@@ -91,20 +90,6 @@ export default async function StoKepanitiaanPage() {
               Daftar program kerja (proker) dan peran divisi kepanitiaan yang Anda emban pada
               periode kepengurusan aktif ini.
             </p>
-          </div>
-
-          <div className="shrink-0 flex items-center gap-3 p-4 rounded-2xl bg-secondary/10 border border-secondary/20">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-secondary shadow-xs">
-              <Award className="w-5 h-5 text-secondary" />
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold text-slate-muted uppercase tracking-wider">
-                Total Proker
-              </p>
-              <p className="text-xl sm:text-2xl font-black text-primary leading-none mt-0.5">
-                {daftarKepanitiaan.length} Kepanitiaan
-              </p>
-            </div>
           </div>
         </div>
 
@@ -137,11 +122,6 @@ export default async function StoKepanitiaanPage() {
                   <div className="p-6 sm:p-7 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-surface border border-[#E2E8F0] text-slate-muted">
-                            Periode {proker.periode.nama}
-                          </span>
-                        </div>
                         <h2 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
                           {proker.nama}
                         </h2>
@@ -179,12 +159,8 @@ export default async function StoKepanitiaanPage() {
                   <div className="p-6 sm:p-7 bg-surface/30 space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-secondary" />
                         Agenda &amp; Rangkaian Kegiatan Proker
                       </h4>
-                      <span className="text-[11px] text-slate-muted">
-                        {proker.agenda.length} agenda
-                      </span>
                     </div>
 
                     {proker.agenda.length === 0 ? (

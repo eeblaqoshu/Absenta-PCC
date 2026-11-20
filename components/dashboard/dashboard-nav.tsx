@@ -78,12 +78,6 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
 
   const masterDataItems = [
     {
-      href: "/dashboard/izin",
-      label: "Izin",
-      icon: FileText,
-      isActive: pathname.startsWith("/dashboard/izin"),
-    },
-    {
       href: "/dashboard/sto",
       label: "Data STO",
       icon: Users,

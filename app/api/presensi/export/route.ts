@@ -8,8 +8,8 @@ import { rekapKehadiranSesi, type StatusKehadiran } from "@/lib/kehadiran";
 const LABEL_KEHADIRAN: Record<StatusKehadiran, string> = {
   hadir: "Hadir",
   terlambat: "Terlambat",
-  izin_disetujui: "Izin (disetujui)",
-  izin_menunggu: "Izin (menunggu)",
+  izin_disetujui: "Izin",
+  izin_menunggu: "Izin",
   alpa: "Alpa",
   ditolak: "Ditolak",
 };
