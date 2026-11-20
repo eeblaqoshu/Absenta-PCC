@@ -150,22 +150,22 @@ export default async function StoKepanitiaanPage() {
                       </div>
                       <div className="flex items-center gap-1.5 text-navy">
                         <Calendar className="w-4 h-4 text-accent" />
-                        <span>{proker.agenda.length} Agenda Kegiatan</span>
+                        <span>{proker.agenda.length} Kegiatan</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Section Agenda Kegiatan Proker */}
+                  {/* Section Rangkaian Kegiatan Proker */}
                   <div className="p-6 sm:p-7 bg-surface/30 space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-slate-muted flex items-center gap-1.5">
-                        Agenda &amp; Rangkaian Kegiatan Proker
+                        Rangkaian Kegiatan Proker
                       </h4>
                     </div>
 
                     {proker.agenda.length === 0 ? (
                       <p className="text-xs text-slate-muted py-2">
-                        Belum ada agenda yang dijadwalkan pada program kerja ini.
+                        Belum ada kegiatan yang dijadwalkan pada program kerja ini.
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

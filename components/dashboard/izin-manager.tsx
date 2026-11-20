@@ -117,7 +117,7 @@ export function IzinManager({ daftar }: { daftar: BarisIzin[] }) {
 
       <div
         className="flex items-center gap-1.5 overflow-x-auto rounded-full border border-[#E2E8F0] bg-surface p-1.5 shadow-sm scrollbar-none"
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
       >
         {tab.map((t) => (
           <button

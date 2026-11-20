@@ -102,7 +102,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
     return (
       <div
         className="flex items-center justify-center gap-4 sm:gap-6 px-4 border-t border-[#E2E8F0] overflow-x-auto bg-white/95 backdrop-blur-sm scrollbar-none"
-        data-lenis-prevent
+        data-lenis-prevent-horizontal
       >
         {navItems.map((item) => {
           const Icon = item.icon;

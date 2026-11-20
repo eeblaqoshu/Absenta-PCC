@@ -74,13 +74,13 @@ export function ModalAgenda({
   return (
     <Modal
       onClose={onClose}
-      ariaLabel={isEdit ? "Edit agenda" : "Tambah agenda"}
+      ariaLabel={isEdit ? "Edit kegiatan" : "Tambah kegiatan"}
       size="lg"
     >
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalHeader
           title={
-            isEdit ? "Edit Agenda Kegiatan" : "Tambah Agenda Kegiatan Baru"
+            isEdit ? "Edit Kegiatan" : "Tambah Kegiatan Baru"
           }
           description="Titik presensi diatur di sini; semua sesi memakai titik yang sama."
           icon={Calendar}
@@ -89,7 +89,7 @@ export function ModalAgenda({
         <ModalBody>
           <div>
             <label className="block text-xs font-semibold text-navy mb-1">
-              Judul Agenda
+              Judul Kegiatan
             </label>
             <input
               type="text"
@@ -103,7 +103,7 @@ export function ModalAgenda({
 
           <div>
             <label className="block text-xs font-semibold text-navy mb-1">
-              Jenis Agenda
+              Jenis Kegiatan
             </label>
             <select
               value={jenisAgenda}
@@ -269,7 +269,7 @@ export function ModalAgenda({
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25 cursor-pointer transition-all"
           >
             {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Simpan Agenda
+            {isEdit ? "Perbarui Kegiatan" : "Simpan Kegiatan"}
           </button>
         </ModalFooter>
       </form>

@@ -144,7 +144,7 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
                   Role / Jabatan
                 </span>
                 <span
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-secondary/10 text-secondary border border-secondary/20 uppercase tracking-wider truncate max-w-[130px]"
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-info/10 text-slated-muted border border-slated-muted/20 uppercase tracking-wider truncate max-w-[130px]"
                   title={roleLabel}
                 >
                   {roleLabel}
@@ -165,7 +165,7 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
               <User className="w-4 h-4 text-slate-muted" />
               <span>Profil Akun</span>
             </Link>
-            
+
             {/* Divider */}
             <div className="h-px bg-[#E2E8F0] my-1" />
 

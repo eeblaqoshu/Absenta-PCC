@@ -207,9 +207,9 @@ export function ProkerDetail({
 
   const handleHapusAgenda = async (agendaId: number, judulAgendaHapus: string) => {
     const setuju = await konfirmasiHapus({
-      judul: "Hapus Agenda Kegiatan?",
-      pesan: `Anda yakin ingin menghapus agenda "${judulAgendaHapus}"? Agenda hanya bisa dihapus bila belum punya sesi presensi.`,
-      tombolHapus: "Ya, Hapus Agenda",
+      judul: "Hapus Kegiatan?",
+      pesan: `Anda yakin ingin menghapus kegiatan "${judulAgendaHapus}"? Kegiatan hanya bisa dihapus bila belum punya sesi presensi.`,
+      tombolHapus: "Ya, Hapus Kegiatan",
     });
     if (!setuju) return;
 

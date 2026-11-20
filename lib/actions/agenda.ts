@@ -14,7 +14,7 @@ import type { Prisma } from "@prisma/client";
 const AgendaInputSchema = z.object({
   prokerId: z.coerce.number(),
   jenis: z.nativeEnum(JenisAgenda),
-  judul: z.string().min(3, "Judul agenda minimal 3 karakter"),
+  judul: z.string().min(3, "Judul kegiatan minimal 3 karakter"),
   urutan: z.coerce.number().default(1),
   tglPelaksanaan: z.string().min(1, "Tanggal pelaksanaan wajib diisi"),
   tglSelesai: z.string().nullable(),
@@ -144,7 +144,7 @@ export async function buatAgendaAction(prevState: unknown, formData: FormData) {
       return {
         error: {
           kode: "PERIODE_READ_ONLY",
-          pesan: "Tidak dapat menambah agenda pada periode kepengurusan yang sudah selesai",
+          pesan: "Tidak dapat menambah kegiatan pada periode kepengurusan yang sudah selesai",
         },
       };
     }
@@ -187,13 +187,13 @@ export async function buatAgendaAction(prevState: unknown, formData: FormData) {
     });
 
     revalidatePath(`/dashboard/proker/${prokerId}`);
-    return { sukses: true, pesan: "Agenda kegiatan berhasil ditambahkan" };
+    return { sukses: true, pesan: "Kegiatan berhasil ditambahkan" };
   } catch (err: unknown) {
     const error = err as Error;
     return {
       error: {
         kode: "SERVER_ERROR",
-        pesan: error.message || "Gagal membuat agenda kegiatan",
+        pesan: error.message || "Gagal membuat kegiatan",
       },
     };
   }
@@ -212,7 +212,7 @@ export async function ubahAgendaAction(agendaId: number, formData: FormData) {
       return {
         error: {
           kode: "PERIODE_READ_ONLY",
-          pesan: "Tidak dapat mengubah agenda pada periode yang sudah selesai",
+          pesan: "Tidak dapat mengubah kegiatan pada periode yang sudah selesai",
         },
       };
     }
@@ -276,13 +276,13 @@ export async function ubahAgendaAction(agendaId: number, formData: FormData) {
     });
 
     revalidatePath(`/dashboard/proker/${agenda.prokerId}`);
-    return { sukses: true, pesan: "Agenda kegiatan berhasil diperbarui" };
+    return { sukses: true, pesan: "Kegiatan berhasil diperbarui" };
   } catch (err: unknown) {
     const error = err as Error;
     return {
       error: {
         kode: "SERVER_ERROR",
-        pesan: error.message || "Gagal mengubah agenda",
+        pesan: error.message || "Gagal mengubah kegiatan",
       },
     };
   }
@@ -304,7 +304,7 @@ export async function hapusAgendaAction(agendaId: number) {
       return {
         error: {
           kode: "PERIODE_READ_ONLY",
-          pesan: "Tidak dapat menghapus agenda pada periode selesai",
+          pesan: "Tidak dapat menghapus kegiatan pada periode selesai",
         },
       };
     }
@@ -315,7 +315,7 @@ export async function hapusAgendaAction(agendaId: number) {
       return {
         error: {
           kode: "MEMILIKI_RIWAYAT_PRESENSI",
-          pesan: "Agenda tidak dapat dihapus karena sudah memiliki rekaman presensi peserta",
+          pesan: "Kegiatan tidak dapat dihapus karena sudah memiliki rekaman presensi peserta",
         },
       };
     }
@@ -327,13 +327,13 @@ export async function hapusAgendaAction(agendaId: number) {
     });
 
     revalidatePath(`/dashboard/proker/${agenda.prokerId}`);
-    return { sukses: true, pesan: "Agenda berhasil dihapus" };
+    return { sukses: true, pesan: "Kegiatan berhasil dihapus" };
   } catch (err: unknown) {
     const error = err as Error;
     return {
       error: {
         kode: "SERVER_ERROR",
-        pesan: error.message || "Gagal menghapus agenda",
+        pesan: error.message || "Gagal menghapus kegiatan",
       },
     };
   }

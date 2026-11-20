@@ -91,7 +91,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
             Belum ada sesi presensi yang selesai pada periode ini.
           </p>
         ) : (
-          <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
+          <div className="overflow-x-auto scrollbar-none" data-lenis-prevent-horizontal>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-[#E2E8F0] text-left text-[11px] uppercase tracking-wide text-slate-muted">

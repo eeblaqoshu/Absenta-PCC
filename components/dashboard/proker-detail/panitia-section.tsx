@@ -47,7 +47,7 @@ export function PanitiaSection({
 
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto scrollbar-none" data-lenis-prevent>
+      <div className="overflow-x-auto scrollbar-none" data-lenis-prevent-horizontal>
         <table className="w-full text-left text-xs">
           <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
             <tr>

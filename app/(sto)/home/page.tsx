@@ -335,10 +335,10 @@ export default async function StoHomePage() {
                   </span>
                 </div>
                 <h2 className="text-xl font-bold tracking-tight text-primary">
-                  Agenda Kepengurusan PCC
+                  Kegiatan Kepengurusan PCC
                 </h2>
                 <p className="text-xs text-slate-muted mt-1">
-                  Daftar agenda kegiatan yang disesuaikan dengan divisi dan
+                  Daftar kegiatan yang disesuaikan dengan divisi dan
                   kepanitiaan Anda.
                 </p>
               </div>

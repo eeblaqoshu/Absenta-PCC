@@ -66,7 +66,7 @@ export function StoNavbar({ sto, periodeNama }: StoNavbarProps) {
               </div>
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-primary leading-tight">
-                  Absenta
+                  Absenta PCC
                 </h1>
                 <p className="text-[10px] text-secondary uppercase tracking-wider font-semibold">
                   STO
@@ -137,7 +137,7 @@ export function StoNavbar({ sto, periodeNama }: StoNavbarProps) {
       <div className="lg:hidden">
         <div
           className="flex items-center justify-center gap-4 sm:gap-6 px-4 border-t border-[#E2E8F0] overflow-x-auto bg-white/95 backdrop-blur-sm scrollbar-none"
-          data-lenis-prevent
+          data-lenis-prevent-horizontal
         >
           {navLinks.map((item) => {
             const Icon = item.icon;

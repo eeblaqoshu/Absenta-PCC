@@ -136,7 +136,7 @@ export default async function StoStatistikPage() {
                 Data Absensi Sesi yang Telah Selesai
               </h2>
               <p className="text-xs text-slate-muted mt-0.5">
-                Rekam jejak kehadiran Anda pada sesi agenda yang sudah ditutup.
+                Rekam jejak kehadiran Anda pada sesi kegiatan yang sudah ditutup.
               </p>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default async function StoStatistikPage() {
                 Belum ada sesi presensi yang berakhir
               </p>
               <p className="text-xs text-slate-muted max-w-sm mx-auto">
-                Setelah sesi agenda ditutup oleh adsek, riwayat kehadiran Anda
+                Setelah sesi kegiatan ditutup oleh adsek, riwayat kehadiran Anda
                 akan ditampilkan secara detail di sini.
               </p>
             </div>

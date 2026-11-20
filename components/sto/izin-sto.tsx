@@ -114,7 +114,7 @@ export function IzinSto({ daftar }: { daftar: SesiIzin[] }) {
         </p>
         <p className="mt-1 text-xs text-slate-muted">
           Izin diajukan per sesi. Sesi akan tampil di sini setelah adsek membuat sesi presensi pada
-          agenda Anda dan sesinya belum ditutup.
+          kegiatan Anda dan sesinya belum ditutup.
         </p>
       </div>
     );

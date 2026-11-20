@@ -1,7 +1,6 @@
 // components/dashboard/proker-detail/agenda-form-page.tsx
 // Halaman form tambah dan edit agenda kegiatan proker (adsek).
-// Menggantikan modal popup agar pengaturan detail dan pemilihan titik radius presensi
-// di peta Leaflet lebih leluasa dan nyaman.
+// Desain ringkas, bersih, dan manusiawi tanpa informasi berlebih.
 "use client";
 
 import { useState, useTransition } from "react";
@@ -10,12 +9,12 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
-  Clock,
   MapPin,
-  Users,
+  Clock,
   Loader2,
   AlertCircle,
   CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { JenisAgenda, TargetPeserta } from "@prisma/client";
 import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";
@@ -61,6 +60,21 @@ interface Props {
   agendaAwal?: AgendaAwalData | null;
 }
 
+const KOORDINAT_POLINES_DEFAULT = { lat: -7.0513, lng: 110.4337 };
+
+const OPSI_JENIS = [
+  { value: JenisAgenda.rapat_besar, label: "Rapat Besar" },
+  { value: JenisAgenda.rapat_koordinasi, label: "Rapat Koordinasi" },
+  { value: JenisAgenda.rapat_pj, label: "Rapat PJ & PI" },
+  { value: JenisAgenda.hari_h, label: "Hari H Acara" },
+];
+
+const OPSI_TARGET = [
+  { value: TargetPeserta.semua_panitia, label: "Semua Panitia" },
+  { value: TargetPeserta.hanya_pj_pi, label: "Khusus PJ & PI" },
+  { value: TargetPeserta.semua_panitia_sto, label: "Semua STO" },
+];
+
 export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -72,7 +86,7 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
   const isEdit = Boolean(agendaAwal);
   const isReadonly = proker.periode.status === "selesai";
 
-  // State form
+  // Form states
   const [judulAgenda, setJudulAgenda] = useState(agendaAwal?.judul ?? "");
   const [jenisAgenda, setJenisAgenda] = useState<JenisAgenda>(
     agendaAwal?.jenis ?? JenisAgenda.rapat_besar,
@@ -97,7 +111,7 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
     agendaAwal?.targetPeserta ?? TargetPeserta.semua_panitia,
   );
 
-  // State lokasi & titik presensi
+  // Lokasi & titik presensi
   const [lokasiAgenda, setLokasiAgenda] = useState(agendaAwal?.lokasiNama ?? "");
   const [lokasiAgendaId, setLokasiAgendaId] = useState(
     agendaAwal?.lokasiId ? String(agendaAwal.lokasiId) : "",
@@ -117,7 +131,7 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
       : null,
   );
 
-  const titikAgendaAktif = titikAgenda ?? { lat: -7.0513, lng: 110.4337 };
+  const titikAgendaAktif = titikAgenda ?? KOORDINAT_POLINES_DEFAULT;
 
   const pilihLokasiMaster = (idStr: string) => {
     setLokasiAgendaId(idStr);
@@ -163,121 +177,95 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
 
       if (res.error) {
         setPesan({ tipe: "error", teks: res.error.pesan });
-        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setPesan({
           tipe: "sukses",
-          teks: res.pesan || (isEdit ? "Agenda berhasil diperbarui" : "Agenda berhasil ditambahkan"),
+          teks: res.pesan || (isEdit ? "Kegiatan berhasil diperbarui" : "Kegiatan berhasil ditambahkan"),
         });
         setTimeout(() => {
           router.push(`/dashboard/proker/${proker.id}`);
           router.refresh();
-        }, 700);
+        }, 600);
       }
     });
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-16">
-      {/* Tombol Kembali & Breadcrumb */}
-      <div>
-        <Link
-          href={`/dashboard/proker/${proker.id}`}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-muted hover:text-navy transition-colors mb-3"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Detail Proker
-        </Link>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="max-w-5xl mx-auto space-y-4 pb-12">
+      {/* Header Sederhana & Ramah */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/dashboard/proker/${proker.id}`}
+            className="p-2 rounded-xl bg-white border border-[#E2E8F0] text-slate-muted hover:text-navy hover:bg-surface shadow-sm transition-all"
+            title="Kembali"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight flex items-center gap-2.5">
-              <span className="w-9 h-9 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                <Calendar className="w-5 h-5" />
-              </span>
-              {isEdit ? "Edit Agenda Kegiatan" : "Tambah Agenda Kegiatan Baru"}
+            <h1 className="text-lg sm:text-xl font-bold text-primary tracking-tight">
+              {isEdit ? "Edit Kegiatan" : "Tambah Kegiatan Baru"}
             </h1>
-            <p className="text-xs text-slate-muted mt-1">
-              Program Kerja:{" "}
-              <span className="font-semibold text-navy">{proker.nama}</span>
-              {" • "}Titik presensi diatur di sini; semua sesi memakai titik yang sama.
+            <p className="text-xs text-slate-muted">
+              {proker.nama}
             </p>
           </div>
-          {isReadonly && (
-            <div className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold inline-flex items-center gap-1.5 self-start">
-              <AlertCircle className="w-4 h-4" />
-              Periode Selesai (Read-only)
-            </div>
-          )}
         </div>
+
+        {isReadonly && (
+          <span className="px-3 py-1 rounded-lg bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-200">
+            Read-only
+          </span>
+        )}
       </div>
 
-      {/* Alert Notifikasi */}
+      {/* Alert Pesan */}
       {pesan && (
         <div
-          className={`p-4 rounded-2xl border flex items-start gap-3 text-xs ${
+          className={`p-3.5 rounded-2xl border flex items-center gap-2.5 text-xs ${
             pesan.tipe === "sukses"
               ? "bg-emerald-50 border-emerald-200 text-emerald-800"
               : "bg-rose-50 border-rose-200 text-rose-800"
           }`}
         >
           {pesan.tipe === "sukses" ? (
-            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
           ) : (
-            <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
           )}
-          <div className="font-medium pt-0.5">{pesan.teks}</div>
+          <span className="font-medium">{pesan.teks}</span>
         </div>
       )}
 
-      {/* Form Utama */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Kolom Kiri: Detail Informasi Agenda */}
-          <div className="lg:col-span-6 space-y-5">
-            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
-              <h2 className="text-sm font-bold text-primary tracking-tight pb-2 border-b border-[#E2E8F0] flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-secondary" />
-                Informasi Kegiatan
+      {/* Form Utama: 2 Kolom Ringkas Bersebelahan */}
+      <form onSubmit={handleSubmit}>
+        <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-6 sm:p-7 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
+            {/* KOLOM KIRI: Data Kegiatan */}
+            <div className="space-y-4">
+              <h2 className="text-xs font-bold text-slate-muted uppercase tracking-wider flex items-center gap-1.5 pb-1 border-b border-[#E2E8F0]">
+                <Calendar className="w-3.5 h-3.5 text-secondary" />
+                Data Kegiatan
               </h2>
 
-              {/* Judul Agenda */}
-              <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Judul Agenda <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  disabled={isReadonly || isPending}
-                  placeholder="Contoh: Rapat Pleno 1 Persiapan Lomba"
-                  value={judulAgenda}
-                  onChange={(e) => setJudulAgenda(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
-                />
-              </div>
-
-              {/* Jenis Agenda & Urutan */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-navy mb-1.5">
-                    Jenis Agenda <span className="text-rose-500">*</span>
+              {/* Judul & Urutan */}
+              <div className="grid grid-cols-12 gap-3">
+                <div className="col-span-9 sm:col-span-10">
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Judul Kegiatan
                   </label>
-                  <select
-                    value={jenisAgenda}
+                  <input
+                    type="text"
+                    required
                     disabled={isReadonly || isPending}
-                    onChange={(e) => setJenisAgenda(e.target.value as JenisAgenda)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
-                  >
-                    <option value={JenisAgenda.rapat_pj}>Rapat PJ &amp; PI</option>
-                    <option value={JenisAgenda.rapat_besar}>Rapat Besar</option>
-                    <option value={JenisAgenda.rapat_koordinasi}>
-                      Rapat Koordinasi
-                    </option>
-                    <option value={JenisAgenda.hari_h}>Hari H Pelaksanaan</option>
-                  </select>
+                    placeholder="Contoh: Rapat Pleno 1"
+                    value={judulAgenda}
+                    onChange={(e) => setJudulAgenda(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                  />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-navy mb-1.5">
+                <div className="col-span-3 sm:col-span-2">
+                  <label className="block text-xs font-semibold text-navy mb-1">
                     Urutan
                   </label>
                   <input
@@ -286,16 +274,40 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     disabled={isReadonly || isPending}
                     value={urutanAgenda}
                     onChange={(e) => setUrutanAgenda(parseInt(e.target.value) || 1)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy text-center focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
-              {/* Tanggal Mulai & Tanggal Selesai */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Jenis Kegiatan (Pills Ringkas) */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1.5">
+                  Jenis Kegiatan
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {OPSI_JENIS.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      disabled={isReadonly || isPending}
+                      onClick={() => setJenisAgenda(o.value)}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold border text-center transition-all cursor-pointer disabled:cursor-not-allowed ${
+                        jenisAgenda === o.value
+                          ? "bg-secondary text-white border-secondary shadow-sm"
+                          : "bg-surface/60 text-navy border-[#E2E8F0] hover:border-slate-300"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tanggal & Waktu */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-navy mb-1.5">
-                    Tanggal Mulai <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Tanggal Mulai
                   </label>
                   <input
                     type="date"
@@ -303,12 +315,12 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     disabled={isReadonly || isPending}
                     value={tglAgenda}
                     onChange={(e) => setTglAgenda(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-navy mb-1.5">
-                    Tanggal Selesai (Opsional)
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Tanggal Selesai <span className="font-normal text-slate-muted">(Opsional)</span>
                   </label>
                   <input
                     type="date"
@@ -316,19 +328,16 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     disabled={isReadonly || isPending}
                     value={tglSelesaiAgenda}
                     onChange={(e) => setTglSelesaiAgenda(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
-              <p className="text-[11px] text-slate-muted">
-                Biarkan tanggal selesai kosong bila agenda hanya satu hari. Agenda multi-hari boleh memiliki sesi presensi di tanggal mana pun di dalam rentang ini.
-              </p>
 
-              {/* Jam Mulai Agenda */}
+              {/* Jam Mulai */}
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-semibold text-navy mb-1 flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-secondary" />
-                  Jam Mulai Agenda (WIB) <span className="text-rose-500">*</span>
+                  Jam Mulai (WIB)
                 </label>
                 <input
                   type="time"
@@ -336,85 +345,90 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                   disabled={isReadonly || isPending}
                   value={waktuAgenda}
                   onChange={(e) => setWaktuAgenda(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                  className="w-full max-w-[140px] px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                 />
               </div>
 
-              {/* Target Peserta */}
-              <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-secondary" />
-                  Target Peserta (Akses Presensi) <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={targetPeserta}
-                  disabled={isReadonly || isPending}
-                  onChange={(e) => setTargetPeserta(e.target.value as TargetPeserta)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
-                >
-                  <option value={TargetPeserta.hanya_pj_pi}>
-                    hanya_pj_pi (Hanya Panitia berstatus PJ dan PI)
-                  </option>
-                  <option value={TargetPeserta.semua_panitia}>
-                    semua_panitia (Seluruh panitia terdaftar di proker ini)
-                  </option>
-                  <option value={TargetPeserta.semua_panitia_sto}>
-                    semua_panitia_sto (Semua anggota STO satu periode)
-                  </option>
-                </select>
-                <p className="text-[11px] text-slate-muted mt-1.5 leading-relaxed">
-                  Aturan akses ini menentukan siapa saja yang dapat melihat agenda ini di beranda STO dan berhak melakukan scan presensi.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Kolom Kanan: Titik Presensi & Peta Interaktif Leaflet */}
-          <div className="lg:col-span-6 space-y-5">
-            <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
-              <h2 className="text-sm font-bold text-primary tracking-tight pb-2 border-b border-[#E2E8F0] flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-secondary" />
-                Titik Presensi &amp; Lokasi
-              </h2>
-
-              {/* Lokasi Pertemuan */}
+              {/* Target Peserta (Pills Ringkas) */}
               <div>
                 <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Nama Lokasi / Ruang Pertemuan (Opsional)
+                  Akses Presensi
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {OPSI_TARGET.map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      disabled={isReadonly || isPending}
+                      onClick={() => setTargetPeserta(t.value)}
+                      className={`px-2 py-2 rounded-xl text-xs font-semibold border text-center transition-all cursor-pointer disabled:cursor-not-allowed ${
+                        targetPeserta === t.value
+                          ? "bg-primary text-white border-primary shadow-sm"
+                          : "bg-surface/60 text-navy border-[#E2E8F0] hover:border-slate-300"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* KOLOM KANAN: Lokasi & Peta */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-1 border-b border-[#E2E8F0]">
+                <h2 className="text-xs font-bold text-slate-muted uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-secondary" />
+                  Titik Presensi &amp; Radius
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setTitikAgenda(KOORDINAT_POLINES_DEFAULT)}
+                  className="text-[11px] text-secondary hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Pusat Polines
+                </button>
+              </div>
+
+              {/* Nama Lokasi Pertemuan */}
+              <div>
+                <label className="block text-xs font-semibold text-navy mb-1">
+                  Nama Tempat / Ruang <span className="font-normal text-slate-muted">(Opsional)</span>
                 </label>
                 <input
                   type="text"
                   disabled={isReadonly || isPending}
-                  placeholder="Contoh: Ruang Sidang Utama Lt. 2 / Auditorium"
+                  placeholder="Contoh: Ruang Sidang Utama / Auditorium"
                   value={lokasiAgenda}
                   onChange={(e) => setLokasiAgenda(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                 />
               </div>
 
-              {/* Dropdown Master Lokasi & Radius */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Master Lokasi & Radius Presensi */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-navy mb-1.5">
-                    Pilih Master Lokasi
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Master Lokasi
                   </label>
                   <select
                     value={lokasiAgendaId}
                     disabled={isReadonly || isPending}
                     onChange={(e) => pilihLokasiMaster(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   >
-                    <option value="">-- Titik manual (peta) --</option>
+                    <option value="">-- Pilih Titik --</option>
                     {daftarLokasi.map((l) => (
                       <option key={l.id} value={l.id}>
-                        {l.nama} (radius {l.radiusM} m)
+                        {l.nama}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-navy mb-1.5">
-                    Radius Presensi (meter)
+                  <label className="block text-xs font-semibold text-navy mb-1">
+                    Radius (meter)
                   </label>
                   <input
                     type="number"
@@ -422,59 +436,40 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     max={5000}
                     disabled={isReadonly || isPending}
                     value={radiusAgenda}
-                    onChange={(e) =>
-                      setRadiusAgenda(parseInt(e.target.value) || 500)
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary disabled:opacity-60"
+                    onChange={(e) => setRadiusAgenda(parseInt(e.target.value) || 500)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
                 </div>
               </div>
 
-              {/* Peta Interaktif Leaflet */}
-              <div className="rounded-2xl border border-[#E2E8F0] p-3.5 bg-surface/60 space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-slate-muted">
-                  <span>Klik atau seret pin pada peta untuk menentukan titik koordinat presensi.</span>
-                  {titikAgenda && (
-                    <span className="font-mono text-[10px] text-primary bg-white px-2 py-0.5 rounded-md border border-[#E2E8F0]">
-                      {titikAgenda.lat.toFixed(4)}, {titikAgenda.lng.toFixed(4)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="rounded-xl overflow-hidden border border-[#CBD5E1]">
-                  <PetaPilihLokasi
-                    lat={titikAgendaAktif.lat}
-                    lng={titikAgendaAktif.lng}
-                    radiusM={radiusAgenda}
-                    tinggi="320px"
-                    onPilih={(lat, lng) => setTitikAgenda({ lat, lng })}
-                  />
-                </div>
-
-                <p className="text-[10px] text-slate-muted leading-relaxed">
-                  Titik presensi melekat pada agenda (bukan sesi). Semua sesi di bawah agenda ini akan memakai titik koordinat &amp; batas radius yang sama.
-                </p>
+              {/* Peta Ringkas */}
+              <div className="rounded-2xl border border-[#CBD5E1] overflow-hidden">
+                <PetaPilihLokasi
+                  lat={titikAgendaAktif.lat}
+                  lng={titikAgendaAktif.lng}
+                  radiusM={radiusAgenda}
+                  tinggi="250px"
+                  onPilih={(lat, lng) => setTitikAgenda({ lat, lng })}
+                />
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Bar / Tombol Simpan */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
-          <Link
-            href={`/dashboard/proker/${proker.id}`}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-[#CBD5E1] text-xs font-semibold text-slate-muted hover:text-navy hover:bg-surface text-center transition-colors"
-          >
-            Batal
-          </Link>
-          <div className="w-full sm:w-auto flex items-center justify-end gap-3">
+          {/* Footer Tombol Simpan & Batal */}
+          <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-end gap-3">
+            <Link
+              href={`/dashboard/proker/${proker.id}`}
+              className="px-4 py-2 rounded-xl border border-[#CBD5E1] text-xs font-semibold text-slate-muted hover:text-navy hover:bg-surface transition-colors"
+            >
+              Batal
+            </Link>
             <button
               type="submit"
               disabled={isReadonly || isPending}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
             >
-              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isEdit ? "Perbarui Agenda" : "Simpan Agenda"}
+              {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isEdit ? "Perbarui Kegiatan" : "Simpan Kegiatan"}
             </button>
           </div>
         </div>

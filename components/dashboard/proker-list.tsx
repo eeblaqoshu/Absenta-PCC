@@ -343,7 +343,7 @@ export function ProkerList({
                   </span>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-surface border border-[#E2E8F0] text-navy font-semibold text-[11px]">
                     <Calendar className="w-3.5 h-3.5 text-accent" />
-                    <span>{item._count.agenda} Agenda</span>
+                    <span>{item._count.agenda} Kegiatan</span>
                   </span>
                 </div>
 
@@ -362,7 +362,7 @@ export function ProkerList({
                   href={`/dashboard/proker/${item.id}`}
                   className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-surface hover:bg-secondary hover:text-white text-navy text-xs font-semibold transition-all group/btn"
                 >
-                  Kelola Panitia & Acara
+                  Kelola Panitia & Kegiatan
                   <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
                 </Link>
               </div>

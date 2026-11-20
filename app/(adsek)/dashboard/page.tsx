@@ -89,7 +89,7 @@ export default async function AdsekDashboardPage() {
 
         <div className="p-5 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm hover:border-secondary transition-all flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-muted">Program Kerja (Proker)</p>
+            <p className="text-xs font-medium text-slate-muted">Program Kerja & Agenda</p>
             <p className="text-2xl font-bold text-primary mt-1">
               {totalProker}
             </p>
@@ -130,7 +130,7 @@ export default async function AdsekDashboardPage() {
                 Program Kerja & Agenda
               </h4>
               <p className="text-xs text-slate-muted mt-1">
-                Kelola proker, kepanitiaan (PI/PJ/Anggota), serta agenda kegiatan.
+                Kelola proker, kepanitiaan (PI/PJ/Anggota), serta kegiatan.
               </p>
             </div>
             <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-secondary">
