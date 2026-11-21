@@ -3,7 +3,7 @@
 // manual via dropdown, verifikasi radius, dan ekspor CSV.
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   catatStatusKehadiranManualAction,
@@ -50,6 +50,19 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
   const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
   const [prosesId, setProsesId] = useState<string | null>(null);
 
+  // Auto-refresh daftar kehadiran real-time setiap 4 detik saat sesi dibuka
+  useEffect(() => {
+    if (isReadonly) return;
+
+    const interval = setInterval(() => {
+      if (!isPending && !prosesId) {
+        router.refresh();
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [router, isPending, prosesId, isReadonly]);
+
   function jalankan(kunci: string, aksi: () => Promise<{ error?: { pesan: string }; pesan?: string }>) {
     setPesan(null);
     setProsesId(kunci);
@@ -78,6 +91,12 @@ export function DaftarKehadiran({ sesiId, isReadonly, rekap }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {!isReadonly && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200/60 text-[10px] font-semibold text-emerald-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Real-time aktif
+            </span>
+          )}
           <button
             onClick={() => router.refresh()}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] text-[11px] font-semibold text-navy hover:bg-surface cursor-pointer transition-colors"

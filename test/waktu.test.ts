@@ -8,51 +8,60 @@ import {
   jamDariWaktuAgenda,
   gabungTanggalDanWaktu,
 } from "../lib/waktu";
-import { BATAS_TERLAMBAT_MENIT } from "../lib/konstanta";
 
 describe("lib/waktu", () => {
   describe("hitungMenitTerlambat & statusDariMenitTerlambat", () => {
-    const bukaAt = new Date("2026-11-17T08:00:00+07:00");
+    // Skenario: Jam mulai 12:00, Jam maksimal kedatangan 12:30
+    const jamMaksimal = new Date("2026-11-21T12:30:00+07:00");
 
-    it("menghasilkan 0 menit jika scan sebelum atau tepat waktu buka", () => {
-      const scanTepat = new Date("2026-11-17T08:00:00+07:00");
-      const scanAwal = new Date("2026-11-17T07:55:00+07:00");
-      assert.equal(hitungMenitTerlambat(bukaAt, scanTepat), 0);
-      assert.equal(hitungMenitTerlambat(bukaAt, scanAwal), 0);
+    it("menghasilkan 0 menit (hadir) jika scan di antara jam mulai dan jam maksimal kedatangan", () => {
+      const scanTepat = new Date("2026-11-21T12:00:00+07:00");
+      const scanTengah = new Date("2026-11-21T12:15:00+07:00");
+      const scanBatasMaksimal = new Date("2026-11-21T12:30:00+07:00");
+
+      assert.equal(hitungMenitTerlambat(jamMaksimal, scanTepat), 0);
+      assert.equal(statusDariMenitTerlambat(hitungMenitTerlambat(jamMaksimal, scanTepat)), "hadir");
+
+      assert.equal(hitungMenitTerlambat(jamMaksimal, scanTengah), 0);
+      assert.equal(statusDariMenitTerlambat(hitungMenitTerlambat(jamMaksimal, scanTengah)), "hadir");
+
+      assert.equal(hitungMenitTerlambat(jamMaksimal, scanBatasMaksimal), 0);
+      assert.equal(statusDariMenitTerlambat(hitungMenitTerlambat(jamMaksimal, scanBatasMaksimal)), "hadir");
     });
 
-    it("menghasilkan status hadir jika scan <= BATAS_TERLAMBAT_MENIT (15 menit)", () => {
-      const scan15Menit = new Date("2026-11-17T08:15:00+07:00");
-      const menit = hitungMenitTerlambat(bukaAt, scan15Menit);
-      assert.equal(menit, 15);
-      assert.equal(statusDariMenitTerlambat(menit), "hadir");
-    });
+    it("menghasilkan menit terlambat dan status terlambat jika scan lebih dari jam maksimal kedatangan", () => {
+      const scanLewat5Menit = new Date("2026-11-21T12:35:00+07:00");
+      const scanLewat30Menit = new Date("2026-11-21T13:00:00+07:00");
 
-    it("menghasilkan status terlambat jika scan > BATAS_TERLAMBAT_MENIT", () => {
-      const scan16Menit = new Date("2026-11-17T08:16:00+07:00");
-      const menit = hitungMenitTerlambat(bukaAt, scan16Menit);
-      assert.equal(menit, 16);
-      assert.equal(statusDariMenitTerlambat(menit), "terlambat");
+      const menit5 = hitungMenitTerlambat(jamMaksimal, scanLewat5Menit);
+      assert.equal(menit5, 5);
+      assert.equal(statusDariMenitTerlambat(menit5), "terlambat");
+
+      const menit30 = hitungMenitTerlambat(jamMaksimal, scanLewat30Menit);
+      assert.equal(menit30, 30);
+      assert.equal(statusDariMenitTerlambat(menit30), "terlambat");
     });
   });
 
   describe("hitungStatusSesi", () => {
-    const bukaAt = new Date("2026-11-17T08:00:00+07:00");
-    const tutupAt = new Date("2026-11-17T10:00:00+07:00");
+    const bukaAt = new Date("2026-11-21T12:00:00+07:00");
+    const tutupAt = new Date("2026-11-21T12:30:00+07:00");
 
     it("mengembalikan belum_dibuka sebelum bukaAt", () => {
-      const now = new Date("2026-11-17T07:59:00+07:00");
+      const now = new Date("2026-11-21T11:59:00+07:00");
       assert.equal(hitungStatusSesi(bukaAt, tutupAt, now), "belum_dibuka");
     });
 
-    it("mengembalikan berjalan di antara bukaAt dan tutupAt", () => {
-      const now = new Date("2026-11-17T08:30:00+07:00");
-      assert.equal(hitungStatusSesi(bukaAt, tutupAt, now), "berjalan");
+    it("mengembalikan berjalan saat sesi sudah dibuka pada hari pelaksanaan", () => {
+      const nowTepat = new Date("2026-11-21T12:15:00+07:00");
+      const nowTerlambat = new Date("2026-11-21T12:45:00+07:00");
+      assert.equal(hitungStatusSesi(bukaAt, tutupAt, nowTepat), "berjalan");
+      assert.equal(hitungStatusSesi(bukaAt, tutupAt, nowTerlambat), "berjalan");
     });
 
-    it("mengembalikan ditutup setelah tutupAt", () => {
-      const now = new Date("2026-11-17T10:01:00+07:00");
-      assert.equal(hitungStatusSesi(bukaAt, tutupAt, now), "ditutup");
+    it("mengembalikan ditutup setelah hari pelaksanaan sesi berakhir (hari berikutnya)", () => {
+      const nowBesok = new Date("2026-11-22T08:00:00+07:00");
+      assert.equal(hitungStatusSesi(bukaAt, tutupAt, nowBesok), "ditutup");
     });
   });
 

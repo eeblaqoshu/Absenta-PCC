@@ -3,6 +3,7 @@ import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import {
+  agendaTelahBerlalu,
   formatTanggalIndo,
   hitungStatusAgenda,
   jamDariWaktuAgenda,
@@ -46,9 +47,9 @@ export default async function StoHomePage() {
         where: { stoId: sto.id },
         select: { jenis: true, status: true, alasan: true },
       },
-      // Sesi yang sedang dibuka sekarang (satu agenda boleh punya banyak sesi).
+      // Sesi yang dibuka hari ini (mengakomodasi tepat waktu dan terlambat)
       sesi: {
-        where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
+        where: { bukaAt: { lte: sekarang } },
         orderBy: { bukaAt: "asc" },
       },
     },
@@ -60,6 +61,7 @@ export default async function StoHomePage() {
   for (const ag of semuaAgenda) {
     const izin = await bolehAkses(sto.id, ag.id);
     if (izin.boleh) {
+      ag.sesi = ag.sesi.filter((s) => !agendaTelahBerlalu(s.bukaAt, undefined, sekarang));
       agendaAkses.push(ag);
     }
   }

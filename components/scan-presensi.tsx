@@ -4,6 +4,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import Link from "next/link";
 import { formatJamIndo } from "@/lib/waktu";
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export function ScanPresensi({ daftarSesi }: Props) {
+  const router = useRouter();
   const [sesiDipilih, setSesiDipilih] = useState<SesiTersedia | null>(daftarSesi[0] ?? null);
   const [posisi, setPosisi] = useState<Omit<Koordinat, "ts"> | null>(null);
   const [gpsGalat, setGpsGalat] = useState<string | null>(null);
@@ -50,6 +52,17 @@ export function ScanPresensi({ daftarSesi }: Props) {
   const [pesanProses, setPesanProses] = useState<string | null>(null);
   const [hasil, setHasil] = useState<HasilScan | null>(null);
   const [modalSukses, setModalSukses] = useState(false);
+
+  // Auto-refresh daftar sesi presensi secara real-time setiap 5 detik
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!memproses && !modalSukses) {
+        router.refresh();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [router, memproses, modalSukses]);
 
   // Salinan status presensi per sesi
   const [presensiSaya, setPresensiSaya] = useState<Record<number, PresensiSesiRingkas>>(() => {

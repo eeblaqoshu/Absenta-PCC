@@ -279,14 +279,20 @@ export function LayarQr({ sesiId, judulAgenda, namaProker, lokasiNama, isReadonl
               Unduh QR (PNG)
             </button>
 
-            <div className="mt-4 flex items-center gap-3 text-xs">
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5 text-xs">
               <span className="inline-flex items-center gap-1.5 font-semibold text-navy">
                 <Timer className="w-3.5 h-3.5 text-secondary" />
                 QR reset dalam {formatDetik(data?.detikSisa)}
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                Sesi berjalan
-              </span>
+              {data && new Date() <= new Date(data.tutupAt) ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                  Tepat waktu (s/d {formatJamIndo(new Date(data.tutupAt))})
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                  Masa terlambat
+                </span>
+              )}
             </div>
           </>
         ) : (
