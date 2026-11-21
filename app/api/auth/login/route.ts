@@ -61,42 +61,40 @@ export async function POST(req: NextRequest) {
 
     const { idToken } = parsed.data;
 
-    // 1. Verifikasi ID Token: Coba via Firebase Admin SDK, fallback ke verifikasi kriptografis lokal jika network hosting timeout/terblokir
+    // 1. Verifikasi ID Token: Verifikasi kriptografis lokal RSA-SHA256 (instan & tanpa dependensi network yang terblokir)
     let decodedToken: {
       uid: string;
       email?: string;
       email_verified?: boolean;
     } | null = null;
 
-    if (adminAuth) {
-      try {
-        decodedToken = await adminAuth.verifyIdToken(idToken, false);
-      } catch (err: unknown) {
-        console.warn("verifyIdToken online gagal, beralih ke verifikasi lokal:", err);
+    try {
+      const expectedProjectId =
+        process.env.FIREBASE_PROJECT_ID ||
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+        "";
+      decodedToken = verifikasiGoogleTokenOffline(idToken, expectedProjectId);
+    } catch (offlineErr: unknown) {
+      console.warn("Verifikasi lokal gagal, mencoba online via adminAuth:", offlineErr);
+      if (adminAuth) {
+        try {
+          decodedToken = await adminAuth.verifyIdToken(idToken, false);
+        } catch (adminErr: unknown) {
+          console.error("Verifikasi online juga gagal:", adminErr);
+        }
       }
     }
 
     if (!decodedToken) {
-      try {
-        const expectedProjectId =
-          process.env.FIREBASE_PROJECT_ID ||
-          process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-          "";
-        decodedToken = verifikasiGoogleTokenOffline(idToken, expectedProjectId);
-      } catch (err: unknown) {
-        console.error("Verifikasi token gagal:", err);
-        const pesanDetail =
-          err instanceof Error ? err.message : "Token tidak dapat diverifikasi";
-        return NextResponse.json(
-          {
-            error: {
-              kode: "TOKEN_INVALID",
-              pesan: `Verifikasi token gagal (${pesanDetail}). Silakan coba lagi.`,
-            },
+      return NextResponse.json(
+        {
+          error: {
+            kode: "TOKEN_INVALID",
+            pesan: "Verifikasi token login gagal atau kedaluwarsa. Silakan coba masuk kembali.",
           },
-          { status: 401 }
-        );
-      }
+        },
+        { status: 401 }
+      );
     }
 
     // Validasi Temuan 1: Pastikan email telah terverifikasi oleh provider autentikasi
@@ -229,28 +227,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Buat Session Cookie (coba Firebase Admin, fallback ke token bertanda tangan lokal jika network hosting diblokir)
-    let sessionCookie: string | null = null;
-    if (adminAuth) {
-      try {
-        sessionCookie = await adminAuth.createSessionCookie(idToken, {
-          expiresIn: EXPIRES_IN,
-        });
-      } catch (err) {
-        console.warn(
-          "createSessionCookie online gagal, menggunakan session token HMAC lokal:",
-          err
-        );
-      }
-    }
-
-    if (!sessionCookie) {
-      sessionCookie = buatSessionTokenLokal({
-        email,
-        uid,
-        expiresInMs: EXPIRES_IN,
-      });
-    }
+    // 4. Buat Session Cookie bertanda tangan HMAC (instan, aman, zero network dependency)
+    const sessionCookie = buatSessionTokenLokal({
+      email,
+      uid,
+      expiresInMs: EXPIRES_IN,
+    });
 
     // 5. Kembalikan response dengan cookie httpOnly
     const response = NextResponse.json({
