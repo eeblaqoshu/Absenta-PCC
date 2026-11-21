@@ -9,32 +9,66 @@ import { hitungLeaderboard } from "@/lib/rekap-poin";
 export default async function AdsekDashboardPage() {
   const adsek = await requireAdsek();
 
-  // Ambil periode aktif dan statistik
-  const periodeAktif = await prisma.periode.findFirst({
-    where: { status: StatusPeriode.aktif },
-    include: {
-      _count: {
-        select: {
-          sto: true,
-          proker: true,
+  let periodeAktif: Awaited<ReturnType<typeof prisma.periode.findFirst<{
+    include: { _count: { select: { sto: true; proker: true } } };
+  }>>> = null;
+
+  let totalProker = 0;
+  let totalSto = 0;
+  let totalAgenda = 0;
+  let topPoin: {
+    peringkat: number;
+    stoId: number;
+    nama: string;
+    nim: string;
+    divisi: string | null;
+    poin: number;
+  }[] = [];
+  let periodeNamaRekap: string | null = null;
+
+  try {
+    periodeAktif = await prisma.periode.findFirst({
+      where: { status: StatusPeriode.aktif },
+      include: {
+        _count: {
+          select: {
+            sto: true,
+            proker: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  const totalProker = periodeAktif?._count.proker ?? 0;
-  const totalSto = periodeAktif?._count.sto ?? 0;
+    totalProker = periodeAktif?._count.proker ?? 0;
+    totalSto = periodeAktif?._count.sto ?? 0;
 
-  // Hitung total agenda periode aktif
-  const totalAgenda = periodeAktif
-    ? await prisma.agenda.count({
-        where: { proker: { periodeId: periodeAktif.id } },
-      })
-    : 0;
+    if (periodeAktif) {
+      totalAgenda = await prisma.agenda
+        .count({
+          where: { proker: { periodeId: periodeAktif.id } },
+        })
+        .catch(() => 0);
 
-  // Ringkasan poin: tampilkan 3 teratas di dashboard (detail di /dashboard/leaderboard).
-  const rekapPoin = periodeAktif ? await hitungLeaderboard(periodeAktif.id) : null;
-  const topPoin = rekapPoin?.baris.slice(0, 3) ?? [];
+      const rekapPoin = await hitungLeaderboard(periodeAktif.id).catch(() => null);
+      if (rekapPoin) {
+        periodeNamaRekap = rekapPoin.periodeNama;
+        topPoin = rekapPoin.baris.slice(0, 3);
+      }
+    }
+  } catch (err) {
+    console.error("Gagal memuat statistik dashboard:", err);
+  }
+
+  const formatTanggal = (d: Date | string | null | undefined) => {
+    if (!d) return "-";
+    try {
+      const parsed = new Date(d);
+      if (isNaN(parsed.getTime())) return "-";
+      return parsed.toLocaleDateString("id-ID");
+    } catch {
+      return "-";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -62,9 +96,9 @@ export default async function AdsekDashboardPage() {
           </h2>
           <p className="text-xs text-slate-muted mt-1">
             {periodeAktif
-              ? `Dimulai: ${new Date(periodeAktif.tglMulai).toLocaleDateString("id-ID")} • Selesai: ${new Date(
+              ? `Dimulai: ${formatTanggal(periodeAktif.tglMulai)} • Selesai: ${formatTanggal(
                   periodeAktif.tglSelesai
-                ).toLocaleDateString("id-ID")}`
+                )}`
               : "Silakan buka periode baru melalui menu Kelola Periode (Admin)."}
           </p>
         </div>
@@ -196,7 +230,7 @@ export default async function AdsekDashboardPage() {
             Top 3 Poin Kehadiran
           </h3>
           <p className="mt-1 text-xs text-slate-muted">
-            {rekapPoin?.periodeNama ?? "Belum ada periode aktif"}
+            {periodeNamaRekap ?? "Belum ada periode aktif"}
           </p>
         </div>
 

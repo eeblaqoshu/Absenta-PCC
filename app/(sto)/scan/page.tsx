@@ -4,6 +4,7 @@ import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { ScanPresensi, type SesiTersedia } from "@/components/scan-presensi";
+import { agendaTelahBerlalu } from "@/lib/waktu";
 import { LogoutButton } from "@/components/ui/logout-button";
 import Link from "next/link";
 import { ArrowLeft, QrCode } from "lucide-react";
@@ -12,16 +13,16 @@ export default async function ScanPage() {
   const sto = await requireSto();
   const sekarang = new Date();
 
-  // Ambil agenda pada periode STO yang punya sesi sedang dibuka.
+  // Ambil agenda pada periode STO yang punya sesi dibuka hari ini (mengakomodasi tepat waktu dan terlambat)
   const agendaDenganSesi = await prisma.agenda.findMany({
     where: {
       proker: { periodeId: sto.periodeId },
-      sesi: { some: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } } },
+      sesi: { some: { bukaAt: { lte: sekarang } } },
     },
     include: {
       proker: { select: { nama: true } },
       sesi: {
-        where: { bukaAt: { lte: sekarang }, tutupAt: { gte: sekarang } },
+        where: { bukaAt: { lte: sekarang } },
         orderBy: { bukaAt: "asc" },
       },
     },
@@ -38,6 +39,8 @@ export default async function ScanPage() {
 
     for (const sesi of agenda.sesi) {
       if (agenda.lat === null || agenda.lng === null) continue;
+      // Abaikan jika hari pelaksanaan sesi sudah berakhir
+      if (agendaTelahBerlalu(sesi.bukaAt, undefined, sekarang)) continue;
 
       const presensi = await prisma.presensi.findUnique({
         where: { sesiId_stoId: { sesiId: sesi.id, stoId: sto.id } },

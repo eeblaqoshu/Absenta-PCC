@@ -7,7 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { bolehAkses } from "@/lib/akses";
 import { hitungJarakHaversine, validasiRadius } from "@/lib/geo";
 import { parsePayloadQr, verifyQrToken } from "@/lib/qr-token";
-import { hitungMenitTerlambat, statusDariMenitTerlambat } from "@/lib/waktu";
+import {
+  agendaTelahBerlalu,
+  hitungMenitTerlambat,
+  statusDariMenitTerlambat,
+} from "@/lib/waktu";
 import { cekBatasLaju } from "@/lib/rate-limit";
 import { z } from "zod";
 
@@ -123,8 +127,9 @@ export async function POST(req: NextRequest) {
     if (sekarang < sesi.bukaAt) {
       return tolak(400, "SESI_BELUM_DIBUKA", "Sesi presensi ini belum dibuka.");
     }
-    if (sekarang > sesi.tutupAt) {
-      return tolak(400, "SESI_SUDAH_DITUTUP", "Sesi presensi ini sudah ditutup.");
+    // Jika hari pelaksanaan sesi telah berlalu (hari berikutnya), sesi ditutup
+    if (agendaTelahBerlalu(sesi.bukaAt, undefined, sekarang)) {
+      return tolak(400, "SESI_SUDAH_DITUTUP", "Sesi presensi untuk hari ini telah berakhir.");
     }
 
     // Periode selesai bersifat read-only: tidak boleh ada presensi baru.
@@ -171,7 +176,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 6. Belum pernah absen di sesi ini ────────────────────────────────────
-    const menitTerlambat = hitungMenitTerlambat(sesi.bukaAt, sekarang);
+    // Keterlambatan dihitung terhadap jam maksimal kedatangan (tutupAt):
+    // - Jika scan di antara jam mulai (bukaAt) dan jam maksimal (tutupAt): tepat waktu (hadir, 0 menit)
+    // - Jika scan setelah jam maksimal (tutupAt): terlambat (terlambat, menitTerlambat > 0)
+    const menitTerlambat = hitungMenitTerlambat(sesi.tutupAt, sekarang);
     const status = statusDariMenitTerlambat(menitTerlambat);
 
     const presensi = await prisma.presensi.create({

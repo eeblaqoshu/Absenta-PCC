@@ -99,31 +99,41 @@ export function jamSekarangWib(now: Date = new Date()): string {
 }
 
 /**
- * Menit keterlambatan (dibulatkan ke bawah) dihitung dari `buka_at` ke waktu scan.
- * 0 berarti tidak terlambat.
+ * Menit keterlambatan dihitung terhadap jam maksimum kedatangan (tutupAt / jamMaksimal).
+ * - Jika scan di antara jam mulai dan jam maksimal (waktuScan <= jamMaksimal): 0 menit (tidak terlambat / tepat waktu).
+ * - Jika scan setelah jam maksimal (waktuScan > jamMaksimal): selisih menit keterlambatan (minimal 1 menit).
  */
-export function hitungMenitTerlambat(bukaAt: Date, waktuScan: Date): number {
-  return Math.max(0, Math.floor((waktuScan.getTime() - bukaAt.getTime()) / 60_000));
+export function hitungMenitTerlambat(jamMaksimal: Date, waktuScan: Date): number {
+  if (waktuScan.getTime() <= jamMaksimal.getTime()) {
+    return 0;
+  }
+  return Math.max(1, Math.floor((waktuScan.getTime() - jamMaksimal.getTime()) / 60_000));
 }
 
 /**
- * Status presensi dari menit keterlambatan: `hadir` bila <= BATAS_TERLAMBAT_MENIT,
- * selain itu `terlambat`. Satu-satunya tempat aturan ini diterapkan.
+ * Status presensi dari menit keterlambatan:
+ * - 0 menit -> `hadir` (tepat waktu).
+ * - > 0 menit -> `terlambat`.
  */
 export function statusDariMenitTerlambat(menitTerlambat: number): "hadir" | "terlambat" {
-  return menitTerlambat <= BATAS_TERLAMBAT_MENIT ? "hadir" : "terlambat";
+  return menitTerlambat <= 0 ? "hadir" : "terlambat";
 }
 
 export type StatusSesiDihitung = "belum_dibuka" | "berjalan" | "ditutup";
 
-/** Menghitung status sesi presensi (dihitung, tidak disimpan di database). */
+/**
+ * Menghitung status sesi presensi (dihitung, tidak disimpan di database).
+ * - Sebelum bukaAt: "belum_dibuka"
+ * - Mulai bukaAt sampai akhir hari pelaksanaan sesi: "berjalan" (mengizinkan presensi tepat waktu maupun terlambat)
+ * - Setelah hari pelaksanaan sesi berakhir: "ditutup"
+ */
 export function hitungStatusSesi(
   bukaAt: Date,
   tutupAt: Date,
   now: Date = new Date()
 ): StatusSesiDihitung {
   if (now < bukaAt) return "belum_dibuka";
-  if (now > tutupAt) return "ditutup";
+  if (agendaTelahBerlalu(bukaAt, undefined, now)) return "ditutup";
   return "berjalan";
 }
 
