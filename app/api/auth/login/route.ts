@@ -70,18 +70,20 @@ export async function POST(req: NextRequest) {
 
     const { idToken } = parsed.data;
 
-    // 1. Verifikasi ID Token dengan Firebase Admin SDK (checkRevoked = true)
+    // 1. Verifikasi ID Token dengan Firebase Admin SDK
+    // Menggunakan checkRevoked = false agar tidak melakukan panggilan jaringan tambahan yang rawan ETIMEDOUT di hosting
     let decodedToken;
     try {
-      decodedToken = await adminAuth.verifyIdToken(idToken, true);
+      decodedToken = await adminAuth.verifyIdToken(idToken, false);
     } catch (err: unknown) {
       console.error("Error verifyIdToken:", err);
+      const pesanDetail =
+        err instanceof Error ? err.message : "Token tidak dapat diverifikasi";
       return NextResponse.json(
         {
           error: {
             kode: "TOKEN_INVALID",
-            pesan:
-              "Sesi login kedaluwarsa atau token tidak valid. Silakan login kembali.",
+            pesan: `Verifikasi token gagal (${pesanDetail}). Silakan coba lagi.`,
           },
         },
         { status: 401 }

@@ -1,7 +1,13 @@
 // lib/firebase-admin.ts
 // Inisialisasi Firebase Admin SDK (hanya dijalankan di server runtime Node)
+import dns from "node:dns";
 import { getApps, initializeApp, cert, getApp, App } from "firebase-admin/app";
 import { getAuth, Auth } from "firebase-admin/auth";
+
+// Prioritaskan IPv4 untuk mencegah ETIMEDOUT / ENETUNREACH di hosting cPanel/LiteSpeed
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 let adminApp: App | undefined;
 let adminAuth: Auth | null = null;

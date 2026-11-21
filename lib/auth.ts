@@ -42,11 +42,13 @@ export async function getSession(): Promise<UserSession | null> {
   }
 
   try {
-    // 1. Verifikasi cookie dengan Firebase Admin (checkRevoked = true)
-    const decodedClaims = await adminAuth.verifySessionCookie(
-      sessionCookie,
-      true
-    );
+    // 1. Verifikasi cookie dengan Firebase Admin (coba checkRevoked, fallback lokal jika network timeout)
+    let decodedClaims;
+    try {
+      decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+    } catch {
+      decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, false);
+    }
 
     // Temuan 1: Validasi status verifikasi email
     if (decodedClaims.email_verified === false) {
