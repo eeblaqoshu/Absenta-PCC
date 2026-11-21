@@ -68,6 +68,7 @@ export async function getSession(): Promise<UserSession | null> {
 
   if (!email || !uid) return null;
 
+  try {
     // 2. Prioritas 1: Cocokkan ke akun_adsek
     const adsek = await prisma.akunAdsek.findUnique({
       where: { email },
