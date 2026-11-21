@@ -26,6 +26,7 @@
 *.zip
 *.tar.gz
 deploy-update.zip
+deploy_stage/
 
 # debug
 npm-debug.log*

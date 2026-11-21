@@ -6,6 +6,7 @@ import { adminAuth } from "./firebase-admin";
 import { prisma } from "./prisma";
 import { RoleAdsek, StatusPeriode } from "@prisma/client";
 import { SESSION_COOKIE_NAME } from "./konstanta";
+import { verifikasiSessionTokenLokal } from "./token-verifier";
 
 export { SESSION_COOKIE_NAME };
 
@@ -37,27 +38,37 @@ export async function getSession(): Promise<UserSession | null> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-  if (!sessionCookie || !adminAuth) {
+  if (!sessionCookie) {
     return null;
   }
 
-  try {
-    // 1. Verifikasi cookie dengan Firebase Admin (checkRevoked = true)
-    const decodedClaims = await adminAuth.verifySessionCookie(
-      sessionCookie,
-      true
-    );
+  let email: string | undefined;
+  let uid: string | undefined;
 
-    // Temuan 1: Validasi status verifikasi email
-    if (decodedClaims.email_verified === false) {
+  // 1. Cek session token bertanda tangan lokal (zero network dependency)
+  const localSession = verifikasiSessionTokenLokal(sessionCookie);
+  if (localSession) {
+    email = localSession.email.toLowerCase();
+    uid = localSession.uid;
+  } else if (adminAuth) {
+    // 2. Fallback ke Firebase Admin SDK jika session cookie Firebase resmi
+    try {
+      const decodedClaims = await adminAuth.verifySessionCookie(
+        sessionCookie,
+        false
+      );
+      if (decodedClaims.email_verified !== false) {
+        email = decodedClaims.email?.toLowerCase();
+        uid = decodedClaims.uid;
+      }
+    } catch {
       return null;
     }
+  }
 
-    const email = decodedClaims.email?.toLowerCase();
-    const uid = decodedClaims.uid;
+  if (!email || !uid) return null;
 
-    if (!email) return null;
-
+  try {
     // 2. Prioritas 1: Cocokkan ke akun_adsek
     const adsek = await prisma.akunAdsek.findUnique({
       where: { email },

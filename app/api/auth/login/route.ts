@@ -7,6 +7,10 @@ import { SESSION_COOKIE_NAME } from "@/lib/auth";
 import { StatusPeriode } from "@prisma/client";
 import { cekBatasLaju } from "@/lib/rate-limit";
 import { z } from "zod";
+import {
+  verifikasiGoogleTokenOffline,
+  buatSessionTokenLokal,
+} from "@/lib/token-verifier";
 
 const loginSchema = z.object({
   idToken: z.string().min(1, "ID token tidak boleh kosong"),
@@ -40,19 +44,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!adminAuth) {
-      return NextResponse.json(
-        {
-          error: {
-            kode: "SERVER_CONFIG_ERROR",
-            pesan:
-              "Konfigurasi Firebase Admin di server belum lengkap. Silakan hubungi Tim Kelola",
-          },
-        },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json().catch(() => null);
     const parsed = loginSchema.safeParse(body);
 
@@ -70,18 +61,36 @@ export async function POST(req: NextRequest) {
 
     const { idToken } = parsed.data;
 
-    // 1. Verifikasi ID Token dengan Firebase Admin SDK (checkRevoked = true)
-    let decodedToken;
+    // 1. Verifikasi ID Token: Verifikasi kriptografis lokal RSA-SHA256 (instan & tanpa dependensi network yang terblokir)
+    let decodedToken: {
+      uid: string;
+      email?: string;
+      email_verified?: boolean;
+    } | null = null;
+
     try {
-      decodedToken = await adminAuth.verifyIdToken(idToken, true);
-    } catch (err: unknown) {
-      console.error("Error verifyIdToken:", err);
+      const expectedProjectId =
+        process.env.FIREBASE_PROJECT_ID ||
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+        "";
+      decodedToken = verifikasiGoogleTokenOffline(idToken, expectedProjectId);
+    } catch (offlineErr: unknown) {
+      console.warn("Verifikasi lokal gagal, mencoba online via adminAuth:", offlineErr);
+      if (adminAuth) {
+        try {
+          decodedToken = await adminAuth.verifyIdToken(idToken, false);
+        } catch (adminErr: unknown) {
+          console.error("Verifikasi online juga gagal:", adminErr);
+        }
+      }
+    }
+
+    if (!decodedToken) {
       return NextResponse.json(
         {
           error: {
             kode: "TOKEN_INVALID",
-            pesan:
-              "Sesi login kedaluwarsa atau token tidak valid. Silakan login kembali.",
+            pesan: "Verifikasi token login gagal atau kedaluwarsa. Silakan coba masuk kembali.",
           },
         },
         { status: 401 }
@@ -218,9 +227,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Buat Firebase Session Cookie
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, {
-      expiresIn: EXPIRES_IN,
+    // 4. Buat Session Cookie bertanda tangan HMAC (instan, aman, zero network dependency)
+    const sessionCookie = buatSessionTokenLokal({
+      email,
+      uid,
+      expiresInMs: EXPIRES_IN,
     });
 
     // 5. Kembalikan response dengan cookie httpOnly
