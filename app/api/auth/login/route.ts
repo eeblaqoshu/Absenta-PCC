@@ -7,6 +7,10 @@ import { SESSION_COOKIE_NAME } from "@/lib/auth";
 import { StatusPeriode } from "@prisma/client";
 import { cekBatasLaju } from "@/lib/rate-limit";
 import { z } from "zod";
+import {
+  verifikasiGoogleTokenOffline,
+  buatSessionTokenLokal,
+} from "@/lib/token-verifier";
 
 const loginSchema = z.object({
   idToken: z.string().min(1, "ID token tidak boleh kosong"),
@@ -40,19 +44,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!adminAuth) {
-      return NextResponse.json(
-        {
-          error: {
-            kode: "SERVER_CONFIG_ERROR",
-            pesan:
-              "Konfigurasi Firebase Admin di server belum lengkap. Silakan hubungi Tim Kelola",
-          },
-        },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json().catch(() => null);
     const parsed = loginSchema.safeParse(body);
 
@@ -70,24 +61,42 @@ export async function POST(req: NextRequest) {
 
     const { idToken } = parsed.data;
 
-    // 1. Verifikasi ID Token dengan Firebase Admin SDK
-    // Menggunakan checkRevoked = false agar tidak melakukan panggilan jaringan tambahan yang rawan ETIMEDOUT di hosting
-    let decodedToken;
-    try {
-      decodedToken = await adminAuth.verifyIdToken(idToken, false);
-    } catch (err: unknown) {
-      console.error("Error verifyIdToken:", err);
-      const pesanDetail =
-        err instanceof Error ? err.message : "Token tidak dapat diverifikasi";
-      return NextResponse.json(
-        {
-          error: {
-            kode: "TOKEN_INVALID",
-            pesan: `Verifikasi token gagal (${pesanDetail}). Silakan coba lagi.`,
+    // 1. Verifikasi ID Token: Coba via Firebase Admin SDK, fallback ke verifikasi kriptografis lokal jika network hosting timeout/terblokir
+    let decodedToken: {
+      uid: string;
+      email?: string;
+      email_verified?: boolean;
+    } | null = null;
+
+    if (adminAuth) {
+      try {
+        decodedToken = await adminAuth.verifyIdToken(idToken, false);
+      } catch (err: unknown) {
+        console.warn("verifyIdToken online gagal, beralih ke verifikasi lokal:", err);
+      }
+    }
+
+    if (!decodedToken) {
+      try {
+        const expectedProjectId =
+          process.env.FIREBASE_PROJECT_ID ||
+          process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+          "";
+        decodedToken = verifikasiGoogleTokenOffline(idToken, expectedProjectId);
+      } catch (err: unknown) {
+        console.error("Verifikasi token gagal:", err);
+        const pesanDetail =
+          err instanceof Error ? err.message : "Token tidak dapat diverifikasi";
+        return NextResponse.json(
+          {
+            error: {
+              kode: "TOKEN_INVALID",
+              pesan: `Verifikasi token gagal (${pesanDetail}). Silakan coba lagi.`,
+            },
           },
-        },
-        { status: 401 }
-      );
+          { status: 401 }
+        );
+      }
     }
 
     // Validasi Temuan 1: Pastikan email telah terverifikasi oleh provider autentikasi
@@ -220,10 +229,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Buat Firebase Session Cookie
-    const sessionCookie = await adminAuth.createSessionCookie(idToken, {
-      expiresIn: EXPIRES_IN,
-    });
+    // 4. Buat Session Cookie (coba Firebase Admin, fallback ke token bertanda tangan lokal jika network hosting diblokir)
+    let sessionCookie: string | null = null;
+    if (adminAuth) {
+      try {
+        sessionCookie = await adminAuth.createSessionCookie(idToken, {
+          expiresIn: EXPIRES_IN,
+        });
+      } catch (err) {
+        console.warn(
+          "createSessionCookie online gagal, menggunakan session token HMAC lokal:",
+          err
+        );
+      }
+    }
+
+    if (!sessionCookie) {
+      sessionCookie = buatSessionTokenLokal({
+        email,
+        uid,
+        expiresInMs: EXPIRES_IN,
+      });
+    }
 
     // 5. Kembalikan response dengan cookie httpOnly
     const response = NextResponse.json({
