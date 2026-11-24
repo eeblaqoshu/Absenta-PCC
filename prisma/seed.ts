@@ -85,6 +85,11 @@ async function main() {
       emailGoogle: "albi@student.polines.ac.id",
       jabatan: "Ketua Umum",
       divisi: "Pengurus Harian",
+      ttd:
+        "data:image/svg+xml;utf8," +
+        encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="90" viewBox="0 0 240 90"><path d="M22 64 C48 18, 72 74, 102 38 C122 14, 138 68, 166 42 C184 26, 202 52, 222 34" fill="none" stroke="#0B2A5B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        ),
     },
   });
 

@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  Lock,
 } from "lucide-react";
 import type { StoItem } from "./sto-manager/types";
 import { ModalStoForm } from "./sto-manager/modal-sto-form";
@@ -29,9 +30,11 @@ export type { StoItem };
 export function StoManager({
   initialSto,
   namaPeriode,
+  isAdmin = true,
 }: {
   initialSto: StoItem[];
   namaPeriode: string;
+  isAdmin?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [pesan, setPesan] = useState<{
@@ -55,6 +58,7 @@ export function StoManager({
   const [emailGoogle, setEmailGoogle] = useState("");
   const [jabatan, setJabatan] = useState("");
   const [divisi, setDivisi] = useState("");
+  const [ttd, setTtd] = useState<string | null>(null);
 
   // CSV Import State
   const [csvPreview, setCsvPreview] = useState<CsvBarisSto[]>([]);
@@ -94,6 +98,7 @@ export function StoManager({
     setEmailGoogle("");
     setJabatan("");
     setDivisi("");
+    setTtd(null);
     setStoSedangDiedit(null);
   };
 
@@ -104,6 +109,7 @@ export function StoManager({
     setEmailGoogle(item.emailGoogle);
     setJabatan(item.jabatan || "");
     setDivisi(item.divisi || "");
+    setTtd(item.ttd || null);
     setModalEditBuka(true);
   };
 
@@ -117,6 +123,9 @@ export function StoManager({
     formData.append("emailGoogle", emailGoogle);
     formData.append("jabatan", jabatan);
     formData.append("divisi", divisi);
+    if (ttd && ttd !== "__HAPUS__") {
+      formData.append("ttd", ttd);
+    }
 
     startTransition(async () => {
       const res = await tambahStoAction(null, formData);
@@ -141,6 +150,11 @@ export function StoManager({
     formData.append("emailGoogle", emailGoogle);
     formData.append("jabatan", jabatan);
     formData.append("divisi", divisi);
+    if (ttd === "__HAPUS__") {
+      formData.append("ttd", "__HAPUS__");
+    } else if (ttd && ttd !== stoSedangDiedit.ttd) {
+      formData.append("ttd", ttd);
+    }
 
     startTransition(async () => {
       const res = await ubahStoAction(stoSedangDiedit.id, formData);
@@ -157,7 +171,7 @@ export function StoManager({
   const handleHapusSto = async (id: number, namaSto: string) => {
     const setuju = await konfirmasiHapus({
       judul: "Hapus Pengurus STO?",
-      pesan: `Anda yakin ingin menghapus data pengurus "${namaSto}"? Data kepanitiaan dan presensi terkait akan terhapus.`,
+      pesan: `Anda yakin ingin menghapus data pengurus "${namaSto}"? Data kepanitiaan terkait akan ikut terhapus.`,
       tombolHapus: "Ya, Hapus Pengurus",
     });
     if (!setuju) return;
@@ -261,6 +275,11 @@ export function StoManager({
     document.body.removeChild(link);
   };
 
+  const totalSudahTtd = useMemo(
+    () => initialSto.filter((s) => Boolean(s.ttd)).length,
+    [initialSto]
+  );
+
   return (
     <div className="space-y-6">
       {/* Header Banner Card */}
@@ -273,41 +292,55 @@ export function StoManager({
                 {namaPeriode}
               </span>
             </div>
+            <span className="text-xs text-slate-muted">•</span>
+            <span className="text-xs font-medium text-slate-muted">
+              TTD Digital: {totalSudahTtd}/{initialSto.length} STO
+            </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
-            Data Kepengerusan STO
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
+            Data Kepengurusan STO
           </h2>
           <p className="text-xs text-slate-muted mt-1 leading-relaxed">
-            Kelola master data pengurus organisasi terdaftar, divisi, jabatan,
-            serta impor massal file CSV.
+            Kelola master data pengurus organisasi, tanda tangan digital (TTD) per STO, serta impor CSV.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
-          <button
-            onClick={() => {
-              setCsvPreview([]);
-              setCsvHasil(null);
-              setCsvFileName("");
-              setModalCsvBuka(true);
-            }}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-navy text-xs font-semibold hover:bg-surface shadow-sm transition-all cursor-pointer"
-          >
-            <Upload className="w-4 h-4 text-secondary" />
-            Impor CSV
-          </button>
+        {isAdmin ? (
+          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+            <button
+              type="button"
+              suppressHydrationWarning
+              onClick={() => {
+                setCsvPreview([]);
+                setCsvHasil(null);
+                setCsvFileName("");
+                setModalCsvBuka(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-white border border-[#CBD5E1] text-navy text-xs font-semibold hover:bg-surface shadow-sm transition-all cursor-pointer"
+            >
+              <Upload className="w-4 h-4 text-secondary" />
+              Impor CSV
+            </button>
 
-          <button
-            onClick={() => {
-              resetForm();
-              setModalTambahBuka(true);
-            }}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah STO
-          </button>
-        </div>
+            <button
+              type="button"
+              suppressHydrationWarning
+              onClick={() => {
+                resetForm();
+                setModalTambahBuka(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah STO
+            </button>
+          </div>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-[#E2E8F0] text-slate-muted text-xs font-semibold shrink-0 self-start sm:self-auto">
+            <Lock className="w-3.5 h-3.5 text-secondary" />
+            Mode Baca (Kelola &amp; Upload TTD Khusus Admin)
+          </span>
+        )}
       </div>
 
       {/* Alert Notification */}
@@ -315,14 +348,14 @@ export function StoManager({
         <div
           className={`p-4 rounded-xl border flex items-start gap-3 text-xs ${
             pesan.tipe === "sukses"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-              : "bg-rose-50 border-rose-200 text-rose-800"
+              ? "bg-accent/15 border-accent/40 text-primary"
+              : "bg-highlight/15 border-highlight/40 text-primary"
           }`}
         >
           {pesan.tipe === "sukses" ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-secondary" />
           ) : (
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-highlight" />
           )}
           <div className="flex-1 font-medium">{pesan.teks}</div>
           <button
@@ -340,6 +373,7 @@ export function StoManager({
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-muted" />
           <input
             type="text"
+            suppressHydrationWarning
             placeholder="Cari nama, NIM, atau email pengurus..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -349,6 +383,7 @@ export function StoManager({
 
         {divisiList.length > 0 && (
           <select
+            suppressHydrationWarning
             value={filterDivisi}
             onChange={(e) => setFilterDivisi(e.target.value)}
             className="w-full sm:w-48 px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary cursor-pointer"
@@ -367,46 +402,53 @@ export function StoManager({
       <StoTable
         data={filteredSto}
         isPending={isPending}
+        isAdmin={isAdmin}
         onEdit={handleOpenEdit}
         onHapus={handleHapusSto}
       />
 
       {/* Modal Tambah / Edit STO */}
-      <ModalStoForm
-        isOpen={modalTambahBuka || modalEditBuka}
-        isEdit={modalEditBuka}
-        isPending={isPending}
-        stoSedangDiedit={stoSedangDiedit}
-        nama={nama}
-        nim={nim}
-        emailGoogle={emailGoogle}
-        jabatan={jabatan}
-        divisi={divisi}
-        setNama={setNama}
-        setNim={setNim}
-        setEmailGoogle={setEmailGoogle}
-        setJabatan={setJabatan}
-        setDivisi={setDivisi}
-        onClose={() => {
-          setModalTambahBuka(false);
-          setModalEditBuka(false);
-          resetForm();
-        }}
-        onSubmit={modalTambahBuka ? handleSubmitTambah : handleSubmitEdit}
-      />
+      {isAdmin && (
+        <ModalStoForm
+          isOpen={modalTambahBuka || modalEditBuka}
+          isEdit={modalEditBuka}
+          isPending={isPending}
+          stoSedangDiedit={stoSedangDiedit}
+          nama={nama}
+          nim={nim}
+          emailGoogle={emailGoogle}
+          jabatan={jabatan}
+          divisi={divisi}
+          ttd={ttd}
+          setNama={setNama}
+          setNim={setNim}
+          setEmailGoogle={setEmailGoogle}
+          setJabatan={setJabatan}
+          setDivisi={setDivisi}
+          setTtd={setTtd}
+          onClose={() => {
+            setModalTambahBuka(false);
+            setModalEditBuka(false);
+            resetForm();
+          }}
+          onSubmit={modalTambahBuka ? handleSubmitTambah : handleSubmitEdit}
+        />
+      )}
 
       {/* Modal Impor CSV */}
-      <ModalStoCsv
-        isOpen={modalCsvBuka}
-        isPending={isPending}
-        csvFileName={csvFileName}
-        csvPreview={csvPreview}
-        csvHasil={csvHasil}
-        onClose={() => setModalCsvBuka(false)}
-        onFileChange={handleCsvFileChange}
-        onProsesImpor={handleProsesImporCsv}
-        onDownloadTemplate={downloadSampleCsv}
-      />
+      {isAdmin && (
+        <ModalStoCsv
+          isOpen={modalCsvBuka}
+          isPending={isPending}
+          csvFileName={csvFileName}
+          csvPreview={csvPreview}
+          csvHasil={csvHasil}
+          onClose={() => setModalCsvBuka(false)}
+          onFileChange={handleCsvFileChange}
+          onProsesImpor={handleProsesImporCsv}
+          onDownloadTemplate={downloadSampleCsv}
+        />
+      )}
     </div>
   );
 }
