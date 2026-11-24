@@ -1,5 +1,5 @@
 // app/(adsek)/dashboard/presensi/[sesi]/page.tsx
-// Layar sesi presensi: proyektor QR dinamis + daftar hadir langsung.
+// Layar sesi presensi: proyektor QR dinamis + daftar hadir langsung + TTD otomatis.
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rekapKehadiranSesi } from "@/lib/kehadiran";
@@ -9,7 +9,7 @@ import { formatJamIndo, hitungStatusSesi } from "@/lib/waktu";
 import { StatusPeriode } from "@prisma/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, QrCode, Users } from "lucide-react";
+import { ArrowLeft, Clock, QrCode } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ sesi: string }>;
@@ -34,7 +34,7 @@ export default async function PresensiSesiPage({ params }: PageProps) {
             select: {
               id: true,
               nama: true,
-              periode: { select: { status: true } },
+              periode: { select: { nama: true, status: true } },
             },
           },
         },
@@ -46,24 +46,32 @@ export default async function PresensiSesiPage({ params }: PageProps) {
 
   const isReadonly = data.agenda.proker.periode.status === StatusPeriode.selesai;
 
-  // Rekap dihitung per sesi (satu agenda boleh punya beberapa sesi).
-  const rekap = await rekapKehadiranSesi(data.id);
+  // Sertakan TTD digital STO agar langsung tampil otomatis saat peserta hadir.
+  const rekap = await rekapKehadiranSesi(data.id, new Date(), {
+    sertakanTtd: true,
+  });
 
   const statusSesi = hitungStatusSesi(data.bukaAt, data.tutupAt);
 
   return (
     <div className="py-2 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href={`/dashboard/proker/${data.agenda.proker.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted transition-colors hover:text-secondary"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke {data.agenda.proker.nama}
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/dashboard/proker/${data.agenda.proker.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted transition-colors hover:text-secondary"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke {data.agenda.proker.nama}
+          </Link>
+          <span className="text-xs text-slate-muted">•</span>
+          <span className="text-xs font-semibold text-secondary">
+            {data.agenda.proker.periode.nama}
+          </span>
+        </div>
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-muted">
-          <Clock className="w-3.5 h-3.5" />
-          Sesi #{data.id} • {formatJamIndo(data.bukaAt)}–{formatJamIndo(data.tutupAt)} WIB
+          <Clock className="w-3.5 h-3.5 text-secondary" />
+          Sesi #{data.id} • {formatJamIndo(data.bukaAt)} – {formatJamIndo(data.tutupAt)}
         </span>
       </div>
 
@@ -88,21 +96,15 @@ export default async function PresensiSesiPage({ params }: PageProps) {
             </p>
             <p className="text-xs text-slate-muted leading-relaxed">
               {statusSesi === "belum_dibuka"
-                ? `QR baru tampil pada ${formatJamIndo(data.bukaAt)} WIB.`
-                : "QR sudah tidak ditampilkan lagi. Anda tetap dapat melihat dan mengelola daftar hadir serta mengekspor CSV di bawah."}
+                ? `QR baru tampil pada ${formatJamIndo(data.bukaAt)}.`
+                : "QR sudah tidak ditampilkan lagi. Anda tetap dapat mengelola daftar hadir, melihat lampiran TTD otomatis, atau melakukan Export PDF di bawah."}
             </p>
           </div>
         </div>
       )}
 
       {rekap && (
-        <div className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wide text-slate-muted flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" />
-            Daftar hadir & kelola kehadiran
-          </h2>
-          <DaftarKehadiran sesiId={data.id} isReadonly={isReadonly} rekap={rekap} />
-        </div>
+        <DaftarKehadiran sesiId={data.id} isReadonly={isReadonly} rekap={rekap} />
       )}
     </div>
   );

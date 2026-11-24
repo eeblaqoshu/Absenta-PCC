@@ -14,6 +14,7 @@ import {
   QrCode,
   Users,
   Pencil,
+  FileDown,
 } from "lucide-react";
 import { AgendaStatusTabs } from "@/components/ui/agenda-status-tabs";
 import { EmptyAgenda } from "@/components/ui/empty-agenda";
@@ -98,7 +99,7 @@ export function AgendaSection({
       ) : agendaTerlihat.length === 0 ? (
         <EmptyAgenda />
       ) : (
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={tabEfektif}
             initial={{ opacity: 0, y: 8 }}
@@ -282,6 +283,13 @@ export function AgendaSection({
                                 >
                                   <Users className="w-3.5 h-3.5 text-secondary" />
                                   Daftar Hadir
+                                </Link>
+                                <Link
+                                  href={`/dashboard/presensi/${sesi.id}/pdf`}
+                                  className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-white border border-[#E2E8F0] hover:bg-surface text-primary font-semibold text-xs shadow-xs transition-all"
+                                >
+                                  <FileDown className="w-3.5 h-3.5 text-secondary" />
+                                  Export PDF
                                 </Link>
                                 {!isReadonly && !sudahSelesai && (
                                   <button
