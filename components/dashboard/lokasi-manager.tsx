@@ -32,13 +32,14 @@ export interface LokasiItem {
 
 interface Props {
   initialLokasi: LokasiItem[];
+  isAdmin?: boolean;
 }
 
 const RADIUS_DEFAULT = 500;
 const LAT_DEFAULT = -6.9999;
 const LNG_DEFAULT = 110.42;
 
-export function LokasiManager({ initialLokasi }: Props) {
+export function LokasiManager({ initialLokasi, isAdmin = true }: Props) {
   const [isPending, startTransition] = useTransition();
   const [pesan, setPesan] = useState<{ tipe: "sukses" | "error"; teks: string } | null>(null);
 
@@ -126,13 +127,19 @@ export function LokasiManager({ initialLokasi }: Props) {
             Daftarkan titik pusat dan radius. Lokasi ini bisa langsung dipilih saat membuat sesi presensi.
           </p>
         </div>
-        <button
-          onClick={bukaTambah}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Daftarkan Lokasi
-        </button>
+        {isAdmin ? (
+          <button
+            onClick={bukaTambah}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            Daftarkan Lokasi
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-[#E2E8F0] text-slate-muted text-xs font-semibold shrink-0 self-start sm:self-auto">
+            Mode Baca (Khusus Admin)
+          </span>
+        )}
       </div>
 
       {pesan && (
@@ -181,23 +188,25 @@ export function LokasiManager({ initialLokasi }: Props) {
                     radius {item.radiusM} m
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => bukaEdit(item)}
-                    title="Ubah"
-                    className="p-1.5 rounded-lg text-slate-muted hover:text-secondary hover:bg-secondary/10 transition-colors"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => hapus(item)}
-                    disabled={isPending}
-                    title="Hapus"
-                    className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                {isAdmin && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => bukaEdit(item)}
+                      title="Ubah"
+                      className="p-1.5 rounded-lg text-slate-muted hover:text-secondary hover:bg-secondary/10 transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => hapus(item)}
+                      disabled={isPending}
+                      title="Hapus"
+                      className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

@@ -90,6 +90,8 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button */}
       <button
+        type="button"
+        suppressHydrationWarning
         onClick={() => setDropdownOpen((prev) => !prev)}
         className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-xl border border-transparent hover:border-[#E2E8F0] hover:bg-surface transition-all group cursor-pointer"
         aria-expanded={dropdownOpen}
@@ -144,7 +146,7 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
                   Role / Jabatan
                 </span>
                 <span
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-info/10 text-slated-muted border border-slated-muted/20 uppercase tracking-wider truncate max-w-[130px]"
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-secondary/10 text-primary border border-secondary/20 uppercase tracking-wider truncate max-w-[150px]"
                   title={roleLabel}
                 >
                   {roleLabel}

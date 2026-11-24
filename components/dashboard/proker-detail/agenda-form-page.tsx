@@ -1,6 +1,5 @@
 // components/dashboard/proker-detail/agenda-form-page.tsx
 // Halaman form tambah dan edit agenda kegiatan proker (adsek).
-// Desain clean, padat (compact), eksklusif, dan informatif.
 "use client";
 
 import { useState, useTransition } from "react";
@@ -8,21 +7,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Calendar,
-  MapPin,
-  Clock,
   Loader2,
   AlertCircle,
   CheckCircle2,
   RotateCcw,
-  Users,
-  GitMerge,
-  ShieldCheck,
-  Sparkles,
-  ShieldAlert,
-  Globe,
-  UserCheck,
-  SlidersHorizontal,
 } from "lucide-react";
 import { JenisAgenda, TargetPeserta } from "@prisma/client";
 import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";
@@ -70,51 +58,57 @@ interface Props {
 
 const KOORDINAT_POLINES_DEFAULT = { lat: -7.0513, lng: 110.4337 };
 
-const OPSI_JENIS = [
+const OPSI_JENIS: {
+  value: JenisAgenda;
+  label: string;
+  keterangan: string;
+  berpoin: boolean;
+}[] = [
+  {
+    value: JenisAgenda.hari_h,
+    label: "Hari H Acara",
+    keterangan: "Pelaksanaan utama kegiatan",
+    berpoin: true,
+  },
   {
     value: JenisAgenda.rapat_besar,
-    label: "Rapat Besar",
-    deskripsi: "Pertemuan akbar melibatkan seluruh panitia & pengurus.",
-    icon: Users,
+    label: "Rapat Besar (Rabes)",
+    keterangan: "Rapat pleno seluruh panitia",
+    berpoin: false,
   },
   {
     value: JenisAgenda.rapat_koordinasi,
-    label: "Rapat Koordinasi",
-    deskripsi: "Sinkronisasi teknis & pembagian tugas antar divisi kerja.",
-    icon: GitMerge,
+    label: "Rapat Koordinasi (Rakoor)",
+    keterangan: "Koordinasi teknis panitia/divisi",
+    berpoin: false,
   },
   {
     value: JenisAgenda.rapat_pj,
     label: "Rapat PJ & PI",
-    deskripsi: "Pengarahan intensif khusus Pimpinan Inti & PJ Divisi.",
-    icon: ShieldCheck,
-  },
-  {
-    value: JenisAgenda.hari_h,
-    label: "Hari H Acara",
-    deskripsi: "Puncak pelaksanaan agenda utama program kerja.",
-    icon: Sparkles,
+    keterangan: "Rapat Pimpinan Inti & PJ Divisi",
+    berpoin: false,
   },
 ];
 
-const OPSI_TARGET = [
+const OPSI_TARGET: {
+  value: TargetPeserta;
+  label: string;
+  keterangan: string;
+}[] = [
   {
     value: TargetPeserta.semua_panitia,
     label: "Semua Panitia",
-    keterangan: "Khusus fungsionaris di SK kepanitiaan proker ini.",
-    icon: UserCheck,
+    keterangan: "Seluruh panitia proker ini",
   },
   {
     value: TargetPeserta.hanya_pj_pi,
     label: "Khusus PJ & PI",
-    keterangan: "Terbatas untuk Pimpinan Inti & PJ Divisi saja.",
-    icon: ShieldAlert,
+    keterangan: "Ketua, Sekretaris, Bendahara, PJ",
   },
   {
     value: TargetPeserta.semua_panitia_sto,
     label: "Seluruh STO",
-    keterangan: "Terbuka bagi seluruh pengurus periode aktif.",
-    icon: Globe,
+    keterangan: "Semua pengurus periode aktif",
   },
 ];
 
@@ -238,126 +232,83 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
 
   return (
     <div className="space-y-5 pb-16 font-sans">
-      {/* Navigasi Kembali */}
-      <div>
-        <Link
-          href={`/dashboard/proker/${proker.id}`}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Detail Proker
-        </Link>
-      </div>
-
-      {/* Header Banner Card Terpadu dengan Action Buttons */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Card (selaras dengan halaman detail proker) */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-slate-muted">
-              Portal Agenda Kegiatan Program Kerja
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+            <Link
+              href={`/dashboard/proker/${proker.id}`}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              {proker.nama}
+            </Link>
+            <span className="text-slate-muted text-xs">•</span>
+            <span className="text-xs font-semibold text-secondary">
+              {proker.periode.nama}
             </span>
           </div>
+
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
             {isEdit ? "Edit Kegiatan" : "Tambah Kegiatan Baru"}
           </h1>
-          <p className="text-xs text-slate-muted mt-1">
-            {proker.nama} • Periode {proker.periode.nama}
-          </p>
         </div>
 
-        {/* Action Buttons di Header: Terasa Padat & Efisien */}
-        <div className="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
-          {isReadonly && (
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-200">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Read-only</span>
-            </div>
-          )}
-
-          <Link
-            href={`/dashboard/proker/${proker.id}`}
-            className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:text-navy hover:bg-slate-50 transition-colors cursor-pointer"
-          >
-            Batal
-          </Link>
-
-          <button
-            type="submit"
-            form="form-agenda"
-            disabled={isReadonly || isPending}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-xs shadow-secondary/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-          >
-            {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            {isEdit ? "Perbarui Kegiatan" : "Simpan Kegiatan"}
-          </button>
-        </div>
+        {isReadonly && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-highlight/15 text-primary text-xs font-semibold border border-highlight/40 self-start sm:self-auto">
+            <AlertCircle className="w-4 h-4 text-highlight shrink-0" />
+            <span>Periode selesai (Read-only)</span>
+          </div>
+        )}
       </div>
 
-      {/* Alert Pesan Sukses / Error */}
+      {/* Notifikasi */}
       {pesan && (
         <div
-          className={`p-4 rounded-2xl border flex items-center gap-3 text-xs shadow-sm transition-all ${
+          className={`p-4 rounded-2xl border flex items-center gap-3 text-xs shadow-sm ${
             pesan.tipe === "sukses"
-              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-rose-50 border-rose-200 text-rose-900"
+              ? "bg-accent/15 border-accent/40 text-primary"
+              : "bg-highlight/15 border-highlight/40 text-primary"
           }`}
         >
           {pesan.tipe === "sukses" ? (
-            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-secondary" />
           ) : (
-            <AlertCircle className="w-5 h-5 shrink-0 text-rose-600" />
+            <AlertCircle className="w-4 h-4 shrink-0 text-highlight" />
           )}
           <span className="font-medium leading-relaxed">{pesan.teks}</span>
         </div>
       )}
 
-      {/* Form Utama: 2 Kolom Seimbang & Padat */}
+      {/* Form 2 Kolom */}
       <form id="form-agenda" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
-          {/* ========================================================= */}
-          {/* KOLOM KIRI: Informasi Kegiatan & Akses Presensi */}
-          {/* ========================================================= */}
-          <div className="space-y-5">
-            {/* Card 1: Detail & Jenis Kegiatan */}
-            <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-secondary flex items-center justify-center">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-navy">
-                    Detail &amp; Jenis Kegiatan
-                  </h2>
-                  <p className="text-[11px] text-slate-400">
-                    Nama kegiatan dan klasifikasi jenis pertemuan.
-                  </p>
-                </div>
-              </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Kolom Kiri: Informasi, Jadwal & Peserta */}
+          <div className="lg:col-span-7 space-y-5">
+            <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 space-y-5">
               {/* Judul Kegiatan */}
               <div>
                 <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Judul Kegiatan <span className="text-rose-500">*</span>
+                  Nama Kegiatan <span className="text-secondary">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   disabled={isReadonly || isPending}
-                  placeholder="Contoh: Rapat Pleno 1 & Pembagian Jobdesk"
+                  placeholder="Contoh: Rapat Pleno 1 / Hari H Seminar Nasional"
                   value={judulAgenda}
                   onChange={(e) => setJudulAgenda(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy placeholder:text-slate-muted/70 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                 />
               </div>
 
-              {/* Jenis Kegiatan (4 Pilihan Visual) */}
+              {/* Jenis Kegiatan */}
               <div>
                 <label className="block text-xs font-semibold text-navy mb-2">
-                  Pilih Jenis Kegiatan
+                  Jenis Kegiatan <span className="text-secondary">*</span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {OPSI_JENIS.map((item) => {
-                    const Icon = item.icon;
                     const aktif = jenisAgenda === item.value;
                     return (
                       <button
@@ -365,68 +316,44 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                         type="button"
                         disabled={isReadonly || isPending}
                         onClick={() => setJenisAgenda(item.value)}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 disabled:cursor-not-allowed ${
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer disabled:cursor-not-allowed ${
                           aktif
-                            ? "border-secondary bg-gradient-to-br from-blue-50/70 to-white shadow-xs ring-1 ring-secondary/30"
-                            : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                            ? "border-secondary bg-secondary/5 ring-1 ring-secondary/30"
+                            : "border-[#E2E8F0] bg-white hover:border-[#CBD5E1] hover:bg-surface/60"
                         }`}
                       >
-                        <div className="flex items-center justify-between w-full">
-                          <div
-                            className={`w-7 h-7 rounded-xl flex items-center justify-center ${
-                              aktif
-                                ? "bg-secondary text-white shadow-xs"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            <Icon className="w-3.5 h-3.5" />
-                          </div>
+                        <div className="flex items-center justify-between gap-2">
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              aktif
-                                ? "bg-blue-100 text-secondary"
-                                : "bg-slate-100 text-slate-400"
+                            className={`text-xs font-bold ${
+                              aktif ? "text-primary" : "text-navy"
                             }`}
                           >
-                            {aktif ? "Terpilih" : "Pilih"}
+                            {item.label}
+                          </span>
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 ${
+                              item.berpoin
+                                ? "bg-highlight/20 text-primary"
+                                : "bg-surface text-slate-muted"
+                            }`}
+                          >
+                            {item.berpoin ? "Berpoin" : "0 Poin"}
                           </span>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-navy">
-                            {item.label}
-                          </p>
-                          <p className="text-[11px] text-slate-500 leading-snug mt-0.5">
-                            {item.deskripsi}
-                          </p>
-                        </div>
+                        <p className="text-[11px] text-slate-muted mt-1">
+                          {item.keterangan}
+                        </p>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            </div>
 
-            {/* Card 2: Jadwal Pelaksanaan */}
-            <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-navy">
-                    Jadwal &amp; Waktu
-                  </h2>
-                  <p className="text-[11px] text-slate-400">
-                    Rentang tanggal dan jam pelaksanaan dalam zona WIB.
-                  </p>
-                </div>
-              </div>
-
-              {/* Tanggal Mulai & Selesai */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Tanggal & Jam */}
+              <div className="pt-4 border-t border-[#E2E8F0] grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1.5">
-                    Tanggal Mulai <span className="text-rose-500">*</span>
+                    Tanggal Mulai <span className="text-secondary">*</span>
                   </label>
                   <input
                     type="date"
@@ -434,13 +361,13 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     disabled={isReadonly || isPending}
                     value={tglAgenda}
                     onChange={(e) => setTglAgenda(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-navy mb-1.5">
                     Tanggal Selesai{" "}
-                    <span className="font-normal text-slate-400">
+                    <span className="font-normal text-slate-muted">
                       (Opsional)
                     </span>
                   </label>
@@ -450,81 +377,44 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     disabled={isReadonly || isPending}
                     value={tglSelesaiAgenda}
                     onChange={(e) => setTglSelesaiAgenda(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
                 </div>
-              </div>
-
-              {/* Jam Mulai WIB */}
-              <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Jam Mulai Pelaksanaan (WIB){" "}
-                  <span className="text-rose-500">*</span>
-                </label>
-                <div className="flex items-center gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1.5">
+                    Jam Mulai (WIB) <span className="text-secondary">*</span>
+                  </label>
                   <input
                     type="time"
                     required
                     disabled={isReadonly || isPending}
                     value={waktuAgenda}
                     onChange={(e) => setWaktuAgenda(e.target.value)}
-                    className="w-36 px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
-                  <span className="text-xs text-slate-500">
-                    WIB (Waktu Indonesia Barat)
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 3: Kebijakan Akses Presensi */}
-            <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <SlidersHorizontal className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-navy">
-                    Kebijakan Akses Presensi
-                  </h2>
-                  <p className="text-[11px] text-slate-400">
-                    Menentukan siapa saja yang berhak scan presensi.
-                  </p>
                 </div>
               </div>
 
-              {/* 3 Opsi Target */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {OPSI_TARGET.map((item) => {
-                  const Icon = item.icon;
-                  const aktif = targetPeserta === item.value;
-                  return (
-                    <button
-                      key={item.value}
-                      type="button"
-                      disabled={isReadonly || isPending}
-                      onClick={() => setTargetPeserta(item.value)}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 disabled:cursor-not-allowed ${
-                        aktif
-                          ? "border-primary bg-primary text-white shadow-sm ring-1 ring-primary"
-                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 text-navy"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center ${
-                            aktif
-                              ? "bg-white/20 text-white"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                        </div>
-                        {aktif && (
-                          <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                        )}
-                      </div>
-                      <div>
+              {/* Target Peserta */}
+              <div className="pt-4 border-t border-[#E2E8F0]">
+                <label className="block text-xs font-semibold text-navy mb-2">
+                  Peserta Wajib Hadir <span className="text-secondary">*</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {OPSI_TARGET.map((item) => {
+                    const aktif = targetPeserta === item.value;
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        disabled={isReadonly || isPending}
+                        onClick={() => setTargetPeserta(item.value)}
+                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer disabled:cursor-not-allowed ${
+                          aktif
+                            ? "border-primary bg-primary text-white"
+                            : "border-[#E2E8F0] bg-white hover:border-[#CBD5E1] hover:bg-surface/60 text-navy"
+                        }`}
+                      >
                         <p
                           className={`text-xs font-bold ${
                             aktif ? "text-white" : "text-navy"
@@ -533,121 +423,75 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                           {item.label}
                         </p>
                         <p
-                          className={`text-[10px] leading-snug mt-1 ${
-                            aktif ? "text-slate-200" : "text-slate-500"
+                          className={`text-[11px] mt-1 leading-snug ${
+                            aktif ? "text-white/80" : "text-slate-muted"
                           }`}
                         >
                           {item.keterangan}
                         </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Info Banner Konfirmasi Izin */}
-              <div className="p-3 flex items-start gap-2.5 text-[11px] text-blue-900 leading-relaxed">
-                <div>
-                  <span className="font-bold">Info: </span>
-                  {targetPeserta === TargetPeserta.semua_panitia && (
-                    <span>
-                      Hanya pengurus yang tercatat di kepanitiaan{" "}
-                      <strong>{proker.nama}</strong> yang dapat mengakses presensi.
-                    </span>
-                  )}
-                  {targetPeserta === TargetPeserta.hanya_pj_pi && (
-                    <span>
-                      Hanya Ketua, Sekretaris, Bendahara, dan PJ Divisi
-                      kepanitiaan <strong>{proker.nama}</strong> yang dapat
-                      mengakses presensi.
-                    </span>
-                  )}
-                  {targetPeserta === TargetPeserta.semua_panitia_sto && (
-                    <span>
-                      Seluruh fungsionaris STO dalam periode{" "}
-                      <strong>{proker.periode.nama}</strong> memiliki hak akses
-                      presensi.
-                    </span>
-                  )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ========================================================= */}
-          {/* KOLOM KANAN: Lokasi & Validasi Presensi GPS */}
-          {/* ========================================================= */}
-          <div className="space-y-5">
+          {/* Kolom Kanan: Lokasi & Titik Presensi */}
+          <div className="lg:col-span-5 space-y-5">
             <div className="bg-white rounded-3xl border border-[#E2E8F0] shadow-sm p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-navy">
-                      Titik Presensi &amp; Radius
-                    </h2>
-                    <p className="text-[11px] text-slate-400">
-                      Geofencing presensi berbasis GPS.
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-primary">
+                  Lokasi &amp; Titik Presensi
+                </h2>
                 <button
                   type="button"
                   onClick={() => setTitikAgenda(KOORDINAT_POLINES_DEFAULT)}
-                  className="text-[11px] text-secondary hover:text-navy hover:underline flex items-center gap-1 cursor-pointer font-semibold transition-colors"
-                  title="Kembalikan koordinat ke Kampus Pusat Polines"
+                  className="text-[11px] text-secondary hover:text-primary inline-flex items-center gap-1 cursor-pointer font-semibold transition-colors"
+                  title="Kembalikan koordinat ke Kampus Polines"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  Pusat Polines
+                  Reset ke Polines
                 </button>
               </div>
 
-              {/* Master Lokasi Preset */}
               <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5 flex items-center gap-1">
-                  Master Titik Lokasi
+                <label className="block text-xs font-semibold text-navy mb-1.5">
+                  Pilih dari Master Lokasi
                 </label>
                 <select
                   value={lokasiAgendaId}
                   disabled={isReadonly || isPending}
                   onChange={(e) => pilihLokasiMaster(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60 cursor-pointer"
                 >
-                  <option value="">-- Pilih Titik Lokasi Master --</option>
+                  <option value="">-- Atur titik manual / pilih lokasi --</option>
                   {daftarLokasi.map((l) => (
                     <option key={l.id} value={l.id}>
-                      {l.nama} (Radius: {l.radiusM}m)
+                      {l.nama} ({l.radiusM} m)
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Nama Tempat / Ruangan */}
-              <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Nama Tempat / Ruang{" "}
-                  <span className="font-normal text-slate-400">
-                    (Opsional/Kustom)
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  disabled={isReadonly || isPending}
-                  placeholder="Contoh: Gedung PKM Lantai 2 / Ruang Sidang Jurusan"
-                  value={lokasiAgenda}
-                  onChange={(e) => setLokasiAgenda(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
-                />
-              </div>
-
-              {/* Radius Toleransi (meter) - Bersih tanpa preset chips */}
-              <div>
-                <label className="block text-xs font-semibold text-navy mb-1.5">
-                  Radius Toleransi (meter)
-                </label>
-                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-navy mb-1.5">
+                    Nama Tempat / Ruang
+                  </label>
+                  <input
+                    type="text"
+                    disabled={isReadonly || isPending}
+                    placeholder="Contoh: Gedung PKM Lt. 2"
+                    value={lokasiAgenda}
+                    onChange={(e) => setLokasiAgenda(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy placeholder:text-slate-muted/70 focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-navy mb-1.5">
+                    Radius (m)
+                  </label>
                   <input
                     type="number"
                     min={10}
@@ -655,46 +499,39 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                     disabled={isReadonly || isPending}
                     value={radiusAgenda}
                     onChange={(e) =>
-                      setRadiusAgenda(parseInt(e.target.value) || 500)
+                      setRadiusAgenda(parseInt(e.target.value, 10) || 500)
                     }
-                    className="w-32 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs font-semibold text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60"
                   />
-                  <span className="text-xs text-slate-500">
-                    meter dari titik pusat
-                  </span>
                 </div>
               </div>
 
-              {/* Peta Interaktif Leaflet */}
               <div>
-                <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1.5">
-                  <span>Klik pada peta untuk menentukan titik koordinat:</span>
+                <div className="flex items-center justify-between text-[11px] text-slate-muted mb-1.5">
+                  <span>Klik peta untuk memindahkan titik pusat</span>
                   <span className="font-mono text-[10px]">
-                    {titikAgendaAktif.lat.toFixed(4)}, {titikAgendaAktif.lng.toFixed(4)}
+                    {titikAgendaAktif.lat.toFixed(5)}, {titikAgendaAktif.lng.toFixed(5)}
                   </span>
                 </div>
-                <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="rounded-2xl border border-[#E2E8F0] overflow-hidden">
                   <PetaPilihLokasi
                     lat={titikAgendaAktif.lat}
                     lng={titikAgendaAktif.lng}
                     radiusM={radiusAgenda}
-                    tinggi="260px"
+                    tinggi="240px"
                     onPilih={(lat, lng) => setTitikAgenda({ lat, lng })}
                   />
                 </div>
               </div>
 
-              {/* Info Geofencing Sesuai Aturan PRD */}
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 leading-relaxed">
-                <span className="font-semibold text-slate-700">Catatan :</span> Peserta
-                yang berada di luar radius tidak dapat melakukan presensi
-              </div>
+              <p className="text-[11px] text-slate-muted leading-relaxed">
+                Presensi di luar radius tetap tercatat dan ditandai menunggu verifikasi AdSek.
+              </p>
 
-              {/* Tombol Aksi di Bawah Kartu Lokasi: Padat & Terintegrasi */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-end gap-2.5">
                 <Link
                   href={`/dashboard/proker/${proker.id}`}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:text-navy hover:bg-slate-50 text-center transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-[#CBD5E1] text-xs font-semibold text-slate-muted hover:text-navy hover:bg-surface text-center transition-colors cursor-pointer"
                 >
                   Batal
                 </Link>
@@ -702,10 +539,10 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                 <button
                   type="submit"
                   disabled={isReadonly || isPending}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-xs shadow-secondary/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {isEdit ? "Perbarui Kegiatan" : "Simpan Kegiatan"}
+                  {isEdit ? "Simpan Perubahan" : "Simpan Kegiatan"}
                 </button>
               </div>
             </div>

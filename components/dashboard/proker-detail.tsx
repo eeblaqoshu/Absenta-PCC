@@ -1,7 +1,7 @@
 // components/dashboard/proker-detail.tsx
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { hapusAgendaAction } from "@/lib/actions/agenda";
 import {
   ubahPanitiaAction,
@@ -37,8 +37,6 @@ import {
   isSekretarisUmum,
   isPeranLitbangPengawas,
   DETAK_MS,
-  langgananDetak,
-  cuplikanDetak,
   keTanggalWib,
   type AgendaItem,
   type PanitiaItem,
@@ -59,6 +57,7 @@ interface Props {
   availableStos: StoOption[];
   daftarLokasi: LokasiOption[];
   rekap: Record<number, RekapKehadiranSesi>;
+  initialNowIso: string;
 }
 
 export function ProkerDetail({
@@ -66,6 +65,7 @@ export function ProkerDetail({
   availableStos,
   daftarLokasi,
   rekap,
+  initialNowIso,
 }: Props) {
   const [tabAktif, setTabAktif] = useState<"panitia" | "agenda">("panitia");
   const [isPending, startTransition] = useTransition();
@@ -76,13 +76,16 @@ export function ProkerDetail({
 
   const isReadonly = proker.periode.status === StatusPeriode.selesai;
 
-  // Real-time time tick (no render loop)
+  // Snapshot waktu deterministik saat SSR & hidrasi awal, lalu diperbarui berkala di klien
   const [tabStatus, setTabStatus] = useState<StatusAgendaDihitung>("sedang_berlangsung");
-  const detak = useSyncExternalStore(langgananDetak, cuplikanDetak, () => 0);
-  const now = useMemo(
-    () => (detak > 0 ? new Date(detak * DETAK_MS) : null),
-    [detak],
-  );
+  const [now, setNow] = useState<Date>(() => new Date(initialNowIso));
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setNow(new Date());
+    }, DETAK_MS);
+    return () => clearInterval(t);
+  }, []);
 
   const agendaBerstatus = useMemo(() => {
     return proker.agenda.map((a) => {
@@ -252,8 +255,8 @@ export function ProkerDetail({
               <ArrowLeft className="w-3.5 h-3.5" />
               Daftar Proker
             </Link>
-            <span className="hidden sm:inline text-slate-muted text-xs">•</span>
-            <span className="sm:hidden text-xs font-medium text-slate-muted">
+            <span className="text-slate-muted text-xs">•</span>
+            <span className="text-xs font-semibold text-secondary">
               {proker.periode.nama}
             </span>
           </div>
