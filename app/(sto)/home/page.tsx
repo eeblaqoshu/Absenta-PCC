@@ -9,6 +9,7 @@ import {
   jamDariWaktuAgenda,
 } from "@/lib/waktu";
 import { ambilStatistikSto } from "@/lib/statistik-sto";
+import { formatLabelDivisi } from "@/lib/divisi";
 import { StoNavbar } from "@/components/sto/sto-navbar";
 import { StoAgendaTabs, type AgendaItem } from "@/components/sto/sto-agenda-tabs";
 import { StoLocationPanel, type TitikAgendaSto } from "@/components/sto-location-panel";
@@ -183,8 +184,11 @@ export default async function StoHomePage() {
                   <p className="text-[11px] text-slate-muted">
                     Divisi / Departemen
                   </p>
-                  <p className="font-semibold text-navy mt-0.5 truncate">
-                    {sto.divisi || "Pengurus Harian"}
+                  <p
+                    className="font-semibold text-navy mt-0.5 truncate"
+                    title={sto.divisi || "Pengurus Harian"}
+                  >
+                    {formatLabelDivisi(sto.divisi)}
                   </p>
                 </div>
                 <div>
