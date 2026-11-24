@@ -25,6 +25,7 @@ export default async function AdsekDashboardPage() {
     poin: number;
   }[] = [];
   let periodeNamaRekap: string | null = null;
+  let bulanLabelRekap: string | null = null;
 
   try {
     periodeAktif = await prisma.periode.findFirst({
@@ -52,6 +53,7 @@ export default async function AdsekDashboardPage() {
       const rekapPoin = await hitungLeaderboard(periodeAktif.id).catch(() => null);
       if (rekapPoin) {
         periodeNamaRekap = rekapPoin.periodeNama;
+        bulanLabelRekap = rekapPoin.bulanAktifLabel;
         topPoin = rekapPoin.baris.slice(0, 3);
       }
     }
@@ -230,7 +232,9 @@ export default async function AdsekDashboardPage() {
             Top 3 Poin Kehadiran
           </h3>
           <p className="mt-1 text-xs text-slate-muted">
-            {periodeNamaRekap ?? "Belum ada periode aktif"}
+            {periodeNamaRekap
+              ? `${periodeNamaRekap}${bulanLabelRekap ? ` • ${bulanLabelRekap}` : ""}`
+              : "Belum ada periode aktif"}
           </p>
         </div>
 

@@ -95,6 +95,7 @@ export async function ambilStatistikSto(
         select: {
           id: true,
           judul: true,
+          jenis: true,
           prokerId: true,
           targetPeserta: true,
           lokasiNama: true,
@@ -189,6 +190,7 @@ export async function ambilStatistikSto(
     const poinSesi = hitungPoin({
       status: presensiSah?.status ?? null,
       adaIzinDisetujui,
+      jenisAgenda: s.agenda.jenis,
     });
 
     totalPoin += poinSesi;
