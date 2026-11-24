@@ -73,7 +73,7 @@ export function StoAgendaTabs({
       />
 
       {/* Tab Contents */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence initial={false} mode="wait">
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 8 }}

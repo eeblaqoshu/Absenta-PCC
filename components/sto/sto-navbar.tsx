@@ -103,6 +103,7 @@ export function StoNavbar({ sto, periodeNama }: StoNavbarProps) {
                       {/* Active Bottom Indicator */}
                       {item.isActive ? (
                         <motion.div
+                          initial={false}
                           layoutId="sto-desktop-navbar-indicator"
                           className="absolute bottom-0 left-2.5 right-2.5 h-[2.5px] bg-secondary rounded-t-full shadow-xs shadow-secondary/40"
                           transition={{
@@ -161,6 +162,7 @@ export function StoNavbar({ sto, periodeNama }: StoNavbarProps) {
                 <span>{item.label}</span>
                 {item.isActive && (
                   <motion.div
+                    initial={false}
                     layoutId="sto-mobile-navbar-indicator"
                     className="absolute bottom-0 left-0 right-0 h-[2px] bg-secondary rounded-full"
                     transition={{

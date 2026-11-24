@@ -3,7 +3,7 @@
 // Semua keputusan presensi tetap di server; komponen ini hanya mengirim payload QR + koordinat.
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import Link from "next/link";
@@ -77,7 +77,13 @@ export function ScanPresensi({ daftarSesi }: Props) {
   const sedangKirim = useRef(false);
   const payloadTerakhir = useRef<string>("");
 
-  const dukungGps = typeof navigator === "undefined" || "geolocation" in navigator;
+  // Node.js 21+ menyediakan global `navigator` tanpa `geolocation`; pakai server snapshot `true`
+  // agar SSR & hidrasi klien selalu identik sebelum membaca kemampuan browser sebenarnya.
+  const dukungGps = useSyncExternalStore(
+    () => () => {},
+    () => typeof navigator !== "undefined" && "geolocation" in navigator,
+    () => true,
+  );
 
   const jarak =
     posisi && sesiDipilih
