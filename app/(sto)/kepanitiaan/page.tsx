@@ -81,13 +81,13 @@ export default async function StoKepanitiaanPage() {
         <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-muted">
-              Susunan Organisasi & Proker
+              Susunan Kepanitiaan Proker/Agenda
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
               Kepanitiaan Saya
             </h1>
             <p className="text-xs sm:text-sm text-slate-muted max-w-2xl leading-relaxed">
-              Daftar program kerja (proker) dan peran divisi kepanitiaan yang Anda emban pada
+              Daftar proker/agenda dan peran divisi kepanitiaan yang Anda emban pada
               periode kepengurusan aktif ini.
             </p>
           </div>

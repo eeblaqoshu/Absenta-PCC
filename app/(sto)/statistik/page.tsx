@@ -167,25 +167,25 @@ export default async function StoStatistikPage() {
                 return (
                   <div
                     key={item.sesiId}
-                    className="p-5 sm:p-6 rounded-2xl border border-[#E2E8F0] bg-white hover:border-secondary/40 hover:shadow-md transition-all space-y-3.5"
+                    className="p-4 sm:p-6 rounded-2xl border border-[#E2E8F0] bg-white hover:border-secondary/40 hover:shadow-md transition-all space-y-3 sm:space-y-3.5"
                   >
                     {/* Baris Atas: Proker & Tanggal/Jam + Status & Poin Badge */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-[#F1F5F9]">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-secondary bg-secondary/10 px-2.5 py-1 rounded-lg">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-secondary bg-secondary/10 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg">
                           {item.namaProker}
                         </span>
                         <span className="text-xs text-[#CBD5E1] hidden sm:inline">
                           •
                         </span>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-muted">
+                        <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-muted">
                           <Calendar className="w-3.5 h-3.5 text-secondary shrink-0" />
                           <span>{item.tanggalFormatted}</span>
                         </div>
                         <span className="text-xs text-[#CBD5E1] hidden sm:inline">
                           •
                         </span>
-                        <div className="flex items-center gap-1.5 text-xs text-slate-muted">
+                        <div className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-muted">
                           <Clock className="w-3.5 h-3.5 text-slate-muted shrink-0" />
                           <span>{item.jamLabel}</span>
                         </div>
@@ -194,25 +194,25 @@ export default async function StoStatistikPage() {
                       {/* Status Badge & Poin */}
                       <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                         {isTepatWaktu && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             {item.statusLabel}
                           </span>
                         )}
                         {isTerlambat && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                             <Clock className="w-3.5 h-3.5" />
                             {item.statusLabel}
                           </span>
                         )}
                         {isIzin && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                             <FileText className="w-3.5 h-3.5" />
                             {item.statusLabel}
                           </span>
                         )}
                         {isAlpa && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                             <XCircle className="w-3.5 h-3.5" />
                             {item.statusLabel}
                           </span>
@@ -222,11 +222,11 @@ export default async function StoStatistikPage() {
 
                     {/* Baris Tengah: Judul Agenda & Lokasi */}
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-navy leading-snug">
+                      <h3 className="text-sm sm:text-lg font-bold text-navy leading-snug">
                         {item.judulAgenda}
                       </h3>
                       {item.lokasiNama && (
-                        <p className="text-xs text-slate-muted flex items-center gap-1.5 mt-1">
+                        <p className="text-[11px] sm:text-xs text-slate-muted flex items-center gap-1.5 mt-1">
                           <MapPin className="w-3.5 h-3.5 text-secondary shrink-0" />
                           <span className="font-medium text-navy/80">
                             tempat : {item.lokasiNama}
@@ -236,22 +236,24 @@ export default async function StoStatistikPage() {
                     </div>
 
                     {/* Baris Bawah: Detail Presensi (Waktu Scan / Keterlambatan / Info Izin) */}
-                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
                       {item.waktuScanFormatted ? (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-[#E2E8F0] text-navy font-base">
-                          <QrCode className="w-3.5 h-3.5 text-secondary shrink-0" />
-                          <span>
-                            Dipindai pada pukul{" "}
-                            <strong>{item.waktuScanFormatted}</strong>
-                          </span>
+                        <div className="inline-flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-surface border border-[#E2E8F0] text-navy text-[11px] sm:text-xs">
+                          <div className="inline-flex items-center gap-1.5 shrink-0">
+                            <QrCode className="w-3.5 h-3.5 text-secondary shrink-0" />
+                            <span>
+                              Dipindai pada pukul{" "}
+                              <strong className="font-semibold text-navy">{item.waktuScanFormatted}</strong>
+                            </span>
+                          </div>
                           {item.menitTerlambat > 0 && (
-                            <span className="inline-flex items-center ml-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[11px] font-medium">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] sm:text-[11px] font-medium whitespace-nowrap">
                               Terlambat {item.menitTerlambat} menit
                             </span>
                           )}
                         </div>
                       ) : isIzin ? (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-800 font-medium">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-blue-50/80 border border-blue-200 text-blue-800 text-[11px] sm:text-xs font-medium">
                           <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                           <span>
                             {item.izinInfo?.alasan
@@ -260,7 +262,7 @@ export default async function StoStatistikPage() {
                           </span>
                         </div>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50/70 border border-rose-200 text-rose-700 text-xs font-medium">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-rose-50/70 border border-rose-200 text-rose-700 text-[11px] sm:text-xs font-medium">
                           <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                           <span>
                             Tidak hadir dan tidak melakukan presensi (Alpa)

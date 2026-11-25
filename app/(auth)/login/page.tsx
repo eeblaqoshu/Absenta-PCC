@@ -69,6 +69,14 @@ export default function LoginPage() {
       if (err instanceof Error) {
         if (err.message.includes("auth/popup-closed-by-user")) {
           setErrorMsg("Jendela login Google ditutup sebelum selesai.");
+        } else if (err.message.includes("auth/unauthorized-domain")) {
+          setErrorMsg(
+            "Domain web ini (absenta.ukmpcc.org) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu klik 'Add domain' dan tambahkan 'absenta.ukmpcc.org'."
+          );
+        } else if (err.message.includes("auth/popup-blocked")) {
+          setErrorMsg("Pop-up login diblokir oleh browser. Harap izinkan pop-up pada peramban Anda.");
+        } else if (err.message.includes("auth/cancelled-popup-request")) {
+          setErrorMsg("Permintaan login dibatalkan karena ada jendela masuk lain yang aktif.");
         } else {
           setErrorMsg(err.message);
         }
@@ -98,6 +106,10 @@ export default function LoginPage() {
           err.message.includes("auth/user-not-found")
         ) {
           setErrorMsg("Alamat email atau kata sandi tidak valid.");
+        } else if (err.message.includes("auth/unauthorized-domain")) {
+          setErrorMsg(
+            "Domain web ini (absenta.ukmpcc.org) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu tambahkan 'absenta.ukmpcc.org'."
+          );
         } else if (err.message.includes("auth/operation-not-allowed")) {
           setErrorMsg(
             "Provider 'Email/Password' belum diaktifkan di Firebase Console. Buka Firebase Console > Authentication > Sign-in method, lalu aktifkan 'Email/Password'.",

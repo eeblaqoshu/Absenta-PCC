@@ -254,11 +254,16 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Internal login error:", error);
+    const detailPesan =
+      error instanceof Error ? error.message : "Kesalahan database atau server";
     return NextResponse.json(
       {
         error: {
           kode: "INTERNAL_SERVER_ERROR",
-          pesan: "Terjadi kesalahan internal saat memproses autentikasi.",
+          pesan:
+            process.env.NODE_ENV !== "production"
+              ? `Terjadi kesalahan internal: ${detailPesan}`
+              : "Terjadi kesalahan internal saat memproses autentikasi.",
         },
       },
       { status: 500 }
