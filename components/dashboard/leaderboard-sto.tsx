@@ -27,7 +27,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
     <div className="space-y-6">
       {/* Podium 3 teratas */}
       {top3.length > 0 && (
-        <div className="rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+        <div className="rounded-2xl sm:rounded-3xl border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-sm">
           <h3 className="inline-flex items-center gap-2 text-sm font-bold text-primary">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-highlight/15">
               <Trophy className="h-4 w-4 text-highlight" />
@@ -67,7 +67,7 @@ export function LeaderboardSto({ rekap }: { rekap: RekapPoin }) {
       )}
 
       {/* Tabel lengkap */}
-      <div className="space-y-4 rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
+      <div className="space-y-4 rounded-2xl sm:rounded-3xl border border-[#E2E8F0] bg-white p-4 sm:p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-bold text-primary">

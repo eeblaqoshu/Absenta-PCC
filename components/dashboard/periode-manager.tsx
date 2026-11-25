@@ -143,16 +143,12 @@ export function PeriodeManager({
       {/* Header Banner Card */}
       <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-slate-muted">
-              Master Data Periode Organisasi
-            </span>
-          </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2">
             Kelola Periode Kepengurusan
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Hanya 1 periode aktif pada satu waktu. Periode selesai bersifat read-only untuk menjaga riwayat data.
+            Hanya 1 periode aktif pada satu waktu. Periode selesai bersifat
+            read-only untuk menjaga riwayat data.
           </p>
         </div>
 
@@ -282,7 +278,10 @@ export function PeriodeManager({
                 </div>
 
                 {/* Date range */}
-                <p suppressHydrationWarning className="text-xs text-slate-muted mb-4">
+                <p
+                  suppressHydrationWarning
+                  className="text-xs text-slate-muted mb-4"
+                >
                   {new Date(item.tglMulai).toLocaleDateString("id-ID", {
                     timeZone: "Asia/Jakarta",
                     day: "numeric",

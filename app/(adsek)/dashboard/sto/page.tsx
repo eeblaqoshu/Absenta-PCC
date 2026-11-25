@@ -8,7 +8,7 @@ import { AlertCircle, Calendar } from "lucide-react";
 
 export default async function StoPage() {
   const adsek = await requireAdsek();
-  const isAdmin = adsek.role === "admin";
+  const canManage = adsek.role === "admin" || adsek.role === "sekretaris_inti";
 
   // Ambil periode aktif
   const periodeAktif = await prisma.periode.findFirst({
@@ -29,7 +29,7 @@ export default async function StoPage() {
             Data STO wajib terikat ke periode kepengurusan aktif. Silakan buka periode baru terlebih dahulu.
           </p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <Link
             href="/dashboard/periode"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all"
@@ -53,7 +53,7 @@ export default async function StoPage() {
       <StoManager
         initialSto={daftarSto}
         namaPeriode={periodeAktif.nama}
-        isAdmin={isAdmin}
+        isAdmin={canManage}
       />
     </div>
   );

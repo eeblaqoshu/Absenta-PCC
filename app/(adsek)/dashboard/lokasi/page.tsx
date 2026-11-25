@@ -6,14 +6,14 @@ import { LokasiManager } from "@/components/dashboard/lokasi-manager";
 
 export default async function LokasiPage() {
   const adsek = await requireAdsek();
-  const isAdmin = adsek.role === "admin";
+  const canManage = adsek.role === "admin" || adsek.role === "sekretaris_inti";
 
   const daftar = await prisma.lokasi.findMany({ orderBy: { nama: "asc" } });
 
   return (
     <div className="py-2">
       <LokasiManager
-        isAdmin={isAdmin}
+        isAdmin={canManage}
         initialLokasi={daftar.map((l) => ({
           id: l.id,
           nama: l.nama,
