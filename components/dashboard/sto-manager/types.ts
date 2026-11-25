@@ -8,4 +8,5 @@ export interface StoItem {
   jabatan: string | null;
   divisi: string | null;
   foto: string | null;
+  ttd: string | null;
 }

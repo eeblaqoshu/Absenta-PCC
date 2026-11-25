@@ -69,6 +69,7 @@ export function AgendaStatusTabs<T extends string>({
 
               {aktif && (
                 <motion.div
+                  initial={false}
                   layoutId={layoutId}
                   transition={{ type: "spring", stiffness: 450, damping: 35 }}
                   className="absolute inset-0 z-0 rounded-full border border-[#CBD5E1] bg-white shadow-[0_2px_10px_rgba(11,42,91,0.12)]"

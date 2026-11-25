@@ -38,8 +38,10 @@ interface PeriodeItem {
 
 export function PeriodeManager({
   initialPeriode,
+  isAdmin = true,
 }: {
   initialPeriode: PeriodeItem[];
+  isAdmin?: boolean;
 }) {
   const [modalBuka, setModalBuka] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -154,16 +156,23 @@ export function PeriodeManager({
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setPesan(null);
-            setModalBuka(true);
-          }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Buka Periode Baru
-        </button>
+        {isAdmin ? (
+          <button
+            onClick={() => {
+              setPesan(null);
+              setModalBuka(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            Buka Periode Baru
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-[#E2E8F0] text-slate-muted text-xs font-semibold shrink-0 self-start sm:self-auto">
+            <Lock className="w-3.5 h-3.5 text-secondary" />
+            Mode Baca (Khusus Admin)
+          </span>
+        )}
       </div>
 
       {/* Alert Notification */}
@@ -233,45 +242,47 @@ export function PeriodeManager({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5">
-                    {isAktif ? (
-                      <button
-                        onClick={() => handleTutupPeriode(item.id, item.nama)}
-                        disabled={isPending}
-                        title="Tutup Periode (Ubah jadi Read-Only)"
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-highlight/15 hover:bg-highlight/25 text-[#B45309] border border-highlight/30 flex items-center gap-1.5 transition-colors"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        Tutup Periode
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          handleAktifkanPeriode(item.id, item.nama)
-                        }
-                        disabled={isPending}
-                        title="Jadikan sebagai Periode Aktif"
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-surface text-navy border border-[#CBD5E1] transition-colors"
-                      >
-                        Aktifkan
-                      </button>
-                    )}
+                  {isAdmin && (
+                    <div className="flex items-center gap-1.5">
+                      {isAktif ? (
+                        <button
+                          onClick={() => handleTutupPeriode(item.id, item.nama)}
+                          disabled={isPending}
+                          title="Tutup Periode (Ubah jadi Read-Only)"
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-highlight/15 hover:bg-highlight/25 text-[#B45309] border border-highlight/30 flex items-center gap-1.5 transition-colors"
+                        >
+                          <Lock className="w-3.5 h-3.5" />
+                          Tutup Periode
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() =>
+                            handleAktifkanPeriode(item.id, item.nama)
+                          }
+                          disabled={isPending}
+                          title="Jadikan sebagai Periode Aktif"
+                          className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-surface text-navy border border-[#CBD5E1] transition-colors"
+                        >
+                          Aktifkan
+                        </button>
+                      )}
 
-                    {item._count.sto === 0 && item._count.proker === 0 && (
-                      <button
-                        onClick={() => handleHapusPeriode(item.id, item.nama)}
-                        disabled={isPending}
-                        title="Hapus Periode Kosong"
-                        className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                      {item._count.sto === 0 && item._count.proker === 0 && (
+                        <button
+                          onClick={() => handleHapusPeriode(item.id, item.nama)}
+                          disabled={isPending}
+                          title="Hapus Periode Kosong"
+                          className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Date range */}
-                <p className="text-xs text-slate-muted mb-4">
+                <p suppressHydrationWarning className="text-xs text-slate-muted mb-4">
                   {new Date(item.tglMulai).toLocaleDateString("id-ID", {
                     timeZone: "Asia/Jakarta",
                     day: "numeric",

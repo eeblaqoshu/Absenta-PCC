@@ -147,6 +147,7 @@ model Sto {
   jabatan     String?
   divisi      String?
   foto        String?
+  ttd         String? @db.MediumText
 
   periode     Periode       @relation(fields: [periodeId], references: [id])
   kepanitiaan Kepanitiaan[]

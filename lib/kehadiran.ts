@@ -1,11 +1,13 @@
 // lib/kehadiran.ts
 // Rekap kehadiran peserta sah sebuah SESI presensi: siapa sudah absen, terlambat
 // berapa menit, izin, atau alpa. Izin melekat pada agenda dan berlaku untuk
-// seluruh sesi pada agenda tersebut; poin tetap dihitung per sesi.
+// seluruh sesi pada agenda tersebut; poin tetap dihitung per sesi (khusus Hari H).
 import { prisma } from "./prisma";
 import { ambilPesertaAgenda, type PesertaAgenda } from "./peserta";
 import { hitungPoin } from "./poin";
+import { jamDariWaktuAgenda } from "./waktu";
 import {
+  JenisAgenda,
   JenisIzin,
   StatusIzin,
   StatusPresensi,
@@ -24,6 +26,7 @@ export type StatusKehadiran =
 export interface BarisKehadiran extends PesertaAgenda {
   presensiId: number | null;
   status: StatusPresensi | null;
+  waktuScan: string | null;
   menitTerlambat: number;
   jarakM: number | null;
   diLuarRadius: boolean;
@@ -31,7 +34,7 @@ export interface BarisKehadiran extends PesertaAgenda {
   manual: boolean;
   izin: { id: number; jenis: JenisIzin; status: StatusIzin; alasan: string } | null;
   statusKehadiran: StatusKehadiran;
-  /** Poin hanya bermakna bila sesi sudah ditutup. */
+  /** Poin hanya bermakna bila sesi sudah ditutup & agenda jenis Hari H. */
   poin: number;
 }
 
@@ -50,9 +53,15 @@ export interface RekapKehadiranSesi {
   sesiId: number;
   agendaId: number;
   judulAgenda: string;
+  jenisAgenda: JenisAgenda;
+  tglPelaksanaan: string;
+  tglSelesai: string | null;
+  waktuPelaksanaan: string;
+  lokasiNama: string | null;
   targetPeserta: TargetPeserta;
   namaProker: string;
   namaProkerId: number;
+  periodeNama: string;
   bukaAt: string;
   tutupAt: string;
   /** Radius titik presensi agenda (null bila agenda belum punya titik). */
@@ -61,6 +70,11 @@ export interface RekapKehadiranSesi {
   sesiSudahDitutup: boolean;
   baris: BarisKehadiran[];
   ringkasan: RingkasanKehadiran;
+}
+
+export interface OpsiRekapKehadiran {
+  /** Sertakan tanda tangan digital STO pada setiap baris peserta. */
+  sertakanTtd?: boolean;
 }
 
 /** Hitung ringkasan dari daftar baris kehadiran. */
@@ -83,7 +97,8 @@ export function ringkasKehadiran(baris: BarisKehadiran[]): RingkasanKehadiran {
  */
 export async function rekapKehadiranSesi(
   sesiId: number,
-  now: Date = new Date()
+  now: Date = new Date(),
+  opsi?: OpsiRekapKehadiran
 ): Promise<RekapKehadiranSesi | null> {
   const sesi = await prisma.sesiPresensi.findUnique({
     where: { id: sesiId },
@@ -96,22 +111,36 @@ export async function rekapKehadiranSesi(
         select: {
           id: true,
           judul: true,
+          jenis: true,
+          tglPelaksanaan: true,
+          tglSelesai: true,
+          waktuPelaksanaan: true,
+          lokasiNama: true,
           targetPeserta: true,
           radiusM: true,
-          proker: { select: { id: true, nama: true } },
+          proker: {
+            select: {
+              id: true,
+              nama: true,
+              periode: { select: { nama: true } },
+            },
+          },
         },
       },
     },
   });
   if (!sesi) return null;
 
-  const peserta = await ambilPesertaAgenda(sesi.agendaId);
+  const peserta = await ambilPesertaAgenda(sesi.agendaId, {
+    sertakanTtd: opsi?.sertakanTtd,
+  });
   const [presensi, izin] = await Promise.all([
     prisma.presensi.findMany({
       where: { sesiId },
       select: {
         id: true,
         stoId: true,
+        waktuScan: true,
         status: true,
         menitTerlambat: true,
         jarakM: true,
@@ -153,6 +182,7 @@ export async function rekapKehadiranSesi(
       ? hitungPoin({
           status: presensiSah?.status ?? null,
           adaIzinDisetujui: iz?.status === StatusIzin.disetujui,
+          jenisAgenda: sesi.agenda.jenis,
         })
       : 0;
 
@@ -160,6 +190,7 @@ export async function rekapKehadiranSesi(
       ...p,
       presensiId: pr?.id ?? null,
       status: pr?.status ?? null,
+      waktuScan: pr ? pr.waktuScan.toISOString() : null,
       menitTerlambat: pr?.menitTerlambat ?? 0,
       jarakM: pr?.jarakM ?? null,
       diLuarRadius: pr?.diLuarRadius ?? false,
@@ -177,9 +208,17 @@ export async function rekapKehadiranSesi(
     sesiId: sesi.id,
     agendaId: sesi.agendaId,
     judulAgenda: sesi.agenda.judul,
+    jenisAgenda: sesi.agenda.jenis,
+    tglPelaksanaan: sesi.agenda.tglPelaksanaan.toISOString(),
+    tglSelesai: sesi.agenda.tglSelesai
+      ? sesi.agenda.tglSelesai.toISOString()
+      : null,
+    waktuPelaksanaan: jamDariWaktuAgenda(sesi.agenda.waktuPelaksanaan),
+    lokasiNama: sesi.agenda.lokasiNama ?? null,
     targetPeserta: sesi.agenda.targetPeserta,
     namaProker: sesi.agenda.proker.nama,
     namaProkerId: sesi.agenda.proker.id,
+    periodeNama: sesi.agenda.proker.periode.nama,
     bukaAt: sesi.bukaAt.toISOString(),
     tutupAt: sesi.tutupAt.toISOString(),
     radiusM: sesi.agenda.radiusM ?? null,
@@ -197,7 +236,7 @@ export async function rekapKehadiranBanyakSesi(
   const hasil = new Map<number, RekapKehadiranSesi>();
   await Promise.all(
     sesiIds.map(async (id) => {
-      const rekap = await rekapKehadiranSesi(id, now);
+      const rekap = await rekapKehadiranSesi(id, now, { sertakanTtd: false });
       if (rekap) hasil.set(id, rekap);
     })
   );

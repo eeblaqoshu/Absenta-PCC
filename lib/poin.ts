@@ -1,9 +1,12 @@
 // lib/poin.ts
 // Aturan poin kehadiran STO. Semua angka disimpan di satu tempat supaya mudah diubah.
-import { StatusPresensi } from "@prisma/client";
+import { JenisAgenda, StatusPresensi } from "@prisma/client";
 
 /**
  * Bobot poin (ketentuan pemilik sistem):
+ * - Poin kehadiran HANYA dihitung pada kegiatan jenis `hari_h` (acara Hari H pelaksanaan).
+ * - Rapat PJ (`rapat_pj`), Rapat Besar (`rapat_besar`), dan Rapat Koordinasi (`rapat_koordinasi`)
+ *   tidak menambah maupun mengurangi poin (0 poin).
  * - hadir tepat waktu (scan ≤ BATAS_TERLAMBAT_MENIT sejak buka) ............ +2
  * - hadir namun terlambat (scan presensi terlambat) ....................... +1
  * - tidak hadir / alpa, ada izin disetujui ................................ 0
@@ -32,6 +35,16 @@ export interface KonteksPoin {
   status: StatusPresensi | null;
   /** true bila ada izin yang sudah disetujui adsek untuk agenda sesi ini. */
   adaIzinDisetujui: boolean;
+  /** Jenis agenda; poin hanya dihitung bila bernilai `hari_h` (atau tidak disertakan). */
+  jenisAgenda?: JenisAgenda | string | null;
+}
+
+/** Mengecek apakah sebuah jenis agenda dihitung poinnya (hanya acara Hari H). */
+export function adalahAgendaBerpoin(
+  jenisAgenda?: JenisAgenda | string | null
+): boolean {
+  if (!jenisAgenda) return true;
+  return jenisAgenda === JenisAgenda.hari_h;
 }
 
 /** Menentukan kategori poin dari satu sesi presensi. */
@@ -66,8 +79,14 @@ export function poinDariKategori(kategori: KategoriPoin): number {
   }
 }
 
-/** Poin untuk satu sesi presensi (satu STO). */
+/**
+ * Poin untuk satu sesi presensi (satu STO).
+ * Bila jenisAgenda adalah rapat_pj, rapat_besar, atau rapat_koordinasi, poin = 0.
+ */
 export function hitungPoin(konteks: KonteksPoin): number {
+  if (!adalahAgendaBerpoin(konteks.jenisAgenda)) {
+    return 0;
+  }
   return poinDariKategori(tentukanKategori(konteks));
 }
 

@@ -2,30 +2,8 @@
 // Ekspor CSV daftar kehadiran satu sesi presensi (hanya adsek).
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { rekapKehadiranSesi, type StatusKehadiran } from "@/lib/kehadiran";
-
-const LABEL_STATUS_KEHADIRAN: Record<StatusKehadiran, string> = {
-  hadir: "Hadir",
-  terlambat: "Terlambat",
-  izin_disetujui: "Izin",
-  izin_menunggu: "Izin",
-  alpa: "Alpa",
-  ditolak: "Ditolak",
-};
-
-/** 
- * Bungkus nilai agar aman di dalam format CSV (RFC 4180)
- * dan netralkan karakter pemicu CSV/Formula Injection (CWE-1236).
- */
-function sel(nilai: string | number | null | undefined): string {
-  let teks = nilai === null || nilai === undefined ? "" : String(nilai);
-  // Netralkan karakter pemicu formula Excel/Spreadsheet (=, +, -, @, \t, \r)
-  if (/^[=+\-@\t\r]/.test(teks)) {
-    teks = "'" + teks;
-  }
-  return `"${teks.replace(/"/g, '""')}"`;
-}
+import { rekapKehadiranSesi } from "@/lib/kehadiran";
+import { susunCsvKehadiran } from "@/lib/csv-presensi";
 
 /** Membersihkan string agar aman sebagai nama file */
 function sanitasiNamaFile(teks: string): string {
@@ -40,7 +18,12 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session || session.type !== "adsek" || !session.adsek) {
     return NextResponse.json(
-      { error: { kode: "AKSES_DITOLAK", pesan: "Hanya adsek yang dapat mengekspor data kehadiran" } },
+      {
+        error: {
+          kode: "AKSES_DITOLAK",
+          pesan: "Hanya adsek yang dapat mengekspor data kehadiran",
+        },
+      },
       { status: 403 }
     );
   }
@@ -53,18 +36,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const sesi = await prisma.sesiPresensi.findUnique({
-    where: { id: sesiId },
-    select: { agendaId: true },
+  const rekap = await rekapKehadiranSesi(sesiId, new Date(), {
+    sertakanTtd: true,
   });
-  if (!sesi) {
-    return NextResponse.json(
-      { error: { kode: "TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } },
-      { status: 404 }
-    );
-  }
-
-  const rekap = await rekapKehadiranSesi(sesiId);
   if (!rekap) {
     return NextResponse.json(
       { error: { kode: "TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } },
@@ -72,48 +46,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const baris: string[] = [
-    [
-      "Nama",
-      "Divisi / Departemen",
-      "Status Kehadiran",
-      "Menit Terlambat",
-      "Jarak (m)",
-      "Diinput Manual",
-    ]
-      .map(sel)
-      .join(","),
-  ];
-
-  for (const b of rekap.baris) {
-    // Format menit terlambat
-    let menitTerlambatStr = "-";
-    if (b.statusKehadiran === "terlambat") {
-      menitTerlambatStr = String(b.menitTerlambat);
-    } else if (b.statusKehadiran === "hadir") {
-      menitTerlambatStr = "0";
-    }
-
-    // Format jarak (m)
-    const jarakStr =
-      b.jarakM !== null && b.jarakM !== undefined ? String(b.jarakM) : "-";
-
-    baris.push(
-      [
-        b.nama,
-        b.divisi || "-",
-        LABEL_STATUS_KEHADIRAN[b.statusKehadiran] ?? b.statusKehadiran,
-        menitTerlambatStr,
-        jarakStr,
-        b.manual ? "Ya" : "Tidak",
-      ]
-        .map(sel)
-        .join(",")
-    );
-  }
-
-  // BOM (\uFEFF) di awal string agar Microsoft Excel membaca format UTF-8 dengan benar
-  const csv = "\uFEFF" + baris.join("\r\n");
+  const csv = susunCsvKehadiran(rekap);
 
   const prokerSlug = sanitasiNamaFile(rekap.namaProker);
   const agendaSlug = sanitasiNamaFile(rekap.judulAgenda);

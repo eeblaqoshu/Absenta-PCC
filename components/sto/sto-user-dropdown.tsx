@@ -5,29 +5,11 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, LogOut, ChevronDown, Loader2 } from "lucide-react";
+import { formatLabelDivisi } from "@/lib/divisi";
 import type { StoNavbarUser } from "./sto-navbar";
 
 interface StoUserDropdownProps {
   sto: StoNavbarUser;
-}
-
-function formatLabelDivisi(divisi?: string | null): string {
-  if (!divisi) return "Pengurus STO";
-  const trim = divisi.trim();
-  // Jika sudah memiliki prefix Div. atau Dep.
-  if (/^(Div\.|Dep\.)/i.test(trim)) {
-    return trim;
-  }
-  if (/^Divisi\s+/i.test(trim)) {
-    return trim.replace(/^Divisi\s+/i, "Div. ");
-  }
-  if (/^Departemen\s+/i.test(trim)) {
-    return trim.replace(/^Departemen\s+/i, "Dep. ");
-  }
-  if (/^Pengurus\s+Harian$/i.test(trim)) {
-    return "Pengurus Harian";
-  }
-  return `Div. ${trim}`;
 }
 
 export function StoUserDropdown({ sto }: StoUserDropdownProps) {
@@ -82,6 +64,8 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button - Sesuai style Adsek */}
       <button
+        type="button"
+        suppressHydrationWarning
         onClick={() => setDropdownOpen((prev) => !prev)}
         className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-2 rounded-xl border border-transparent hover:border-[#E2E8F0] hover:bg-surface transition-all group cursor-pointer"
         aria-expanded={dropdownOpen}
@@ -119,7 +103,7 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -6 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] p-1.5 z-40 overflow-hidden"
+            className="absolute right-0 mt-2 w-68 bg-white rounded-2xl shadow-xl border border-[#E2E8F0] p-1.5 z-40 overflow-hidden"
           >
             {/* Header / Info User */}
             <div className="px-3 py-2.5 bg-surface/70 rounded-xl mb-1 border border-[#E2E8F0]/60 space-y-2">
@@ -138,10 +122,10 @@ export function StoUserDropdown({ sto }: StoUserDropdownProps) {
                   Div/Dep
                 </span>
                 <span
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-info/10 text-slated-muted border border-slated-muted/20 uppercase tracking-wider truncate max-w-[130px]"
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-secondary/10 text-primary border border-secondary/20 uppercase tracking-wider truncate max-w-[175px]"
                   title={sto.divisi || "Pengurus STO"}
                 >
-                  {sto.divisi || "Pengurus STO"}
+                  {formatLabelDivisi(sto.divisi)}
                 </span>
               </div>
             </div>

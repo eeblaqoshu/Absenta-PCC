@@ -90,12 +90,14 @@ export default async function ProkerDetailPage({ params }: PageProps) {
   });
 
   // Rekap kehadiran tiap SESI (satu agenda bisa punya beberapa sesi) untuk kartu agenda.
+  const sekarang = new Date();
   const semuaSesiId = proker.agenda.flatMap((a) => a.sesi.map((s) => s.id));
-  const rekapMap = await rekapKehadiranBanyakSesi(semuaSesiId);
+  const rekapMap = await rekapKehadiranBanyakSesi(semuaSesiId, sekarang);
 
   return (
     <div className="py-2">
       <ProkerDetail
+        initialNowIso={sekarang.toISOString()}
         proker={{
           ...proker,
           agenda: proker.agenda.map((a) => ({
@@ -105,7 +107,8 @@ export default async function ProkerDetailPage({ params }: PageProps) {
             statusDihitung: hitungStatusAgenda(
               a.tglPelaksanaan,
               a.waktuPelaksanaan,
-              a.tglSelesai
+              a.tglSelesai,
+              sekarang
             ),
           })),
         }}

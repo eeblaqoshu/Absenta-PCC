@@ -119,7 +119,7 @@ export function DashboardHeader({
   return (
     <>
       {/* Top Navbar Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(11,42,91,0.04)]">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#E2E8F0] shadow-[0_1px_3px_rgba(11,42,91,0.04)] print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative flex items-center justify-between h-16">
             {/* Left: Brand Logo & Name */}
@@ -166,6 +166,7 @@ export function DashboardHeader({
               {/* Mobile Only: Burger Icon Button (Di Kanan Navbar) */}
               <button
                 type="button"
+                suppressHydrationWarning
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden p-2 rounded-xl text-navy hover:bg-surface border border-transparent hover:border-[#E2E8F0] focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
                 aria-label="Buka navigasi sidebar"
@@ -246,7 +247,7 @@ export function DashboardHeader({
                     <span className="text-[10px] font-semibold text-slate-muted">
                       Jabatan :
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-info/10 text-info">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-secondary/10 text-secondary border border-secondary/20">
                       {roleLabel}
                     </span>
                   </div>

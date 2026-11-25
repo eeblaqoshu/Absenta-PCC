@@ -7,6 +7,19 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { StatusPeriode } from "@prisma/client";
 
+const POLA_DATA_URL_GAMBAR =
+  /^data:image\/(png|jpeg|jpg|webp|svg\+xml)(;charset=utf-8|;utf8)?(;base64)?,.+/i;
+
+const TtdSchema = z
+  .string()
+  .max(700_000, "Ukuran gambar tanda tangan terlalu besar (maks. ±500 KB)")
+  .refine(
+    (val) => val === "__HAPUS__" || POLA_DATA_URL_GAMBAR.test(val),
+    "Format tanda tangan harus berupa gambar PNG, JPG, WEBP, atau SVG"
+  )
+  .optional()
+  .nullable();
+
 const StoInputSchema = z.object({
   nama: z.string().min(2, "Nama minimal 2 karakter"),
   nim: z.string().min(3, "NIM minimal 3 karakter"),
@@ -14,6 +27,7 @@ const StoInputSchema = z.object({
   jabatan: z.string().optional().nullable(),
   divisi: z.string().optional().nullable(),
   foto: z.string().optional().nullable(),
+  ttd: TtdSchema,
 });
 
 export async function tambahStoAction(prevState: unknown, formData: FormData) {
@@ -33,6 +47,7 @@ export async function tambahStoAction(prevState: unknown, formData: FormData) {
       };
     }
 
+    const rawTtd = (formData.get("ttd") as string) || null;
     const rawData = {
       nama: formData.get("nama") as string,
       nim: formData.get("nim") as string,
@@ -40,6 +55,7 @@ export async function tambahStoAction(prevState: unknown, formData: FormData) {
       jabatan: (formData.get("jabatan") as string) || null,
       divisi: (formData.get("divisi") as string) || null,
       foto: (formData.get("foto") as string) || null,
+      ttd: rawTtd,
     };
 
     const parsed = StoInputSchema.safeParse(rawData);
@@ -52,7 +68,7 @@ export async function tambahStoAction(prevState: unknown, formData: FormData) {
       };
     }
 
-    const { nama, nim, emailGoogle, jabatan, divisi, foto } = parsed.data;
+    const { nama, nim, emailGoogle, jabatan, divisi, foto, ttd } = parsed.data;
 
     // Cek duplikasi email di tabel STO
     const emailExist = await prisma.sto.findUnique({
@@ -77,6 +93,7 @@ export async function tambahStoAction(prevState: unknown, formData: FormData) {
         jabatan,
         divisi,
         foto,
+        ttd: ttd && ttd !== "__HAPUS__" ? ttd : null,
       },
     });
 
@@ -98,6 +115,7 @@ export async function ubahStoAction(stoId: number, formData: FormData) {
   try {
     await requireAdsek(["admin"]);
 
+    const rawTtd = (formData.get("ttd") as string) || null;
     const rawData = {
       nama: formData.get("nama") as string,
       nim: formData.get("nim") as string,
@@ -105,6 +123,7 @@ export async function ubahStoAction(stoId: number, formData: FormData) {
       jabatan: (formData.get("jabatan") as string) || null,
       divisi: (formData.get("divisi") as string) || null,
       foto: (formData.get("foto") as string) || null,
+      ttd: rawTtd,
     };
 
     const parsed = StoInputSchema.safeParse(rawData);
@@ -117,7 +136,7 @@ export async function ubahStoAction(stoId: number, formData: FormData) {
       };
     }
 
-    const { nama, nim, emailGoogle, jabatan, divisi, foto } = parsed.data;
+    const { nama, nim, emailGoogle, jabatan, divisi, foto, ttd } = parsed.data;
 
     // Cek duplikasi email ke id lain
     const emailExist = await prisma.sto.findFirst({
@@ -136,6 +155,9 @@ export async function ubahStoAction(stoId: number, formData: FormData) {
       };
     }
 
+    const updateTtd =
+      ttd === "__HAPUS__" ? { ttd: null } : ttd ? { ttd } : {};
+
     await prisma.sto.update({
       where: { id: stoId },
       data: {
@@ -145,10 +167,12 @@ export async function ubahStoAction(stoId: number, formData: FormData) {
         jabatan,
         divisi,
         ...(foto ? { foto } : {}),
+        ...updateTtd,
       },
     });
 
     revalidatePath("/dashboard/sto");
+    revalidatePath("/dashboard");
     return { sukses: true, pesan: `Data pengurus ${nama} berhasil diperbarui` };
   } catch (err: unknown) {
     const error = err as Error;

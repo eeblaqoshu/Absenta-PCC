@@ -5,13 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { LokasiManager } from "@/components/dashboard/lokasi-manager";
 
 export default async function LokasiPage() {
-  await requireAdsek(["admin"]);
+  const adsek = await requireAdsek();
+  const isAdmin = adsek.role === "admin";
 
   const daftar = await prisma.lokasi.findMany({ orderBy: { nama: "asc" } });
 
   return (
     <div className="py-2">
       <LokasiManager
+        isAdmin={isAdmin}
         initialLokasi={daftar.map((l) => ({
           id: l.id,
           nama: l.nama,

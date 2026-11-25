@@ -1,8 +1,7 @@
 // public/sw.js
-const CACHE_NAME = 'absenta-pcc-v1';
+const CACHE_NAME = 'absenta-pcc-v2';
 
 const STATIC_ASSETS = [
-  '/',
   '/logo-pcc.png',
   '/manifest.webmanifest',
 ];
@@ -37,12 +36,17 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Jangan pernah meng-cache di localhost/127.0.0.1 agar HMR Turbopack selalu segar
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return;
+  }
+
   // Jangan sentuh API requests atau HTTP selain GET
   if (request.method !== 'GET' || url.pathname.startsWith('/api/')) {
     return;
   }
 
-  // Khusus aset statis (Next static, gambar, font): Cache-first dengan network fallback
+  // Khusus aset statis produksi (immutable Next static, gambar, font): Cache-first
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.match(/\.(png|jpg|jpeg|svg|webp|ico|woff2?|css)$/)

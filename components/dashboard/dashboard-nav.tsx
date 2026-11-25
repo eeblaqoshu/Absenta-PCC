@@ -73,6 +73,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
       href: "/dashboard/leaderboard",
       label: "Leaderboard",
       icon: Trophy,
+      isActive: pathname.startsWith("/dashboard/leaderboard"),
     },
   ];
 
@@ -126,6 +127,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
               <span>{item.label}</span>
               {item.isActive && (
                 <motion.div
+                  initial={false}
                   layoutId="mobile-navbar-indicator"
                   className="absolute bottom-0 left-0 right-0 h-[2px] bg-secondary rounded-full"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
@@ -139,6 +141,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
+            suppressHydrationWarning
             onClick={() => setMasterDataOpen((prev) => !prev)}
             className={`relative flex items-center gap-1.5 py-3 text-xs font-semibold tracking-wide whitespace-nowrap transition-colors group cursor-pointer ${
               isMasterDataActive
@@ -161,6 +164,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
             />
             {isMasterDataActive && (
               <motion.div
+                initial={false}
                 layoutId="mobile-navbar-indicator"
                 className="absolute bottom-0 left-0 right-0 h-[2px] bg-secondary rounded-full"
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
@@ -236,6 +240,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
             {/* Active Bottom Indicator */}
             {item.isActive ? (
               <motion.div
+                initial={false}
                 layoutId="desktop-navbar-indicator"
                 className="absolute bottom-0 left-2.5 right-2.5 h-[2.5px] bg-secondary rounded-t-full shadow-xs shadow-secondary/40"
                 transition={{ type: "spring", stiffness: 420, damping: 32 }}
@@ -251,6 +256,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
       <div className="relative" ref={dropdownRef}>
         <button
           type="button"
+          suppressHydrationWarning
           onClick={() => setMasterDataOpen((prev) => !prev)}
           className={`relative flex items-center gap-1.5 h-16 px-3.5 text-xs font-medium tracking-wide transition-colors group cursor-pointer ${
             isMasterDataActive
@@ -279,6 +285,7 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
           {/* Active Bottom Indicator */}
           {isMasterDataActive ? (
             <motion.div
+              initial={false}
               layoutId="desktop-navbar-indicator"
               className="absolute bottom-0 left-2.5 right-2.5 h-[2.5px] bg-secondary rounded-t-full shadow-xs shadow-secondary/40"
               transition={{ type: "spring", stiffness: 420, damping: 32 }}
