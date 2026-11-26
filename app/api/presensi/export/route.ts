@@ -24,15 +24,20 @@ export async function GET(req: NextRequest) {
           pesan: "Hanya adsek yang dapat mengekspor data kehadiran",
         },
       },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   const sesiId = Number(req.nextUrl.searchParams.get("sesiId"));
   if (!Number.isInteger(sesiId) || sesiId <= 0) {
     return NextResponse.json(
-      { error: { kode: "VALIDASI_GAGAL", pesan: "Parameter sesiId tidak valid" } },
-      { status: 400 }
+      {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: "Parameter sesiId tidak valid",
+        },
+      },
+      { status: 400 },
     );
   }
 
@@ -41,8 +46,13 @@ export async function GET(req: NextRequest) {
   });
   if (!rekap) {
     return NextResponse.json(
-      { error: { kode: "TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } },
-      { status: 404 }
+      {
+        error: {
+          kode: "TIDAK_DITEMUKAN",
+          pesan: "Sesi presensi tidak ditemukan",
+        },
+      },
+      { status: 404 },
     );
   }
 

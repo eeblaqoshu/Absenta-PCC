@@ -78,7 +78,9 @@ export function ModalStoCsv({
               {/* Petunjuk & Download Template */}
               <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div>
-                  <p className="font-semibold text-primary">Format Kolom CSV:</p>
+                  <p className="font-semibold text-primary">
+                    Format Kolom CSV:
+                  </p>
                   <p className="text-secondary text-[11px] mt-0.5">
                     Nama, NIM, Email, Jabatan, Divisi
                   </p>
@@ -205,7 +207,9 @@ export function ModalStoCsv({
                   onClick={onProsesImpor}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25 cursor-pointer"
                 >
-                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   Mulai Impor ({csvPreview.length} Data)
                 </button>
               )}

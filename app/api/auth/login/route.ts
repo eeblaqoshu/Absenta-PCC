@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
               "Terlalu banyak percobaan masuk dari perangkat ini. Silakan tunggu beberapa saat sebelum mencoba lagi.",
           },
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
             pesan: parsed.error.issues[0]?.message || "Input tidak valid",
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,7 +75,10 @@ export async function POST(req: NextRequest) {
         "";
       decodedToken = verifikasiGoogleTokenOffline(idToken, expectedProjectId);
     } catch (offlineErr: unknown) {
-      console.warn("Verifikasi lokal gagal, mencoba online via adminAuth:", offlineErr);
+      console.warn(
+        "Verifikasi lokal gagal, mencoba online via adminAuth:",
+        offlineErr,
+      );
       if (adminAuth) {
         try {
           decodedToken = await adminAuth.verifyIdToken(idToken, false);
@@ -90,10 +93,11 @@ export async function POST(req: NextRequest) {
         {
           error: {
             kode: "TOKEN_INVALID",
-            pesan: "Verifikasi token login gagal atau kedaluwarsa. Silakan coba masuk kembali.",
+            pesan:
+              "Verifikasi token login gagal atau kedaluwarsa. Silakan coba masuk kembali.",
           },
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -107,7 +111,7 @@ export async function POST(req: NextRequest) {
               "Alamat email belum diverifikasi oleh provider autentikasi. Silakan verifikasi email Anda terlebih dahulu.",
           },
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -122,11 +126,11 @@ export async function POST(req: NextRequest) {
             pesan: "Akun Anda tidak memiliki alamat email yang valid.",
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // 2. Cek Akun Adsek (Prioritas 1)
+    // 2. Cek Akun Adsek 
     const adsek = await prisma.akunAdsek.findUnique({
       where: { email },
     });
@@ -148,7 +152,7 @@ export async function POST(req: NextRequest) {
                 "Identitas akun Firebase tidak sesuai dengan data terdaftar.",
             },
           },
-          { status: 403 }
+          { status: 403 },
         );
       }
 
@@ -160,7 +164,7 @@ export async function POST(req: NextRequest) {
         });
       }
     } else {
-      // 3. Cek STO pada periode aktif (Prioritas 2)
+      // 3. Cek STO pada periode aktif
       const periodeAktif = await prisma.periode.findFirst({
         where: { status: StatusPeriode.aktif },
       });
@@ -174,7 +178,7 @@ export async function POST(req: NextRequest) {
                 "Saat ini belum ada periode kepengurusan yang berstatus aktif.",
             },
           },
-          { status: 403 }
+          { status: 403 },
         );
       }
 
@@ -199,7 +203,7 @@ export async function POST(req: NextRequest) {
                   "Identitas akun Firebase tidak sesuai dengan data terdaftar.",
               },
             },
-            { status: 403 }
+            { status: 403 },
           );
         }
 
@@ -223,7 +227,7 @@ export async function POST(req: NextRequest) {
               "Email Anda belum terdaftar sebagai pengurus STO periode aktif atau adsek.",
           },
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -254,14 +258,19 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Internal login error:", error);
+    const detailPesan =
+      error instanceof Error ? error.message : "Kesalahan database atau server";
     return NextResponse.json(
       {
         error: {
           kode: "INTERNAL_SERVER_ERROR",
-          pesan: "Terjadi kesalahan internal saat memproses autentikasi.",
+          pesan:
+            process.env.NODE_ENV !== "production"
+              ? `Terjadi kesalahan internal: ${detailPesan}`
+              : "Terjadi kesalahan internal saat memproses autentikasi.",
         },
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

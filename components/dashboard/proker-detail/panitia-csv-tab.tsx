@@ -105,7 +105,7 @@ export function PanitiaCsvTab({
           h.includes("name") ||
           h.includes("pengurus") ||
           h.includes("anggota") ||
-          h.includes("nim")
+          h.includes("nim"),
       );
       const peranIdx = headers.findIndex(
         (h) =>
@@ -113,7 +113,7 @@ export function PanitiaCsvTab({
           h.includes("role") ||
           h.includes("posisi") ||
           h.includes("kepanitiaan") ||
-          h.includes("jabatan")
+          h.includes("jabatan"),
       );
       const divisiIdx = headers.findIndex(
         (h) =>
@@ -122,23 +122,24 @@ export function PanitiaCsvTab({
           h.includes("dept") ||
           h.includes("sie") ||
           h.includes("bidang") ||
-          h.includes("seksi")
+          h.includes("seksi"),
       );
 
       const effNama = namaIdx >= 0 ? namaIdx : 0;
       const effPeran = peranIdx >= 0 ? peranIdx : 1;
       const effDivisi = divisiIdx >= 0 ? divisiIdx : 2;
 
-      const normalize = (s: string) => s.toLowerCase().trim().replace(/\s+/g, " ");
+      const normalize = (s: string) =>
+        s.toLowerCase().trim().replace(/\s+/g, " ");
 
       const stoByNama = new Map(
-        availableStos.map((s) => [normalize(s.nama), s])
+        availableStos.map((s) => [normalize(s.nama), s]),
       );
       const stoByNim = new Map(
-        availableStos.map((s) => [s.nim.trim().toLowerCase(), s])
+        availableStos.map((s) => [s.nim.trim().toLowerCase(), s]),
       );
       const existingPanitiaIds = new Set(
-        proker.kepanitiaan.map((k) => k.sto.id)
+        proker.kepanitiaan.map((k) => k.sto.id),
       );
 
       const parsed: typeof csvPreview = [];
@@ -252,7 +253,10 @@ export function PanitiaCsvTab({
         <div>
           <p className="font-semibold text-primary">Format File CSV:</p>
           <p className="text-secondary text-[11px] mt-0.5">
-            Kolom yang diperlukan: <span className="font-mono font-semibold">Nama, Peran_Kepanitiaan, Divisi_Departemen</span>
+            Kolom yang diperlukan:{" "}
+            <span className="font-mono font-semibold">
+              Nama, Peran_Kepanitiaan, Divisi_Departemen
+            </span>
           </p>
         </div>
         <button
@@ -320,9 +324,7 @@ export function PanitiaCsvTab({
                     <td className="px-3 py-1.5 text-navy font-semibold">
                       {row.nama}
                     </td>
-                    <td className="px-3 py-1.5 text-navy">
-                      {row.peran}
-                    </td>
+                    <td className="px-3 py-1.5 text-navy">{row.peran}</td>
                     <td className="px-3 py-1.5 text-slate-muted">
                       {row.divisi}
                     </td>

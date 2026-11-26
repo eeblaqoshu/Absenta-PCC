@@ -3,7 +3,13 @@
 // Semua keputusan presensi tetap di server; komponen ini hanya mengirim payload QR + koordinat.
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import Link from "next/link";
@@ -44,7 +50,9 @@ interface Props {
 
 export function ScanPresensi({ daftarSesi }: Props) {
   const router = useRouter();
-  const [sesiDipilih, setSesiDipilih] = useState<SesiTersedia | null>(daftarSesi[0] ?? null);
+  const [sesiDipilih, setSesiDipilih] = useState<SesiTersedia | null>(
+    daftarSesi[0] ?? null,
+  );
   const [posisi, setPosisi] = useState<Omit<Koordinat, "ts"> | null>(null);
   const [gpsGalat, setGpsGalat] = useState<string | null>(null);
   const [kameraGalat, setKameraGalat] = useState<string | null>(null);
@@ -65,7 +73,9 @@ export function ScanPresensi({ daftarSesi }: Props) {
   }, [router, memproses, modalSukses]);
 
   // Salinan status presensi per sesi
-  const [presensiSaya, setPresensiSaya] = useState<Record<number, PresensiSesiRingkas>>(() => {
+  const [presensiSaya, setPresensiSaya] = useState<
+    Record<number, PresensiSesiRingkas>
+  >(() => {
     const awal: Record<number, PresensiSesiRingkas> = {};
     for (const sesi of daftarSesi) {
       if (sesi.presensi) awal[sesi.sesiId] = sesi.presensi;
@@ -87,7 +97,12 @@ export function ScanPresensi({ daftarSesi }: Props) {
 
   const jarak =
     posisi && sesiDipilih
-      ? hitungJarakHaversine(posisi.lat, posisi.lng, sesiDipilih.lat, sesiDipilih.lng)
+      ? hitungJarakHaversine(
+          posisi.lat,
+          posisi.lng,
+          sesiDipilih.lat,
+          sesiDipilih.lng,
+        )
       : null;
 
   const sudah = sesiDipilih ? (presensiSaya[sesiDipilih.sesiId] ?? null) : null;
@@ -111,7 +126,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
         });
       },
       (err) => setGpsGalat(pesanGalatGps(err)),
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 20_000 }
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 20_000 },
     );
 
     return () => navigator.geolocation.clearWatch(id);
@@ -222,7 +237,7 @@ export function ScanPresensi({ daftarSesi }: Props) {
         }, 5000);
       }
     },
-    [simpanPosisi]
+    [simpanPosisi],
   );
 
   const ambilLokasiManual = useCallback(async () => {
@@ -251,7 +266,8 @@ export function ScanPresensi({ daftarSesi }: Props) {
     );
   }
 
-  const diDalamRadius = jarak !== null && sesiDipilih !== null && jarak <= sesiDipilih.radiusM;
+  const diDalamRadius =
+    jarak !== null && sesiDipilih !== null && jarak <= sesiDipilih.radiusM;
 
   return (
     <div className="space-y-5">
@@ -263,7 +279,9 @@ export function ScanPresensi({ daftarSesi }: Props) {
         <select
           value={sesiDipilih?.sesiId ?? ""}
           onChange={(e) => {
-            const pilih = daftarSesi.find((s) => String(s.sesiId) === e.target.value) ?? null;
+            const pilih =
+              daftarSesi.find((s) => String(s.sesiId) === e.target.value) ??
+              null;
             setSesiDipilih(pilih);
             setHasil(null);
           }}
@@ -281,7 +299,8 @@ export function ScanPresensi({ daftarSesi }: Props) {
           <div className="text-[11px] text-slate-muted space-y-0.5">
             <p className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-rose-500" />
-              {sesiDipilih.lokasiNama ?? "Titik manual"} • radius {sesiDipilih.radiusM} m
+              {sesiDipilih.lokasiNama ?? "Titik manual"} • radius{" "}
+              {sesiDipilih.radiusM} m
             </p>
             <p>
               Buka {formatJamIndo(new Date(sesiDipilih.bukaAt))} • Tutup{" "}
@@ -310,7 +329,9 @@ export function ScanPresensi({ daftarSesi }: Props) {
                 }`}
               >
                 <CircleDot className="w-3.5 h-3.5" />
-                {diDalamRadius ? `Dalam radius (${jarak} m)` : `Di luar radius (${jarak} m)`}
+                {diDalamRadius
+                  ? `Dalam radius (${jarak} m)`
+                  : `Di luar radius (${jarak} m)`}
               </span>
             )}
             <button
@@ -333,7 +354,8 @@ export function ScanPresensi({ daftarSesi }: Props) {
         <ScanLeafletMap sesiDipilih={sesiDipilih} posisi={posisi} />
 
         <p className="text-[11px] text-slate-muted mt-2">
-          Titik biru = pusat sesi, titik merah = posisi Anda. Presensi hanya dapat dilakukan jika Anda berada di dalam radius lokasi kegiatan.
+          Titik biru = pusat sesi, titik merah = posisi Anda. Presensi hanya
+          dapat dilakukan jika Anda berada di dalam radius lokasi kegiatan.
         </p>
       </div>
 
@@ -355,14 +377,18 @@ export function ScanPresensi({ daftarSesi }: Props) {
               }}
               onError={(err) => setKameraGalat(pesanGalatKamera(err.kind))}
               paused={memproses}
-              styles={{ container: { width: "100%" }, video: { width: "100%" } }}
+              styles={{
+                container: { width: "100%" },
+                video: { width: "100%" },
+              }}
             />
           </div>
 
           {kameraGalat && (
             <p className="mt-2 text-[11px] text-rose-600 inline-flex items-start gap-1">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
-              {kameraGalat} Pastikan izin kamera aktif untuk memindai QR langsung.
+              {kameraGalat} Pastikan izin kamera aktif untuk memindai QR
+              langsung.
             </p>
           )}
 
@@ -391,11 +417,15 @@ export function ScanPresensi({ daftarSesi }: Props) {
                 {hasil.sukses && (
                   <p className="mt-0.5">
                     Status: <strong>{hasil.status}</strong>
-                    {typeof hasil.jarakM === "number" && ` • jarak ${hasil.jarakM} m`}
+                    {typeof hasil.jarakM === "number" &&
+                      ` • jarak ${hasil.jarakM} m`}
                   </p>
                 )}
                 {hasil.perluLogin && (
-                  <Link href="/login" className="mt-1 inline-flex items-center gap-1 underline">
+                  <Link
+                    href="/login"
+                    className="mt-1 inline-flex items-center gap-1 underline"
+                  >
                     <LogIn className="w-3 h-3" />
                     Login ulang
                   </Link>

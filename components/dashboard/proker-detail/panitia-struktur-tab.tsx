@@ -91,7 +91,9 @@ export function PanitiaStrukturTab({
     if (barisStruktur.length === 0) return;
     setPesan(null);
 
-    const invalidRow = barisStruktur.find((b) => !b.stoId || !b.peranTeks.trim());
+    const invalidRow = barisStruktur.find(
+      (b) => !b.stoId || !b.peranTeks.trim(),
+    );
     if (invalidRow) {
       setPesan({
         tipe: "error",
@@ -173,7 +175,8 @@ export function PanitiaStrukturTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
           <div className="text-xs text-navy">
             <span className="font-semibold">Susun Kepanitiaan Manual</span>:{" "}
-            Pilih peran dan tunjuk pengurus STO secara manual untuk program kerja ini.
+            Pilih peran dan tunjuk pengurus STO secara manual untuk program
+            kerja ini.
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -227,8 +230,10 @@ export function PanitiaStrukturTab({
               (s) => String(s.id) === String(baris.stoId),
             );
             const isSekumSebagaiSekretarisInti =
-              baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
-              isSekretarisUmum(stoDipilih);
+              baris.peranTeks
+                .trim()
+                .toLowerCase()
+                .includes("sekretaris inti") && isSekretarisUmum(stoDipilih);
             const isLitbangBukanPengawas =
               stoDipilih &&
               isDivisiLitbang(stoDipilih) &&
@@ -279,15 +284,22 @@ export function PanitiaStrukturTab({
                       {availableStos
                         .filter((s) => {
                           const sudahDiProker = panitiaStoIdSet.has(s.id);
-                          const sudahDiBarisLain = selectedInOtherRows.has(s.id);
+                          const sudahDiBarisLain = selectedInOtherRows.has(
+                            s.id,
+                          );
                           const isRowIni = String(s.id) === String(baris.stoId);
-                          return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
+                          return (
+                            (!sudahDiProker && !sudahDiBarisLain) || isRowIni
+                          );
                         })
                         .map((s) => {
                           const isLitbang = isDivisiLitbang(s);
                           const disabledLitbang =
                             isLitbang &&
-                            !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks);
+                            !isPeranLitbangPengawas(
+                              baris.peranTeks,
+                              baris.peranTeks,
+                            );
                           return (
                             <option
                               key={s.id}
@@ -335,13 +347,15 @@ export function PanitiaStrukturTab({
                 {isSekumSebagaiSekretarisInti && (
                   <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
                     <AlertCircle className="w-3 h-3 shrink-0" />
-                    Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris Inti.
+                    Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris
+                    Inti.
                   </p>
                 )}
                 {isLitbangBukanPengawas && (
                   <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
                     <AlertCircle className="w-3 h-3 shrink-0" />
-                    Pengurus dari Divisi Litbang ({stoDipilih?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.
+                    Pengurus dari Divisi Litbang ({stoDipilih?.nama}) hanya
+                    dapat ditugaskan sebagai Litbang Pengawas.
                   </p>
                 )}
               </div>
@@ -364,7 +378,8 @@ export function PanitiaStrukturTab({
               Tambah Baris Panitia
             </button>
             <span className="text-xs text-slate-muted">
-              Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)} STO belum masuk
+              Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)}{" "}
+              STO belum masuk
             </span>
           </div>
 

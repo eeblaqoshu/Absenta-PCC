@@ -2,7 +2,7 @@
 // Halaman pembuatan agenda kegiatan baru di bawah program kerja tertentu.
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AgendaFormPage } from "@/components/dashboard/proker-detail/agenda-form-page";
+import { AgendaFormPage } from "@/components/dashboard/proker";
 import { notFound } from "next/navigation";
 
 interface PageProps {

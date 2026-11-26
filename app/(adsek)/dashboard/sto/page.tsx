@@ -1,14 +1,14 @@
 // app/(adsek)/dashboard/sto/page.tsx
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { StoManager } from "@/components/dashboard/sto-manager";
+import { StoManager } from "@/components/dashboard/sto";
 import { StatusPeriode } from "@prisma/client";
 import Link from "next/link";
 import { AlertCircle, Calendar } from "lucide-react";
 
 export default async function StoPage() {
   const adsek = await requireAdsek();
-  const isAdmin = adsek.role === "admin";
+  const canManage = adsek.role === "admin" || adsek.role === "sekretaris_inti";
 
   // Ambil periode aktif
   const periodeAktif = await prisma.periode.findFirst({
@@ -26,10 +26,11 @@ export default async function StoPage() {
             Tidak Ada Periode Aktif
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Data STO wajib terikat ke periode kepengurusan aktif. Silakan buka periode baru terlebih dahulu.
+            Data STO wajib terikat ke periode kepengurusan aktif. Silakan buka
+            periode baru terlebih dahulu.
           </p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <Link
             href="/dashboard/periode"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all"
@@ -53,7 +54,7 @@ export default async function StoPage() {
       <StoManager
         initialSto={daftarSto}
         namaPeriode={periodeAktif.nama}
-        isAdmin={isAdmin}
+        isAdmin={canManage}
       />
     </div>
   );

@@ -4,7 +4,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateQrToken, getWindowNumber, susunPayloadQr } from "@/lib/qr-token";
+import {
+  generateQrToken,
+  getWindowNumber,
+  susunPayloadQr,
+} from "@/lib/qr-token";
 import { QR_WINDOW_SECONDS } from "@/lib/konstanta";
 import { hitungStatusSesi } from "@/lib/waktu";
 
@@ -12,8 +16,13 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session || session.type !== "adsek" || !session.adsek) {
     return NextResponse.json(
-      { error: { kode: "AKSES_DITOLAK", pesan: "Hanya adsek yang dapat menampilkan QR presensi" } },
-      { status: 403 }
+      {
+        error: {
+          kode: "AKSES_DITOLAK",
+          pesan: "Hanya adsek yang dapat menampilkan QR presensi",
+        },
+      },
+      { status: 403 },
     );
   }
 
@@ -21,8 +30,13 @@ export async function GET(req: NextRequest) {
   const sesiId = Number(sesiIdParam);
   if (!Number.isInteger(sesiId) || sesiId <= 0) {
     return NextResponse.json(
-      { error: { kode: "VALIDASI_GAGAL", pesan: "Parameter sesiId tidak valid" } },
-      { status: 400 }
+      {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: "Parameter sesiId tidak valid",
+        },
+      },
+      { status: 400 },
     );
   }
 
@@ -39,15 +53,22 @@ export async function GET(req: NextRequest) {
 
   if (!sesi) {
     return NextResponse.json(
-      { error: { kode: "TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } },
-      { status: 404 }
+      {
+        error: {
+          kode: "TIDAK_DITEMUKAN",
+          pesan: "Sesi presensi tidak ditemukan",
+        },
+      },
+      { status: 404 },
     );
   }
 
   const sekarang = new Date();
   const jendela = getWindowNumber(sekarang.getTime());
   const token = generateQrToken(sesi.qrSecret, sesi.id, jendela);
-  const detikSisa = QR_WINDOW_SECONDS - (Math.floor(sekarang.getTime() / 1000) % QR_WINDOW_SECONDS);
+  const detikSisa =
+    QR_WINDOW_SECONDS -
+    (Math.floor(sekarang.getTime() / 1000) % QR_WINDOW_SECONDS);
 
   return NextResponse.json(
     {
@@ -62,6 +83,6 @@ export async function GET(req: NextRequest) {
       radiusM: sesi.agenda.radiusM ?? null,
       status: hitungStatusSesi(sesi.bukaAt, sesi.tutupAt, sekarang),
     },
-    { headers: { "Cache-Control": "no-store" } }
+    { headers: { "Cache-Control": "no-store" } },
   );
 }

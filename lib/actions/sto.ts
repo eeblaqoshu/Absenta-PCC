@@ -32,7 +32,7 @@ const StoInputSchema = z.object({
 
 export async function tambahStoAction(prevState: unknown, formData: FormData) {
   try {
-    await requireAdsek(["admin"]);
+    await requireAdsek(["admin", "sekretaris_inti"]);
 
     const periodeAktif = await prisma.periode.findFirst({
       where: { status: StatusPeriode.aktif },
@@ -113,7 +113,7 @@ export async function tambahStoAction(prevState: unknown, formData: FormData) {
 
 export async function ubahStoAction(stoId: number, formData: FormData) {
   try {
-    await requireAdsek(["admin"]);
+    await requireAdsek(["admin", "sekretaris_inti"]);
 
     const rawTtd = (formData.get("ttd") as string) || null;
     const rawData = {
@@ -187,7 +187,7 @@ export async function ubahStoAction(stoId: number, formData: FormData) {
 
 export async function hapusStoAction(stoId: number) {
   try {
-    await requireAdsek(["admin"]);
+    await requireAdsek(["admin", "sekretaris_inti"]);
 
     const sto = await prisma.sto.findUnique({
       where: { id: stoId },
@@ -251,7 +251,7 @@ export interface CsvBarisSto {
 
 export async function imporCsvStoAction(barisList: CsvBarisSto[]) {
   try {
-    await requireAdsek(["admin"]);
+    await requireAdsek(["admin", "sekretaris_inti"]);
 
     const periodeAktif = await prisma.periode.findFirst({
       where: { status: StatusPeriode.aktif },

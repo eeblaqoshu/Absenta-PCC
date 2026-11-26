@@ -1,7 +1,7 @@
 // app/(adsek)/dashboard/proker/[id]/panitia/page.tsx
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { KelolaPanitiaPage } from "@/components/dashboard/proker-detail/kelola-panitia-page";
+import { KelolaPanitiaPage } from "@/components/dashboard/proker";
 import { notFound } from "next/navigation";
 
 interface PageProps {

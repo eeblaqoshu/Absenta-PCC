@@ -96,7 +96,9 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
     if (barisStruktur.length === 0) return;
     setPesan(null);
 
-    const invalidRow = barisStruktur.find((b) => !b.stoId || !b.peranTeks.trim());
+    const invalidRow = barisStruktur.find(
+      (b) => !b.stoId || !b.peranTeks.trim(),
+    );
     if (invalidRow) {
       setPesan({
         tipe: "error",
@@ -115,15 +117,23 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
     }
 
     for (const baris of barisStruktur) {
-      const sto = availableStos.find((s) => String(s.id) === String(baris.stoId));
-      if (baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") && isSekretarisUmum(sto)) {
+      const sto = availableStos.find(
+        (s) => String(s.id) === String(baris.stoId),
+      );
+      if (
+        baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
+        isSekretarisUmum(sto)
+      ) {
         setPesan({
           tipe: "error",
           teks: `Sekretaris Umum (${sto?.nama}) tidak dapat ditugaskan sebagai Sekretaris Inti pada kepanitiaan ini.`,
         });
         return;
       }
-      if (isDivisiLitbang(sto) && !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)) {
+      if (
+        isDivisiLitbang(sto) &&
+        !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)
+      ) {
         setPesan({
           tipe: "error",
           teks: `Pengurus dari Divisi Litbang (${sto?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
@@ -245,7 +255,8 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 Susun Kepanitiaan Manual
               </h3>
               <p className="text-xs text-slate-muted">
-                Pilih peran dan tunjuk pengurus STO secara manual untuk program kerja ini.
+                Pilih peran dan tunjuk pengurus STO secara manual untuk program
+                kerja ini.
               </p>
             </div>
 
@@ -293,13 +304,17 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 );
                 const isDuplikat =
                   baris.stoId &&
-                  barisStruktur.filter((b) => b.stoId === baris.stoId).length > 1;
+                  barisStruktur.filter((b) => b.stoId === baris.stoId).length >
+                    1;
 
                 const stoDipilih = availableStos.find(
                   (s) => String(s.id) === String(baris.stoId),
                 );
                 const isSekumSebagaiSekretarisInti =
-                  baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
+                  baris.peranTeks
+                    .trim()
+                    .toLowerCase()
+                    .includes("sekretaris inti") &&
                   isSekretarisUmum(stoDipilih);
                 const isLitbangBukanPengawas =
                   stoDipilih &&
@@ -328,7 +343,9 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                           list="daftar-saran-peran"
                           value={baris.peranTeks}
                           onChange={(e) =>
-                            ubahBaris(baris.tempId, { peranTeks: e.target.value })
+                            ubahBaris(baris.tempId, {
+                              peranTeks: e.target.value,
+                            })
                           }
                           placeholder="Ketik peran, cth: Ketua Pelaksana / Sie Acara"
                           disabled={isReadonly}
@@ -353,15 +370,24 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                           {availableStos
                             .filter((s) => {
                               const sudahDiProker = panitiaStoIdSet.has(s.id);
-                              const sudahDiBarisLain = selectedInOtherRows.has(s.id);
-                              const isRowIni = String(s.id) === String(baris.stoId);
-                              return (!sudahDiProker && !sudahDiBarisLain) || isRowIni;
+                              const sudahDiBarisLain = selectedInOtherRows.has(
+                                s.id,
+                              );
+                              const isRowIni =
+                                String(s.id) === String(baris.stoId);
+                              return (
+                                (!sudahDiProker && !sudahDiBarisLain) ||
+                                isRowIni
+                              );
                             })
                             .map((s) => {
                               const isLitbang = isDivisiLitbang(s);
                               const disabledLitbang =
                                 isLitbang &&
-                                !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks);
+                                !isPeranLitbangPengawas(
+                                  baris.peranTeks,
+                                  baris.peranTeks,
+                                );
                               return (
                                 <option
                                   key={s.id}
@@ -418,13 +444,15 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                     {isSekumSebagaiSekretarisInti && (
                       <p className="text-xs text-rose-600 mt-2.5 flex items-center gap-1.5 font-medium">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris Inti.
+                        Sekretaris Umum tidak dapat ditugaskan sebagai
+                        Sekretaris Inti.
                       </p>
                     )}
                     {isLitbangBukanPengawas && (
                       <p className="text-xs text-rose-600 mt-2.5 flex items-center gap-1.5 font-medium">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        Pengurus dari Divisi Litbang ({stoDipilih?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.
+                        Pengurus dari Divisi Litbang ({stoDipilih?.nama}) hanya
+                        dapat ditugaskan sebagai Litbang Pengawas.
                       </p>
                     )}
                   </div>
@@ -464,7 +492,9 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 </Link>
                 <button
                   type="button"
-                  disabled={isPending || barisStruktur.length === 0 || isReadonly}
+                  disabled={
+                    isPending || barisStruktur.length === 0 || isReadonly
+                  }
                   onClick={handleSubmitBanyakPanitia}
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-50 shadow-md shadow-secondary/25 transition-all cursor-pointer"
                 >

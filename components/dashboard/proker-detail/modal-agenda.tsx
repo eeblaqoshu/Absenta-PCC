@@ -79,9 +79,7 @@ export function ModalAgenda({
     >
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalHeader
-          title={
-            isEdit ? "Edit Kegiatan" : "Tambah Kegiatan Baru"
-          }
+          title={isEdit ? "Edit Kegiatan" : "Tambah Kegiatan Baru"}
           description="Titik presensi diatur di sini; semua sesi memakai titik yang sama."
           icon={Calendar}
           onClose={onClose}

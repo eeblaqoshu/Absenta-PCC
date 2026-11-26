@@ -50,7 +50,9 @@ export function ScanLeafletMap({ sesiDipilih, posisi }: Props) {
       });
 
       if (sesiDipilih) {
-        L.marker([sesiDipilih.lat, sesiDipilih.lng], { icon: ikonSesi }).addTo(peta);
+        L.marker([sesiDipilih.lat, sesiDipilih.lng], { icon: ikonSesi }).addTo(
+          peta,
+        );
         circleSesiRef.current = L.circle([sesiDipilih.lat, sesiDipilih.lng], {
           radius: sesiDipilih.radiusM,
           color: "#2563eb",
@@ -60,10 +62,13 @@ export function ScanLeafletMap({ sesiDipilih, posisi }: Props) {
         }).addTo(peta);
       }
 
-      markerSayaRef.current = L.marker([peta.getCenter().lat, peta.getCenter().lng], {
-        icon: ikonSaya,
-        draggable: false,
-      }).addTo(peta);
+      markerSayaRef.current = L.marker(
+        [peta.getCenter().lat, peta.getCenter().lng],
+        {
+          icon: ikonSaya,
+          draggable: false,
+        },
+      ).addTo(peta);
 
       mapRef.current = peta;
       setTimeout(() => peta.invalidateSize(), 100);

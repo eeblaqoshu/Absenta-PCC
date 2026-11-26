@@ -1,5 +1,5 @@
 // app/api/presensi/hadir/route.ts
-// Daftar kehadiran langsung (live feed) untuk layar adsek. Hanya adsek.
+// Daftar kehadiran langsung (live feed) untuk adsek.
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,16 +8,26 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session || session.type !== "adsek" || !session.adsek) {
     return NextResponse.json(
-      { error: { kode: "AKSES_DITOLAK", pesan: "Hanya adsek yang dapat melihat daftar hadir" } },
-      { status: 403 }
+      {
+        error: {
+          kode: "AKSES_DITOLAK",
+          pesan: "Hanya adsek yang dapat melihat daftar hadir",
+        },
+      },
+      { status: 403 },
     );
   }
 
   const sesiId = Number(req.nextUrl.searchParams.get("sesiId"));
   if (!Number.isInteger(sesiId) || sesiId <= 0) {
     return NextResponse.json(
-      { error: { kode: "VALIDASI_GAGAL", pesan: "Parameter sesiId tidak valid" } },
-      { status: 400 }
+      {
+        error: {
+          kode: "VALIDASI_GAGAL",
+          pesan: "Parameter sesiId tidak valid",
+        },
+      },
+      { status: 400 },
     );
   }
 
@@ -28,8 +38,13 @@ export async function GET(req: NextRequest) {
 
   if (!sesi) {
     return NextResponse.json(
-      { error: { kode: "TIDAK_DITEMUKAN", pesan: "Sesi presensi tidak ditemukan" } },
-      { status: 404 }
+      {
+        error: {
+          kode: "TIDAK_DITEMUKAN",
+          pesan: "Sesi presensi tidak ditemukan",
+        },
+      },
+      { status: 404 },
     );
   }
 
@@ -53,8 +68,12 @@ export async function GET(req: NextRequest) {
   const dihitung = daftar.filter((p) => p.statusVerifikasi !== "ditolak");
 
   const jumlahHadir = dihitung.filter((p) => p.status === "hadir").length;
-  const jumlahTerlambat = dihitung.filter((p) => p.status === "terlambat").length;
-  const perluVerifikasi = daftar.filter((p) => p.statusVerifikasi === "menunggu").length;
+  const jumlahTerlambat = dihitung.filter(
+    (p) => p.status === "terlambat",
+  ).length;
+  const perluVerifikasi = daftar.filter(
+    (p) => p.statusVerifikasi === "menunggu",
+  ).length;
 
   return NextResponse.json(
     {
@@ -69,6 +88,6 @@ export async function GET(req: NextRequest) {
       },
       daftar,
     },
-    { headers: { "Cache-Control": "no-store" } }
+    { headers: { "Cache-Control": "no-store" } },
   );
 }

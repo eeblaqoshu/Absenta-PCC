@@ -1,7 +1,7 @@
 // app/(adsek)/dashboard/periode/page.tsx
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PeriodeManager } from "@/components/dashboard/periode-manager";
+import { PeriodeManager } from "@/components/dashboard/periode";
 
 export default async function PeriodePage() {
   const adsek = await requireAdsek();

@@ -50,7 +50,10 @@ interface Props {
   rekap: Record<number, RekapKehadiranSesi>;
   setTabStatus: (v: StatusAgendaDihitung) => void;
   onHapusAgenda: (id: number, judul: string) => void;
-  onOpenModalSesi: (params: { agenda: AgendaItem; sesiAwal: SesiItem | null }) => void;
+  onOpenModalSesi: (params: {
+    agenda: AgendaItem;
+    sesiAwal: SesiItem | null;
+  }) => void;
 }
 
 export function AgendaSection({
@@ -180,7 +183,8 @@ export function AgendaSection({
                       {!adaTitik && !sudahSelesai && (
                         <p className="text-[11px] text-amber-600 inline-flex items-center gap-1">
                           <AlertCircle className="w-3 h-3" />
-                          Titik presensi belum diatur — atur di tombol edit kegiatan sebelum membuat sesi.
+                          Titik presensi belum diatur — atur di tombol edit
+                          kegiatan sebelum membuat sesi.
                         </p>
                       )}
                     </div>
@@ -207,7 +211,9 @@ export function AgendaSection({
                       )}
                       {!isReadonly && sedangBerjalan && (
                         <button
-                          onClick={() => onOpenModalSesi({ agenda: item, sesiAwal: null })}
+                          onClick={() =>
+                            onOpenModalSesi({ agenda: item, sesiAwal: null })
+                          }
                           className="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-secondary hover:bg-primary text-white font-semibold text-xs shadow-md shadow-secondary/25 transition-all cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -250,7 +256,8 @@ export function AgendaSection({
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-muted">
                                 <span className="inline-flex items-center gap-1 font-semibold text-navy">
                                   <QrCode className="w-3.5 h-3.5 text-secondary" />
-                                  {keInputJam(sesi.bukaAt)}–{keInputJam(sesi.tutupAt)} WIB
+                                  {keInputJam(sesi.bukaAt)}–
+                                  {keInputJam(sesi.tutupAt)} WIB
                                 </span>
                                 <span>
                                   {statusSesi === "berjalan"
@@ -262,7 +269,8 @@ export function AgendaSection({
                                 {rekapSesi && (
                                   <span>
                                     Hadir{" "}
-                                    {rekapSesi.ringkasan.hadir + rekapSesi.ringkasan.terlambat}
+                                    {rekapSesi.ringkasan.hadir +
+                                      rekapSesi.ringkasan.terlambat}
                                     /{rekapSesi.ringkasan.total}
                                   </span>
                                 )}

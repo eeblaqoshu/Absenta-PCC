@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, MapPin, CheckCircle2, AlertCircle, QrCode } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  CheckCircle2,
+  AlertCircle,
+  QrCode,
+} from "lucide-react";
 import Link from "next/link";
 import { AgendaStatusTabs } from "@/components/ui/agenda-status-tabs";
 import { EmptyAgenda } from "@/components/ui/empty-agenda";
@@ -38,7 +45,9 @@ export function StoAgendaTabs({
   sedangBerlangsung: AgendaItem[];
   selesai: AgendaItem[];
 }) {
-  const [activeTab, setActiveTab] = useState<"mendatang" | "berlangsung" | "selesai">("mendatang");
+  const [activeTab, setActiveTab] = useState<
+    "mendatang" | "berlangsung" | "selesai"
+  >("mendatang");
 
   const tabs = [
     {
@@ -66,7 +75,11 @@ export function StoAgendaTabs({
   return (
     <div className="space-y-4">
       <AgendaStatusTabs
-        items={tabs.map((tab) => ({ id: tab.id, label: tab.label, count: tab.count }))}
+        items={tabs.map((tab) => ({
+          id: tab.id,
+          label: tab.label,
+          count: tab.count,
+        }))}
         value={activeTab}
         onChange={setActiveTab}
         layoutId="sto-agenda-tabs"
@@ -93,7 +106,9 @@ export function StoAgendaTabs({
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-accent/20 text-primary uppercase tracking-wide border border-accent/30">
-                      {agenda.jenis ? agenda.jenis.replace(/_/g, " ") : "Agenda"}
+                      {agenda.jenis
+                        ? agenda.jenis.replace(/_/g, " ")
+                        : "Agenda"}
                     </span>
                     <span className="text-xs text-slate-muted">•</span>
                     <span className="text-xs font-semibold text-secondary">

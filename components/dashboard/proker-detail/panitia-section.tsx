@@ -28,7 +28,8 @@ export function PanitiaSection({
           Belum ada susunan panitia untuk proker ini
         </p>
         <p className="text-xs text-slate-muted mt-1">
-          Tambahkan pengurus STO ke dalam kepanitiaan melalui halaman &quot;Kelola Susunan Panitia&quot;.
+          Tambahkan pengurus STO ke dalam kepanitiaan melalui halaman
+          &quot;Kelola Susunan Panitia&quot;.
         </p>
         {!isReadonly && (
           <div className="mt-4">
@@ -47,7 +48,10 @@ export function PanitiaSection({
 
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto scrollbar-none" data-lenis-prevent-horizontal>
+      <div
+        className="overflow-x-auto scrollbar-none"
+        data-lenis-prevent-horizontal
+      >
         <table className="w-full text-left text-xs">
           <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
             <tr>
@@ -63,16 +67,23 @@ export function PanitiaSection({
               const divisiLabel = item.sto.divisi || "Umum";
 
               return (
-                <tr key={item.id} className="hover:bg-surface/70 transition-colors">
+                <tr
+                  key={item.id}
+                  className="hover:bg-surface/70 transition-colors"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div>
-                        <div className="font-semibold text-navy">{item.sto.nama}</div>
+                        <div className="font-semibold text-navy">
+                          {item.sto.nama}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badge.bg}`}>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badge.bg}`}
+                    >
                       {badge.label}
                     </span>
                   </td>

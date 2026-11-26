@@ -28,7 +28,7 @@ interface Props {
 }
 
 /**
- * Menyesuaikan format gambar tanda tangan ke rasio standar tanda tangan (320x120 px):
+ * Menyesuaikan format gambar tanda tangan ke rasio standar tanda tangan ukuran (320x120 px):
  * 1. Menghapus latar putih/terang agar transparan.
  * 2. Memangkas ruang kosong di sekeliling goresan tanda tangan (auto-trim).
  * 3. Menempatkan tanda tangan tepat di tengah kanvas proporsional 320x120 px.
@@ -145,7 +145,7 @@ async function prosesGambarTtd(file: File): Promise<string> {
     drawX,
     drawY,
     drawW,
-    drawH
+    drawH,
   );
 
   return outCanvas.toDataURL("image/png");
@@ -193,7 +193,9 @@ export function ModalStoForm({
       setTtd(hasilDataUrl);
     } catch (err) {
       setErrorTtd(
-        err instanceof Error ? err.message : "Gagal memproses gambar tanda tangan."
+        err instanceof Error
+          ? err.message
+          : "Gagal memproses gambar tanda tangan.",
       );
     } finally {
       setSedangMemprosesTtd(false);
@@ -380,7 +382,8 @@ export function ModalStoForm({
                         : "Pilih File Gambar TTD"}
                     </span>
                     <span className="text-[10px] text-slate-muted">
-                      Otomatis disesuaikan ke bentuk tanda tangan &amp; latar transparan
+                      Otomatis disesuaikan ke bentuk tanda tangan &amp; latar
+                      transparan
                     </span>
                   </button>
                 )}
@@ -392,7 +395,8 @@ export function ModalStoForm({
                 )}
 
                 <p className="text-[10px] text-slate-muted leading-relaxed">
-                  TTD ini otomatis tampil pada daftar hadir setiap kali STO tercatat hadir atau terlambat.
+                  TTD ini otomatis tampil pada daftar hadir setiap kali STO
+                  tercatat hadir atau terlambat.
                 </p>
               </div>
 
@@ -409,7 +413,9 @@ export function ModalStoForm({
                   disabled={isPending || sedangMemprosesTtd}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25 cursor-pointer"
                 >
-                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   Simpan
                 </button>
               </div>

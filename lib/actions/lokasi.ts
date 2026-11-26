@@ -35,7 +35,7 @@ function kodeErrorPrisma(err: unknown): string {
 
 export async function tambahLokasiAction(prevState: unknown, formData: FormData) {
   try {
-    const adsek = await requireAdsek(["admin"]);
+    const adsek = await requireAdsek(["admin", "sekretaris_inti"]);
 
     const parsed = LokasiInputSchema.safeParse(bacaForm(formData));
     if (!parsed.success) {
@@ -67,7 +67,7 @@ export async function tambahLokasiAction(prevState: unknown, formData: FormData)
 
 export async function ubahLokasiAction(lokasiId: number, formData: FormData) {
   try {
-    await requireAdsek(["admin"]);
+    await requireAdsek(["admin", "sekretaris_inti"]);
 
     const parsed = LokasiInputSchema.safeParse(bacaForm(formData));
     if (!parsed.success) {
@@ -100,7 +100,7 @@ export async function ubahLokasiAction(lokasiId: number, formData: FormData) {
 
 export async function hapusLokasiAction(lokasiId: number) {
   try {
-    await requireAdsek(["admin"]);
+    await requireAdsek(["admin", "sekretaris_inti"]);
 
     const lokasi = await prisma.lokasi.findUnique({
       where: { id: lokasiId },
