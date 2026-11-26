@@ -4,7 +4,7 @@ import { requireAdsek } from "@/lib/auth";
 import { RoleAdsek } from "@prisma/client";
 import Link from "next/link";
 import { ArrowLeft, UserPlus } from "lucide-react";
-import { FormTambahAdsek } from "@/components/dashboard/form-tambah-adsek";
+import { FormTambahAdsek } from "@/components/dashboard/adsek";
 
 export default async function TambahAdsekPage() {
   await requireAdsek([RoleAdsek.admin]);
@@ -20,8 +20,7 @@ export default async function TambahAdsekPage() {
           <ArrowLeft className="w-4 h-4" />
           Kembali ke Profil &amp; Data Pengelola
         </Link>
-      </div>
-
+      </div> 
       {/* Card Form */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-6">
         <div className="border-b border-[#E2E8F0] pb-4">

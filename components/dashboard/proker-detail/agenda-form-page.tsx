@@ -130,9 +130,7 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
   );
   const [urutanAgenda] = useState<number>(agendaAwal?.urutan ?? 1);
   const [tglAgenda, setTglAgenda] = useState(
-    agendaAwal?.tglPelaksanaan
-      ? keTanggalWib(agendaAwal.tglPelaksanaan)
-      : "",
+    agendaAwal?.tglPelaksanaan ? keTanggalWib(agendaAwal.tglPelaksanaan) : "",
   );
   const [tglSelesaiAgenda, setTglSelesaiAgenda] = useState(
     agendaAwal?.tglSelesai ? keTanggalWib(agendaAwal.tglSelesai) : "",
@@ -147,7 +145,9 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
   );
 
   // Lokasi & titik presensi
-  const [lokasiAgenda, setLokasiAgenda] = useState(agendaAwal?.lokasiNama ?? "");
+  const [lokasiAgenda, setLokasiAgenda] = useState(
+    agendaAwal?.lokasiNama ?? "",
+  );
   const [lokasiAgendaId, setLokasiAgendaId] = useState(
     agendaAwal?.lokasiId ? String(agendaAwal.lokasiId) : "",
   );
@@ -465,7 +465,9 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                   onChange={(e) => pilihLokasiMaster(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all disabled:opacity-60 cursor-pointer"
                 >
-                  <option value="">-- Atur titik manual / pilih lokasi --</option>
+                  <option value="">
+                    -- Atur titik manual / pilih lokasi --
+                  </option>
                   {daftarLokasi.map((l) => (
                     <option key={l.id} value={l.id}>
                       {l.nama} ({l.radiusM} m)
@@ -510,7 +512,8 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                 <div className="flex items-center justify-between text-[11px] text-slate-muted mb-1.5">
                   <span>Klik peta untuk memindahkan titik pusat</span>
                   <span className="font-mono text-[10px]">
-                    {titikAgendaAktif.lat.toFixed(5)}, {titikAgendaAktif.lng.toFixed(5)}
+                    {titikAgendaAktif.lat.toFixed(5)},{" "}
+                    {titikAgendaAktif.lng.toFixed(5)}
                   </span>
                 </div>
                 <div className="rounded-2xl border border-[#E2E8F0] overflow-hidden">
@@ -525,7 +528,8 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
               </div>
 
               <p className="text-[11px] text-slate-muted leading-relaxed">
-                Presensi di luar radius tetap tercatat dan ditandai menunggu verifikasi AdSek.
+                Presensi di luar radius tetap tercatat dan ditandai menunggu
+                verifikasi AdSek.
               </p>
 
               <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-end gap-2.5">
@@ -541,7 +545,9 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                   disabled={isReadonly || isPending}
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
                 >
-                  {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isPending && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
                   {isEdit ? "Simpan Perubahan" : "Simpan Kegiatan"}
                 </button>
               </div>

@@ -1,7 +1,7 @@
 // app/(adsek)/dashboard/proker/[id]/page.tsx
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ProkerDetail } from "@/components/dashboard/proker-detail";
+import { ProkerDetail } from "@/components/dashboard/proker";
 import { rekapKehadiranBanyakSesi } from "@/lib/kehadiran";
 import { hitungStatusAgenda } from "@/lib/waktu";
 import { notFound } from "next/navigation";
@@ -69,7 +69,7 @@ export default async function ProkerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Ambil semua daftar STO pada periode proker ini untuk pilihan penambahan panitia
+  // Ambil semua daftar STO pada periode proker ini untuk penambahan panitia
   const availableStos = await prisma.sto.findMany({
     where: { periodeId: proker.periode.id },
     select: {
@@ -108,7 +108,7 @@ export default async function ProkerDetailPage({ params }: PageProps) {
               a.tglPelaksanaan,
               a.waktuPelaksanaan,
               a.tglSelesai,
-              sekarang
+              sekarang,
             ),
           })),
         }}

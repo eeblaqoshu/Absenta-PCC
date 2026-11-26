@@ -1,7 +1,12 @@
 // components/dashboard/proker-detail/modal-edit-panitia.tsx
 "use client";
 
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/modal";
+import {
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+} from "@/components/ui/modal";
 import { Loader2, AlertCircle } from "lucide-react";
 import {
   DAFTAR_SARAN_PERAN,
@@ -100,7 +105,9 @@ export function ModalEditPanitia({
                 <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                 <div>
                   <span className="font-bold">Pengurus Divisi Litbang:</span>{" "}
-                  Sesuai kebijakan organisasi, pengurus dari Divisi Litbang hanya dapat ditugaskan sebagai <strong>Litbang Pengawas</strong> pada seluruh program kerja.
+                  Sesuai kebijakan organisasi, pengurus dari Divisi Litbang
+                  hanya dapat ditugaskan sebagai{" "}
+                  <strong>Litbang Pengawas</strong> pada seluruh program kerja.
                 </div>
               </div>
             )}
@@ -111,7 +118,8 @@ export function ModalEditPanitia({
                 <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
                 <div>
                   <span className="font-bold">Pengurus Sekretaris Umum:</span>{" "}
-                  Sekretaris Umum tidak dapat ditugaskan sebagai <strong>Sekretaris Inti</strong>.
+                  Sekretaris Umum tidak dapat ditugaskan sebagai{" "}
+                  <strong>Sekretaris Inti</strong>.
                 </div>
               </div>
             )}

@@ -47,13 +47,18 @@ export function StoTable({
               </tr>
             ) : (
               data.map((item, index) => (
-                <tr key={item.id} className="hover:bg-surface/70 transition-colors">
+                <tr
+                  key={item.id}
+                  className="hover:bg-surface/70 transition-colors"
+                >
                   <td className="px-5 py-4 whitespace-nowrap text-slate-muted font-medium">
                     {index + 1}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
                     <div className="font-semibold text-navy">{item.nama}</div>
-                    <div className="text-[11px] text-slate-muted">{item.nim}</div>
+                    <div className="text-[11px] text-slate-muted">
+                      {item.nim}
+                    </div>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-slate-muted text-[11px]">
                     {item.emailGoogle}
@@ -93,7 +98,9 @@ export function StoTable({
                         Upload TTD
                       </button>
                     ) : (
-                      <span className="text-[11px] text-slate-muted">Belum ada</span>
+                      <span className="text-[11px] text-slate-muted">
+                        Belum ada
+                      </span>
                     )}
                   </td>
                   {isAdmin && (

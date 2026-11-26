@@ -11,8 +11,14 @@ import {
 import { ambilStatistikSto } from "@/lib/statistik-sto";
 import { formatLabelDivisi } from "@/lib/divisi";
 import { StoNavbar } from "@/components/sto/sto-navbar";
-import { StoAgendaTabs, type AgendaItem } from "@/components/sto/sto-agenda-tabs";
-import { StoLocationPanel, type TitikAgendaSto } from "@/components/sto-location-panel";
+import {
+  StoAgendaTabs,
+  type AgendaItem,
+} from "@/components/sto/sto-agenda-tabs";
+import {
+  StoLocationPanel,
+  type TitikAgendaSto,
+} from "@/components/sto-location-panel";
 import {
   QrCode,
   CheckCircle2,
@@ -62,7 +68,9 @@ export default async function StoHomePage() {
   for (const ag of semuaAgenda) {
     const izin = await bolehAkses(sto.id, ag.id);
     if (izin.boleh) {
-      ag.sesi = ag.sesi.filter((s) => !agendaTelahBerlalu(s.bukaAt, undefined, sekarang));
+      ag.sesi = ag.sesi.filter(
+        (s) => !agendaTelahBerlalu(s.bukaAt, undefined, sekarang),
+      );
       agendaAkses.push(ag);
     }
   }
@@ -166,7 +174,7 @@ export default async function StoHomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Kolom Kiri: Profil, Quick Actions & Statistik (Desktop 4/12, Mobile Full) */}
           <aside className="lg:col-span-4 space-y-5">
-            {/* Kartu Profil STO */}
+            {/* Profil STO */}
             <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -345,9 +353,7 @@ export default async function StoHomePage() {
                 href="/statistik"
                 className="pt-2 border-t border-[#E2E8F0] flex items-center justify-start gap-2 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
               >
-                <span>
-                  Lihat Data Sesi Selesai
-                </span>
+                <span>Lihat Data Sesi Selesai</span>
                 <span>→</span>
               </Link>
             </div>
@@ -355,7 +361,7 @@ export default async function StoHomePage() {
 
           {/* Kolom Kanan: Daftar Agenda Kegiatan (Desktop 8/12, Mobile Full) */}
           <section className="lg:col-span-8 space-y-6">
-        <StoLocationPanel titikAgenda={titikAgenda} />
+            <StoLocationPanel titikAgenda={titikAgenda} />
 
             {/* Banner Salam & Status Periode */}
             <div className="p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -369,8 +375,8 @@ export default async function StoHomePage() {
                   Kegiatan Kepengurusan PCC
                 </h2>
                 <p className="text-xs text-slate-muted mt-1">
-                  Daftar kegiatan yang disesuaikan dengan divisi dan
-                  kepanitiaan Anda.
+                  Daftar kegiatan yang disesuaikan dengan divisi dan kepanitiaan
+                  Anda.
                 </p>
               </div>
 
@@ -391,7 +397,6 @@ export default async function StoHomePage() {
               sedangBerlangsung={sedangBerlangsung}
               selesai={selesai}
             />
-
           </section>
         </div>
       </main>

@@ -136,7 +136,8 @@ export default async function StoStatistikPage() {
                 Data Absensi Sesi yang Telah Selesai
               </h2>
               <p className="text-xs text-slate-muted mt-0.5">
-                Rekam jejak kehadiran Anda pada sesi kegiatan yang sudah ditutup.
+                Rekam jejak kehadiran Anda pada sesi kegiatan yang sudah
+                ditutup.
               </p>
             </div>
           </div>
@@ -243,7 +244,9 @@ export default async function StoStatistikPage() {
                             <QrCode className="w-3.5 h-3.5 text-secondary shrink-0" />
                             <span>
                               Dipindai pada pukul{" "}
-                              <strong className="font-semibold text-navy">{item.waktuScanFormatted}</strong>
+                              <strong className="font-semibold text-navy">
+                                {item.waktuScanFormatted}
+                              </strong>
                             </span>
                           </div>
                           {item.menitTerlambat > 0 && (

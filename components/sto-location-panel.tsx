@@ -55,7 +55,9 @@ export function StoLocationPanel({ titikAgenda }: Props) {
           weight: 1.5,
         })
           .addTo(peta)
-          .bindPopup(`<strong>${escapeHtml(titik.judul)}</strong><br/>${escapeHtml(titik.lokasi ?? "Lokasi agenda")}`);
+          .bindPopup(
+            `<strong>${escapeHtml(titik.judul)}</strong><br/>${escapeHtml(titik.lokasi ?? "Lokasi agenda")}`,
+          );
         L.circleMarker([titik.lat, titik.lng], {
           radius: 5,
           color: "#fff",
@@ -102,7 +104,10 @@ export function StoLocationPanel({ titikAgenda }: Props) {
           });
           posisiSayaRef.current?.remove();
           radiusSayaRef.current?.remove();
-          posisiSayaRef.current = L.marker([lat, lng], { icon: ikon }).addTo(peta).bindTooltip("Lokasi saya").openTooltip();
+          posisiSayaRef.current = L.marker([lat, lng], { icon: ikon })
+            .addTo(peta)
+            .bindTooltip("Lokasi saya")
+            .openTooltip();
           radiusSayaRef.current = L.circle([lat, lng], {
             radius: Math.max(posisi.coords.accuracy, 20),
             color: "#0f172a",
@@ -127,7 +132,9 @@ export function StoLocationPanel({ titikAgenda }: Props) {
         <div>
           <h2 className="text-sm font-semibold text-navy">Lokasi agenda</h2>
           <p className="mt-0.5 text-xs text-slate-muted">
-            {titikAgenda.length ? `${titikAgenda.length} titik presensi` : "Belum ada titik presensi"}
+            {titikAgenda.length
+              ? `${titikAgenda.length} titik presensi`
+              : "Belum ada titik presensi"}
           </p>
         </div>
         <button
@@ -136,16 +143,31 @@ export function StoLocationPanel({ titikAgenda }: Props) {
           disabled={memuat}
           className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#E2E8F0] px-3 text-xs font-medium text-navy transition-colors hover:bg-surface disabled:opacity-60"
         >
-          {memuat ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+          {memuat ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <LocateFixed className="h-4 w-4" />
+          )}
           {memuat ? "Mencari lokasi" : "Cek lokasi saya"}
         </button>
       </div>
-      <div ref={containerRef} className="relative z-0 isolate h-56 w-full bg-slate-100 sm:h-64" aria-label="Peta lokasi agenda" />
-      {pesan && <p role="status" className="px-4 py-2 text-xs text-rose-600">{pesan}</p>}
+      <div
+        ref={containerRef}
+        className="relative z-0 isolate h-56 w-full bg-slate-100 sm:h-64"
+        aria-label="Peta lokasi agenda"
+      />
+      {pesan && (
+        <p role="status" className="px-4 py-2 text-xs text-rose-600">
+          {pesan}
+        </p>
+      )}
       {titikAgenda.length > 0 && (
         <div className="flex gap-2 overflow-x-auto border-t border-[#E2E8F0] px-4 py-2.5 scrollbar-none sm:px-5">
           {titikAgenda.slice(0, 4).map((titik) => (
-            <span key={titik.id} className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-slate-muted">
+            <span
+              key={titik.id}
+              className="inline-flex shrink-0 items-center gap-1.5 text-[11px] text-slate-muted"
+            >
               <MapPin className="h-3 w-3 text-secondary" />
               {titik.lokasi || titik.judul}
             </span>
@@ -157,11 +179,15 @@ export function StoLocationPanel({ titikAgenda }: Props) {
 }
 
 function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  })[character] ?? character);
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[character] ?? character,
+  );
 }

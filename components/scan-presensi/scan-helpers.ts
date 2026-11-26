@@ -10,7 +10,7 @@ export function pesanGalatGps(err: GeolocationPositionError): string {
     return "Lokasi tidak tersedia. Pastikan GPS aktif dan Anda berada di area terbuka.";
   }
   if (err.code === err.TIMEOUT) {
-    return "Pengambilan lokasi terlalu lama. Coba tekan tombol \"Ambil lokasi\".";
+    return 'Pengambilan lokasi terlalu lama. Coba tekan tombol "Ambil lokasi".';
   }
   return "Gagal membaca GPS.";
 }
@@ -19,7 +19,11 @@ export function pesanGalatGps(err: GeolocationPositionError): string {
 export function ambilPosisiSekarang(): Promise<Omit<Koordinat, "ts">> {
   return new Promise((resolve, reject) => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      reject(new Error("Perangkat ini tidak mendukung GPS. Presensi tidak bisa dilakukan."));
+      reject(
+        new Error(
+          "Perangkat ini tidak mendukung GPS. Presensi tidak bisa dilakukan.",
+        ),
+      );
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -30,7 +34,7 @@ export function ambilPosisiSekarang(): Promise<Omit<Koordinat, "ts">> {
           akurasi: Math.round(pos.coords.accuracy),
         }),
       (err) => reject(new Error(pesanGalatGps(err))),
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 10_000 }
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 10_000 },
     );
   });
 }

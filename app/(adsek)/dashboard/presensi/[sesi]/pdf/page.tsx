@@ -1,5 +1,5 @@
 // app/(adsek)/dashboard/presensi/[sesi]/pdf/page.tsx
-// Halaman Export PDF Daftar Hadir sesuai agenda & format resmi UKM PCC.
+// Halaman Export PDF Daftar Hadir sesuai agenda.
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rekapKehadiranSesi } from "@/lib/kehadiran";
@@ -7,7 +7,7 @@ import { formatTanggalIndo } from "@/lib/waktu";
 import {
   ExportPdfDaftarHadir,
   type PenandatanganDaftarHadir,
-} from "@/components/dashboard/export-pdf-daftar-hadir";
+} from "@/components/dashboard/presensi";
 import { JenisAgenda, PeranPanitia, TargetPeserta } from "@prisma/client";
 import { notFound } from "next/navigation";
 
@@ -44,7 +44,7 @@ function tentukanSubjudulDefault(target: TargetPeserta): string {
 function tentukanNamaAcaraDefault(
   jenis: JenisAgenda,
   judulAgenda: string,
-  namaProker: string
+  namaProker: string,
 ): string {
   const j = judulAgenda.trim();
   const p = namaProker.trim();
@@ -85,7 +85,7 @@ export default async function ExportPdfPresensiPage({ params }: PageProps) {
 
   const ketuaPelaksana =
     daftarKetua.find(
-      (k) => !(k.divisiPanitia || "").toLowerCase().includes("wakil")
+      (k) => !(k.divisiPanitia || "").toLowerCase().includes("wakil"),
     ) ?? daftarKetua[0];
 
   let penandatanganDefault: PenandatanganDaftarHadir;
@@ -117,7 +117,7 @@ export default async function ExportPdfPresensiPage({ params }: PageProps) {
         acaraDefault={tentukanNamaAcaraDefault(
           rekap.jenisAgenda,
           rekap.judulAgenda,
-          rekap.namaProker
+          rekap.namaProker,
         )}
         subjudulDefault={tentukanSubjudulDefault(rekap.targetPeserta)}
         penandatanganDefault={penandatanganDefault}

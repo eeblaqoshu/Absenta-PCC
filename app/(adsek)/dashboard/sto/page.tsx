@@ -1,7 +1,7 @@
 // app/(adsek)/dashboard/sto/page.tsx
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { StoManager } from "@/components/dashboard/sto-manager";
+import { StoManager } from "@/components/dashboard/sto";
 import { StatusPeriode } from "@prisma/client";
 import Link from "next/link";
 import { AlertCircle, Calendar } from "lucide-react";
@@ -26,7 +26,8 @@ export default async function StoPage() {
             Tidak Ada Periode Aktif
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Data STO wajib terikat ke periode kepengurusan aktif. Silakan buka periode baru terlebih dahulu.
+            Data STO wajib terikat ke periode kepengurusan aktif. Silakan buka
+            periode baru terlebih dahulu.
           </p>
         </div>
         {canManage && (

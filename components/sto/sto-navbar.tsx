@@ -124,12 +124,7 @@ export function StoNavbar({ sto, periodeNama }: StoNavbarProps) {
 
           {/* Sisi Kanan: Shortcut Scan QR + Profil Dropdown STO */}
           <div className="flex items-center shrink-0 gap-2.5">
-
-            {sto ? (
-              <StoUserDropdown sto={sto} />
-            ) : (
-              <LogoutButton />
-            )}
+            {sto ? <StoUserDropdown sto={sto} /> : <LogoutButton />}
           </div>
         </div>
       </div>

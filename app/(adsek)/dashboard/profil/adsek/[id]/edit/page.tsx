@@ -1,12 +1,12 @@
 // app/(adsek)/dashboard/profil/adsek/[id]/edit/page.tsx
-// Halaman untuk mengedit akun Adsek / PI yang sudah ada
+// Halaman untuk mengedit akun Adsek / PH yang sudah ada
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { RoleAdsek } from "@prisma/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, UserCheck } from "lucide-react";
-import { FormEditAdsek } from "@/components/dashboard/form-edit-adsek";
+import { FormEditAdsek } from "@/components/dashboard/adsek";
 
 interface Props {
   params: Promise<{ id: string }>;

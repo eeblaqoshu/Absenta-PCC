@@ -1,0 +1,442 @@
+﻿// components/dashboard/proker-detail.tsx
+"use client";
+
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { hapusAgendaAction } from "@/lib/actions/agenda";
+import {
+  ubahPanitiaAction,
+  hapusPanitiaAction,
+} from "@/lib/actions/kepanitiaan";
+import { StatusPeriode } from "@prisma/client";
+import { konfirmasiHapus } from "@/lib/swal";
+import {
+  SesiModal,
+  type LokasiOption,
+  type SesiItem,
+} from "@/components/dashboard/sesi-modal";
+import {
+  hitungStatusAgenda,
+  jamDariWaktuAgenda,
+  type StatusAgendaDihitung,
+} from "@/lib/waktu";
+import type { RekapKehadiranSesi } from "@/lib/kehadiran";
+import {
+  Users,
+  Calendar,
+  Plus,
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import {
+  OPSI_PERAN_PANITIA,
+  normalisasiPeranPanitia,
+  isDivisiLitbang,
+  isSekretarisUmum,
+  isPeranLitbangPengawas,
+  DETAK_MS,
+  keTanggalWib,
+  type AgendaItem,
+  type PanitiaItem,
+  type StoOption,
+  type ProkerData,
+} from "./types";
+import { PanitiaSection } from "./panitia-section";
+import { AgendaSection } from "./agenda-section";
+import { ModalKelolaPanitia } from "./modal-kelola-panitia";
+import { ModalEditPanitia } from "./modal-edit-panitia";
+
+// Re-export untuk backwards-compatibility
+export { OPSI_PERAN_PANITIA };
+export type { PanitiaItem, AgendaItem, StoOption };
+
+interface Props {
+  proker: ProkerData;
+  availableStos: StoOption[];
+  daftarLokasi: LokasiOption[];
+  rekap: Record<number, RekapKehadiranSesi>;
+  initialNowIso: string;
+}
+
+export function ProkerDetail({
+  proker,
+  availableStos,
+  daftarLokasi,
+  rekap,
+  initialNowIso,
+}: Props) {
+  const [tabAktif, setTabAktif] = useState<"panitia" | "agenda">("panitia");
+  const [isPending, startTransition] = useTransition();
+  const [pesan, setPesan] = useState<{
+    tipe: "sukses" | "error";
+    teks: string;
+  } | null>(null);
+
+  const isReadonly = proker.periode.status === StatusPeriode.selesai;
+
+  // Snapshot waktu deterministik saat SSR & hidrasi awal, lalu diperbarui berkala di klien
+  const [tabStatus, setTabStatus] =
+    useState<StatusAgendaDihitung>("sedang_berlangsung");
+  const [now, setNow] = useState<Date>(() => new Date(initialNowIso));
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setNow(new Date());
+    }, DETAK_MS);
+    return () => clearInterval(t);
+  }, []);
+
+  const agendaBerstatus = useMemo(() => {
+    return proker.agenda.map((a) => {
+      const statusLive = now
+        ? hitungStatusAgenda(
+            new Date(a.tglPelaksanaan),
+            a.waktuPelaksanaan,
+            a.tglSelesai ? new Date(a.tglSelesai) : null,
+            now,
+          )
+        : a.statusDihitung;
+      return { ...a, statusLive };
+    });
+  }, [proker.agenda, now]);
+
+  const kelompokAgenda = useMemo(
+    () => ({
+      sedang_berlangsung: agendaBerstatus.filter(
+        (a) => a.statusLive === "sedang_berlangsung",
+      ),
+      akan_datang: agendaBerstatus.filter(
+        (a) => a.statusLive === "akan_datang",
+      ),
+      selesai: agendaBerstatus.filter((a) => a.statusLive === "selesai"),
+    }),
+    [agendaBerstatus],
+  );
+
+  const tabEfektif: StatusAgendaDihitung =
+    kelompokAgenda[tabStatus].length > 0
+      ? tabStatus
+      : ((
+          [
+            "sedang_berlangsung",
+            "akan_datang",
+            "selesai",
+          ] as StatusAgendaDihitung[]
+        ).find((k) => kelompokAgenda[k].length > 0) ?? tabStatus);
+
+  const agendaTerlihat = kelompokAgenda[tabEfektif];
+
+  // Sesi modal state
+  const [modalSesi, setModalSesi] = useState<{
+    agenda: AgendaItem;
+    sesiAwal: SesiItem | null;
+  } | null>(null);
+
+  // Modal kelola banyak panitia & CSV
+  const [modalPanitiaBuka, setModalPanitiaBuka] = useState(false);
+
+  // Modal edit panitia tunggal
+  const [modalEditPanitiaBuka, setModalEditPanitiaBuka] = useState(false);
+  const [panitiaDiedit, setPanitiaDiedit] = useState<PanitiaItem | null>(null);
+  const [selectedStoIdEdit, setSelectedStoIdEdit] = useState<number>(0);
+  const [selectedRoleKeyEdit, setSelectedRoleKeyEdit] =
+    useState<string>("ketua_pelaksana");
+  const [divisiPanitiaEdit, setDivisiPanitiaEdit] = useState<string>("");
+
+  // Handler Edit Panitia Tunggal
+  const handleOpenEditPanitia = (item: PanitiaItem) => {
+    setPanitiaDiedit(item);
+    setSelectedStoIdEdit(item.sto.id);
+    if (isDivisiLitbang(item.sto)) {
+      setSelectedRoleKeyEdit("Litbang Pengawas");
+    } else {
+      setSelectedRoleKeyEdit(item.divisiPanitia || "Anggota");
+    }
+    setDivisiPanitiaEdit(item.sto.divisi || "Umum");
+    setModalEditPanitiaBuka(true);
+  };
+
+  const handleSubmitEditPanitia = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!panitiaDiedit) return;
+    setPesan(null);
+
+    const targetSto =
+      availableStos.find((s) => s.id === selectedStoIdEdit) ||
+      panitiaDiedit.sto;
+
+    if (
+      isDivisiLitbang(targetSto) &&
+      !isPeranLitbangPengawas(selectedRoleKeyEdit, selectedRoleKeyEdit)
+    ) {
+      setPesan({
+        tipe: "error",
+        teks: `Pengurus dari Divisi Litbang (${targetSto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+      });
+      return;
+    }
+
+    if (
+      selectedRoleKeyEdit.trim().toLowerCase().includes("sekretaris inti") &&
+      isSekretarisUmum(targetSto)
+    ) {
+      setPesan({
+        tipe: "error",
+        teks: `Sekretaris Umum (${targetSto.nama}) tidak dapat ditugaskan sebagai Sekretaris Inti pada kepanitiaan ini.`,
+      });
+      return;
+    }
+
+    const norm = normalisasiPeranPanitia(
+      selectedRoleKeyEdit,
+      divisiPanitiaEdit,
+    );
+
+    const formData = new FormData();
+    formData.append("stoId", String(selectedStoIdEdit));
+    formData.append("peran", norm.peran);
+    formData.append("peranTeks", selectedRoleKeyEdit.trim());
+    formData.append(
+      "divisiPanitia",
+      selectedRoleKeyEdit.trim() || norm.divisiPanitia,
+    );
+
+    startTransition(async () => {
+      const res = await ubahPanitiaAction(panitiaDiedit.id, formData);
+      if (res.error) {
+        setPesan({ tipe: "error", teks: res.error.pesan });
+      } else {
+        setPesan({ tipe: "sukses", teks: res.pesan });
+        setModalEditPanitiaBuka(false);
+        setPanitiaDiedit(null);
+      }
+    });
+  };
+
+  const handleHapusPanitia = async (kepanitiaanId: number, namaSto: string) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus dari Kepanitiaan?",
+      pesan: `Anda yakin ingin menghapus "${namaSto}" dari kepanitiaan proker ini?`,
+      tombolHapus: "Ya, Hapus Panitia",
+    });
+    if (!setuju) return;
+
+    startTransition(async () => {
+      const res = await hapusPanitiaAction(kepanitiaanId);
+      if (res.error) {
+        setPesan({ tipe: "error", teks: res.error.pesan });
+      } else {
+        setPesan({ tipe: "sukses", teks: res.pesan });
+      }
+    });
+  };
+
+  const handleHapusAgenda = async (
+    agendaId: number,
+    judulAgendaHapus: string,
+  ) => {
+    const setuju = await konfirmasiHapus({
+      judul: "Hapus Kegiatan?",
+      pesan: `Anda yakin ingin menghapus kegiatan "${judulAgendaHapus}"? Kegiatan hanya bisa dihapus bila belum punya sesi presensi.`,
+      tombolHapus: "Ya, Hapus Kegiatan",
+    });
+    if (!setuju) return;
+
+    startTransition(async () => {
+      const res = await hapusAgendaAction(agendaId);
+      if (res.error) {
+        setPesan({ tipe: "error", teks: res.error.pesan });
+      } else {
+        setPesan({ tipe: "sukses", teks: res.pesan });
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header Banner Card */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+            <Link
+              href="/dashboard/proker"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors whitespace-nowrap shrink-0"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Daftar Proker
+            </Link>
+            <span className="text-slate-muted text-xs">â€¢</span>
+            <span className="text-xs font-semibold text-secondary">
+              {proker.periode.nama}
+            </span>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
+            {proker.nama}
+          </h2>
+          {proker.deskripsi && (
+            <p className="text-xs text-slate-muted mt-1 leading-relaxed max-w-2xl">
+              {proker.deskripsi}
+            </p>
+          )}
+        </div>
+
+        {/* Action Buttons Top */}
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          {!isReadonly && (
+            <>
+              {tabAktif === "panitia" ? (
+                <Link
+                  href={`/dashboard/proker/${proker.id}/panitia`}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                >
+                  <Users className="w-4 h-4" />
+                  Tambah Panitia Baru
+                </Link>
+              ) : (
+                <Link
+                  href={`/dashboard/proker/${proker.id}/agenda/baru`}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Kegiatan
+                </Link>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Alert Notification */}
+      {pesan && (
+        <div
+          className={`p-4 rounded-xl border flex items-start gap-3 text-xs ${
+            pesan.tipe === "sukses"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
+          }`}
+        >
+          {pesan.tipe === "sukses" ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1 font-medium">{pesan.teks}</div>
+          <button
+            onClick={() => setPesan(null)}
+            className="text-slate-muted hover:text-navy cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Tabs Navigation */}
+      <div className="flex items-center gap-3 border-b border-[#E2E8F0] pb-px">
+        <button
+          onClick={() => setTabAktif("panitia")}
+          className={`flex items-center gap-2 pb-3 px-1 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            tabAktif === "panitia"
+              ? "border-secondary text-secondary"
+              : "border-transparent text-slate-muted hover:text-navy"
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Susunan Kepanitiaan ({proker.kepanitiaan.length})
+        </button>
+
+        <button
+          onClick={() => setTabAktif("agenda")}
+          className={`flex items-center gap-2 pb-3 px-1 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+            tabAktif === "agenda"
+              ? "border-secondary text-secondary"
+              : "border-transparent text-slate-muted hover:text-navy"
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          Kegiatan ({proker.agenda.length})
+        </button>
+      </div>
+
+      {/* TAB 1: KEPANITIAAN CONTENT */}
+      {tabAktif === "panitia" && (
+        <PanitiaSection
+          proker={proker}
+          isReadonly={isReadonly}
+          isPending={isPending}
+          onEditPanitia={handleOpenEditPanitia}
+          onHapusPanitia={handleHapusPanitia}
+        />
+      )}
+
+      {/* TAB 2: AGENDA KEGIATAN CONTENT */}
+      {tabAktif === "agenda" && (
+        <AgendaSection
+          proker={proker}
+          isReadonly={isReadonly}
+          isPending={isPending}
+          tabStatus={tabStatus}
+          tabEfektif={tabEfektif}
+          kelompokAgenda={kelompokAgenda}
+          agendaTerlihat={agendaTerlihat}
+          now={now}
+          rekap={rekap}
+          setTabStatus={setTabStatus}
+          onHapusAgenda={handleHapusAgenda}
+          onOpenModalSesi={setModalSesi}
+        />
+      )}
+
+      {/* Modal Kelola Banyak Panitia & Impor CSV */}
+      <ModalKelolaPanitia
+        isOpen={modalPanitiaBuka}
+        proker={proker}
+        availableStos={availableStos}
+        onClose={() => setModalPanitiaBuka(false)}
+        setPesan={setPesan}
+        isPending={isPending}
+        startTransition={startTransition}
+      />
+
+      {/* Modal Ubah Panitia Tunggal */}
+      <ModalEditPanitia
+        isOpen={modalEditPanitiaBuka}
+        panitiaDiedit={panitiaDiedit}
+        availableStos={availableStos}
+        existingPanitiaStoIds={new Set(proker.kepanitiaan.map((k) => k.sto.id))}
+        selectedStoIdEdit={selectedStoIdEdit}
+        selectedRoleKeyEdit={selectedRoleKeyEdit}
+        divisiPanitiaEdit={divisiPanitiaEdit}
+        isPending={isPending}
+        setSelectedStoIdEdit={setSelectedStoIdEdit}
+        setSelectedRoleKeyEdit={setSelectedRoleKeyEdit}
+        onClose={() => {
+          setModalEditPanitiaBuka(false);
+          setPanitiaDiedit(null);
+        }}
+        onSubmit={handleSubmitEditPanitia}
+      />
+
+      {/* MODAL SESI PRESENSI (buat/ubah) */}
+      {modalSesi && (
+        <SesiModal
+          agendaId={modalSesi.agenda.id}
+          judulAgenda={modalSesi.agenda.judul}
+          tglMulai={keTanggalWib(modalSesi.agenda.tglPelaksanaan)}
+          tglSelesai={
+            modalSesi.agenda.tglSelesai
+              ? keTanggalWib(modalSesi.agenda.tglSelesai)
+              : null
+          }
+          jamAgendaWib={jamDariWaktuAgenda(modalSesi.agenda.waktuPelaksanaan)}
+          lokasiNama={modalSesi.agenda.lokasiNama}
+          radiusM={modalSesi.agenda.radiusM}
+          sesiAwal={modalSesi.sesiAwal}
+          onTutup={() => setModalSesi(null)}
+        />
+      )}
+    </div>
+  );
+}

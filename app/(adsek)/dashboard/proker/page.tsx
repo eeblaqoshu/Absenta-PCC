@@ -1,7 +1,7 @@
 // app/(adsek)/dashboard/proker/page.tsx
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ProkerList } from "@/components/dashboard/proker-list";
+import { ProkerList } from "@/components/dashboard/proker";
 import { StatusPeriode } from "@prisma/client";
 import Link from "next/link";
 import { AlertCircle, Calendar } from "lucide-react";
@@ -31,7 +31,8 @@ export default async function ProkerPage() {
             Belum Ada Periode Kepengurusan
           </h2>
           <p className="text-xs text-slate-muted mt-1">
-            Program kerja harus terikat pada periode kepengurusan. Silakan buat periode baru terlebih dahulu.
+            Program kerja harus terikat pada periode kepengurusan. Silakan buat
+            periode baru terlebih dahulu.
           </p>
         </div>
         <Link

@@ -4,7 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { getClientAuth, googleProvider } from "@/lib/firebase-client";
-import { ArrowRight, Lock, Mail, AlertCircle, Loader2, Eye, EyeOff } from "lucide-react";
+import {
+  ArrowRight,
+  Lock,
+  Mail,
+  AlertCircle,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import Image from "next/image";
 
@@ -41,7 +49,7 @@ export default function LoginPage() {
       data = await res.json();
     } catch {
       throw new Error(
-        "Gagal memproses respon dari server. Pastikan server aktif dan kredensial Firebase di .env sudah lengkap."
+        "Gagal memproses respon dari server. Pastikan server aktif dan kredensial Firebase di .env sudah lengkap.",
       );
     }
 
@@ -71,12 +79,16 @@ export default function LoginPage() {
           setErrorMsg("Jendela login Google ditutup sebelum selesai.");
         } else if (err.message.includes("auth/unauthorized-domain")) {
           setErrorMsg(
-            "Domain web ini (absenta.ukmpcc.org) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu klik 'Add domain' dan tambahkan 'absenta.ukmpcc.org'."
+            "Domain web ini (absenta.ukmpcc.org) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu klik 'Add domain' dan tambahkan 'absenta.ukmpcc.org'.",
           );
         } else if (err.message.includes("auth/popup-blocked")) {
-          setErrorMsg("Pop-up login diblokir oleh browser. Harap izinkan pop-up pada peramban Anda.");
+          setErrorMsg(
+            "Pop-up login diblokir oleh browser. Harap izinkan pop-up pada peramban Anda.",
+          );
         } else if (err.message.includes("auth/cancelled-popup-request")) {
-          setErrorMsg("Permintaan login dibatalkan karena ada jendela masuk lain yang aktif.");
+          setErrorMsg(
+            "Permintaan login dibatalkan karena ada jendela masuk lain yang aktif.",
+          );
         } else {
           setErrorMsg(err.message);
         }
@@ -108,7 +120,7 @@ export default function LoginPage() {
           setErrorMsg("Alamat email atau kata sandi tidak valid.");
         } else if (err.message.includes("auth/unauthorized-domain")) {
           setErrorMsg(
-            "Domain web ini (absenta.ukmpcc.org) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu tambahkan 'absenta.ukmpcc.org'."
+            "Domain web ini (absenta.ukmpcc.org) belum didaftarkan di Firebase Console. Buka Firebase Console > Authentication > Settings > Authorized domains, lalu tambahkan 'absenta.ukmpcc.org'.",
           );
         } else if (err.message.includes("auth/operation-not-allowed")) {
           setErrorMsg(
@@ -154,7 +166,6 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-surface p-4 sm:p-6 font-sans selection:bg-primary selection:text-white antialiased">
-      {/* Background Ambience (Subtle brand glow) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[540px] h-[540px] bg-gradient-to-tr from-secondary/15 via-accent/10 to-transparent rounded-full blur-3xl opacity-70" />
       </div>
@@ -167,7 +178,7 @@ export default function LoginPage() {
       >
         {/* Header Section */}
         <div className="px-8 pt-8 pb-5 text-center">
-          {/* Logo Resmi UKM PCC */}
+          {/* Logo UKM PCC */}
           <div className="relative w-12 overflow-hidden p-0.5 mx-auto mb-3.5">
             <Image
               src="/logo-pcc.png"
@@ -358,8 +369,16 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-navy transition-colors focus:outline-none cursor-pointer z-10"
-                        title={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-                        aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                        title={
+                          showPassword
+                            ? "Sembunyikan kata sandi"
+                            : "Tampilkan kata sandi"
+                        }
+                        aria-label={
+                          showPassword
+                            ? "Sembunyikan kata sandi"
+                            : "Tampilkan kata sandi"
+                        }
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />

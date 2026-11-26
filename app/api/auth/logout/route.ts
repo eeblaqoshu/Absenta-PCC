@@ -14,7 +14,10 @@ export async function POST() {
     console.error("Gagal mencabut token sesi Firebase saat logout:", error);
   }
 
-  const response = NextResponse.json({ sukses: true, pesan: "Berhasil keluar" });
+  const response = NextResponse.json({
+    sukses: true,
+    pesan: "Berhasil keluar",
+  });
 
   response.cookies.set({
     name: SESSION_COOKIE_NAME,

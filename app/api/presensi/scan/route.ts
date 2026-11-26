@@ -1,5 +1,5 @@
 // app/api/presensi/scan/route.ts
-// Endpoint scan presensi STO. Seluruh validasi dilakukan di server (PRD 5.6).
+// Endpoint scan presensi STO. Seluruh validasi dilakukan di server.
 // Klien hanya mengirim: payload QR hasil scan + koordinat GPS.
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";

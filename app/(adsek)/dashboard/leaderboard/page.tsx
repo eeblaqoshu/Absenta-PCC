@@ -1,10 +1,12 @@
 // app/(adsek)/dashboard/leaderboard/page.tsx
-// Papan poin kehadiran STO per bulan pada periode aktif (khusus kegiatan Hari H).
+// Papan poin kehadiran STO per bulan pada periode aktif (khusus kegiatan Hari H saja).
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hitungLeaderboard } from "@/lib/rekap-poin";
-import { LeaderboardSto } from "@/components/dashboard/leaderboard-sto";
-import { FilterBulanLeaderboard } from "@/components/dashboard/filter-bulan-leaderboard";
+import {
+  LeaderboardSto,
+  FilterBulanLeaderboard,
+} from "@/components/dashboard/leaderboard";
 import { StatusPeriode } from "@prisma/client";
 import { Info } from "lucide-react";
 
@@ -15,7 +17,7 @@ interface LeaderboardPageProps {
 export default async function LeaderboardPage({
   searchParams,
 }: LeaderboardPageProps) {
-  // Semua adsek (admin & sekretaris) boleh melihat rekap poin.
+  // admin & sekum boleh melihat rekap poin.
   await requireAdsek();
 
   const resolvedParams = searchParams ? await searchParams : {};

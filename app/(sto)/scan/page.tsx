@@ -29,9 +29,6 @@ export default async function ScanPage() {
     orderBy: { urutan: "asc" },
   });
 
-  // Saring hanya agenda yang menjadi hak STO ini (aturan target_peserta).
-  // Sekaligus ambil presensi STO pada tiap sesi supaya halaman bisa langsung
-  // menampilkan status "sudah presensi" alih-alih scanner.
   const daftarSesi: SesiTersedia[] = [];
   for (const agenda of agendaDenganSesi) {
     const akses = await bolehAkses(sto.id, agenda.id);
@@ -109,7 +106,8 @@ export default async function ScanPage() {
             Scan Presensi
           </h1>
           <p className="text-xs text-slate-muted mt-1 leading-relaxed">
-            Pastikan Anda berada di dalam radius lokasi kegiatan dan sesi presensi masih berstatus dibuka.
+            Pastikan Anda berada di dalam radius lokasi kegiatan dan sesi
+            presensi masih berstatus dibuka.
           </p>
         </div>
 

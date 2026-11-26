@@ -1,5 +1,5 @@
 // app/(sto)/kepanitiaan/page.tsx
-// Halaman Kepanitiaan STO: Menampilkan seluruh data program kerja dan peran kepanitiaan STO yang sedang login.
+// Halaman Kepanitiaan STO: Menampilkan seluruh data program kerja dan peran kepanitiaan STO.
 import { requireSto } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { StoNavbar } from "@/components/sto/sto-navbar";
@@ -15,7 +15,7 @@ import {
 import {
   getPeranBadge,
   getJenisAgendaBadge,
-} from "@/components/dashboard/proker-detail/types";
+} from "@/components/dashboard/proker";
 import { formatTanggalIndo, jamDariWaktuAgenda } from "@/lib/waktu";
 
 export default async function StoKepanitiaanPage() {
@@ -87,23 +87,29 @@ export default async function StoKepanitiaanPage() {
               Kepanitiaan Saya
             </h1>
             <p className="text-xs sm:text-sm text-slate-muted max-w-2xl leading-relaxed">
-              Daftar proker/agenda dan peran divisi kepanitiaan yang Anda emban pada
-              periode kepengurusan aktif ini.
+              Daftar proker/agenda dan peran divisi kepanitiaan yang Anda emban
+              pada periode kepengurusan aktif ini.
             </p>
           </div>
         </div>
 
-        {/* Konten Daftar Kepanitiaan */}
+        {/* Daftar Kepanitiaan */}
         {daftarKepanitiaan.length === 0 ? (
           <div className="p-12 sm:p-16 text-center rounded-3xl border border-dashed border-[#CBD5E1] bg-white space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-surface flex items-center justify-center text-slate-muted mx-auto">
               <FolderKanban className="w-7 h-7" />
             </div>
-            <h3 className="text-base font-bold text-navy">Belum Terdaftar di Kepanitiaan Proker</h3>
+            <h3 className="text-base font-bold text-navy">
+              Belum Terdaftar di Kepanitiaan Proker
+            </h3>
             <p className="text-xs text-slate-muted max-w-md mx-auto leading-relaxed">
-              Anda belum ditugaskan dalam susunan kepanitiaan program kerja manapun pada periode{" "}
-              <span className="font-semibold text-navy">{periode?.nama || "aktif"}</span>. Data akan
-              otomatis muncul di sini setelah didaftarkan oleh sekretaris/admin.
+              Anda belum ditugaskan dalam susunan kepanitiaan program kerja
+              manapun pada periode{" "}
+              <span className="font-semibold text-navy">
+                {periode?.nama || "aktif"}
+              </span>
+              . Data akan otomatis muncul di sini setelah didaftarkan oleh
+              sekretaris/admin.
             </p>
           </div>
         ) : (
@@ -111,14 +117,16 @@ export default async function StoKepanitiaanPage() {
             {daftarKepanitiaan.map((item) => {
               const { proker, peran, divisiPanitia } = item;
               const badgePeran = getPeranBadge(peran, divisiPanitia);
-              const rekanPanitia = proker.kepanitiaan.filter((k) => k.stoId !== sto.id);
+              const rekanPanitia = proker.kepanitiaan.filter(
+                (k) => k.stoId !== sto.id,
+              );
 
               return (
                 <div
                   key={item.id}
                   className="rounded-3xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden divide-y divide-[#E2E8F0]"
                 >
-                  {/* Header Kartu Proker */}
+                  {/* Header Component Card Proker */}
                   <div className="p-6 sm:p-7 space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="space-y-1">
@@ -127,7 +135,7 @@ export default async function StoKepanitiaanPage() {
                         </h2>
                       </div>
 
-                      {/* Badge Peran STO */}
+                      {/* Badge Peran Kepanitiaan STO */}
                       <div className="shrink-0 flex items-center gap-2">
                         <div
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border ${badgePeran.bg}`}
@@ -165,13 +173,16 @@ export default async function StoKepanitiaanPage() {
 
                     {proker.agenda.length === 0 ? (
                       <p className="text-xs text-slate-muted py-2">
-                        Belum ada kegiatan yang dijadwalkan pada program kerja ini.
+                        Belum ada kegiatan yang dijadwalkan pada program kerja
+                        ini.
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {proker.agenda.map((ag) => {
                           const badgeAgenda = getJenisAgendaBadge(ag.jenis);
-                          const jamStr = jamDariWaktuAgenda(ag.waktuPelaksanaan);
+                          const jamStr = jamDariWaktuAgenda(
+                            ag.waktuPelaksanaan,
+                          );
                           return (
                             <div
                               key={ag.id}
@@ -192,7 +203,8 @@ export default async function StoKepanitiaanPage() {
                                 <div className="flex items-center gap-1">
                                   <Clock className="w-3 h-3 text-secondary" />
                                   <span>
-                                    {formatTanggalIndo(ag.tglPelaksanaan)} • {jamStr} WIB
+                                    {formatTanggalIndo(ag.tglPelaksanaan)} •{" "}
+                                    {jamStr} WIB
                                   </span>
                                 </div>
                                 {ag.lokasiNama && (

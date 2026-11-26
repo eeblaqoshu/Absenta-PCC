@@ -49,7 +49,7 @@ export interface ActionResponse {
  */
 export async function tambahAdsekAction(
   prevState: unknown,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionResponse> {
   try {
     // 1. Verifikasi hak akses (hanya admin yang berhak mengelola akun adsek)
@@ -103,7 +103,10 @@ export async function tambahAdsekAction(
       } catch (fbErr: unknown) {
         const msg = fbErr instanceof Error ? fbErr.message : String(fbErr);
         // Jika user sudah ada di Firebase, gunakan UID yang ada dan perbarui passwordnya
-        if (msg.includes("email-already-exists") || msg.includes("auth/email-already-exists")) {
+        if (
+          msg.includes("email-already-exists") ||
+          msg.includes("auth/email-already-exists")
+        ) {
           try {
             const existingFbUser = await adminAuth.getUserByEmail(email);
             await adminAuth.updateUser(existingFbUser.uid, {
@@ -113,7 +116,10 @@ export async function tambahAdsekAction(
             });
             firebaseUid = existingFbUser.uid;
           } catch (updateFbErr: unknown) {
-            console.error("Gagal sinkronisasi user Firebase yang ada:", updateFbErr);
+            console.error(
+              "Gagal sinkronisasi user Firebase yang ada:",
+              updateFbErr,
+            );
           }
         } else {
           console.error("Gagal membuat user di Firebase Auth:", fbErr);
@@ -161,7 +167,7 @@ export async function tambahAdsekAction(
  */
 export async function ubahAdsekAction(
   prevState: unknown,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionResponse> {
   try {
     // 1. Verifikasi hak akses admin
@@ -324,7 +330,8 @@ export async function hapusAdsekAction(id: number): Promise<ActionResponse> {
       return {
         error: {
           kode: "AKUN_SENDIRI",
-          pesan: "Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.",
+          pesan:
+            "Anda tidak dapat menghapus akun Anda sendiri yang sedang aktif digunakan.",
         },
       };
     }

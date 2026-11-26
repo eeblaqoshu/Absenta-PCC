@@ -9,7 +9,7 @@ import { ArrowLeft, Users } from "lucide-react";
 import {
   AdsekTable,
   type AdsekUserItem,
-} from "@/components/dashboard/adsek-table";
+} from "@/components/dashboard/adsek";
 
 function formatTerakhirLogin(dateString?: string | null): string | null {
   if (!dateString) return null;
@@ -119,7 +119,7 @@ export default async function AdsekProfilPage() {
         </div>
       </div>
 
-      {/* Tabel Data Akun Adsek / PI (Full Width) */}
+      {/* Tabel Data Akun Adsek / PH (Full Width) */}
       <AdsekTable
         data={adsekTableData}
         currentUserId={adsek.id}

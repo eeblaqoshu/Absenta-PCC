@@ -3,8 +3,7 @@
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rekapKehadiranSesi } from "@/lib/kehadiran";
-import { LayarQr } from "@/components/dashboard/layar-qr";
-import { DaftarKehadiran } from "@/components/dashboard/daftar-kehadiran";
+import { LayarQr, DaftarKehadiran } from "@/components/dashboard/presensi";
 import { formatJamIndo, hitungStatusSesi } from "@/lib/waktu";
 import { StatusPeriode } from "@prisma/client";
 import { notFound } from "next/navigation";
@@ -44,7 +43,8 @@ export default async function PresensiSesiPage({ params }: PageProps) {
 
   if (!data) notFound();
 
-  const isReadonly = data.agenda.proker.periode.status === StatusPeriode.selesai;
+  const isReadonly =
+    data.agenda.proker.periode.status === StatusPeriode.selesai;
 
   // Sertakan TTD digital STO agar langsung tampil otomatis saat peserta hadir.
   const rekap = await rekapKehadiranSesi(data.id, new Date(), {
@@ -71,7 +71,8 @@ export default async function PresensiSesiPage({ params }: PageProps) {
         </div>
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-muted">
           <Clock className="w-3.5 h-3.5 text-secondary" />
-          Sesi #{data.id} • {formatJamIndo(data.bukaAt)} – {formatJamIndo(data.tutupAt)}
+          Sesi #{data.id} • {formatJamIndo(data.bukaAt)} –{" "}
+          {formatJamIndo(data.tutupAt)}
         </span>
       </div>
 
@@ -104,7 +105,11 @@ export default async function PresensiSesiPage({ params }: PageProps) {
       )}
 
       {rekap && (
-        <DaftarKehadiran sesiId={data.id} isReadonly={isReadonly} rekap={rekap} />
+        <DaftarKehadiran
+          sesiId={data.id}
+          isReadonly={isReadonly}
+          rekap={rekap}
+        />
       )}
     </div>
   );

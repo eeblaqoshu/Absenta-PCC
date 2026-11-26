@@ -13,7 +13,8 @@ export function PwaRegister() {
     if (process.env.NODE_ENV !== "production") {
       void (async () => {
         try {
-          const registrations = await navigator.serviceWorker.getRegistrations();
+          const registrations =
+            await navigator.serviceWorker.getRegistrations();
           let adaYangDihapus = false;
           for (const reg of registrations) {
             const berhasil = await reg.unregister();
