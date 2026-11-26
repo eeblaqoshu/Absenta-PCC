@@ -2,19 +2,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RoleAdsek } from "@prisma/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
   LogOut,
   ChevronDown,
-  Shield,
   Loader2,
-  Calendar,
-  Users,
-  MapPin,
 } from "lucide-react";
 
 interface AdsekUserDropdownProps {
@@ -32,8 +27,6 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const pathname = usePathname();
-  const isAdmin = adsek.role === "admin";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -153,20 +146,6 @@ export function AdsekUserDropdown({ adsek, email }: AdsekUserDropdownProps) {
                 </span>
               </div>
             </div>
-
-            {/* Menu: Profil */}
-            <Link
-              href="/dashboard/profil"
-              onClick={() => setDropdownOpen(false)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${
-                pathname === "/dashboard/profil"
-                  ? "bg-secondary/10 text-secondary font-bold"
-                  : "text-navy hover:bg-surface hover:text-secondary"
-              }`}
-            >
-              <User className="w-4 h-4 text-slate-muted" />
-              <span>Profil Akun</span>
-            </Link>
 
             {/* Divider */}
             <div className="h-px bg-[#E2E8F0] my-1" />

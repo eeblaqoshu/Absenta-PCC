@@ -1,5 +1,5 @@
-// components/dashboard/adsek-table.tsx
-// Tabel data akun Adsek / PI dengan aksi Tambah, Edit, Hapus (SweetAlert2), dan Pagination per 10 data
+// components/dashboard/adsek/adsek-table.tsx
+// Tabel data akun Adsek / Admin dengan tata letak & visual identik dengan halaman Data STO
 "use client";
 
 import { useState, useMemo, useTransition } from "react";
@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RoleAdsek } from "@prisma/client";
 import {
-  Users,
   Plus,
   Edit2,
   Trash2,
@@ -33,11 +32,30 @@ interface Props {
   data: AdsekUserItem[];
   currentUserId: number;
   currentUserRole: RoleAdsek;
+  namaPeriode?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-export function AdsekTable({ data, currentUserId, currentUserRole }: Props) {
+function formatRoleLabel(role: RoleAdsek): string {
+  switch (role) {
+    case RoleAdsek.admin:
+      return "Admin";
+    case RoleAdsek.sekretaris_inti:
+      return "Sekretaris Inti";
+    case RoleAdsek.sekretaris_umum:
+      return "Sekretaris Umum";
+    default:
+      return role;
+  }
+}
+
+export function AdsekTable({
+  data,
+  currentUserId,
+  currentUserRole,
+  namaPeriode = "Tidak Ada Periode Aktif",
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isAdmin = currentUserRole === RoleAdsek.admin;
@@ -131,253 +149,245 @@ export function AdsekTable({ data, currentUserId, currentUserRole }: Props) {
   }
 
   return (
-    <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm space-y-6">
-      {/* Header Kartu: Judul, Ringkasan & Tombol Tambah Data Baru */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+    <div className="space-y-6">
+      {/* Header Banner Card (Identik dengan format STO) */}
+      <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-primary flex items-center gap-2">
-            <Users className="w-5 h-5 text-secondary" />
-            Daftar Akun Adsek / PI
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1.5">
+            <div className="inline-flex items-center gap-1.5 shrink-0">
+              <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shrink-0" />
+              <span className="text-xs font-semibold text-secondary whitespace-nowrap">
+                {namaPeriode}
+              </span>
+            </div>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
+            Data Admin
           </h2>
-          <p className="text-xs text-slate-muted mt-0.5">
-            Kelola data kredensial, peran kepengurusan, dan hak akses pengelola
-            sistem presensi.
+          <p className="text-xs text-slate-muted mt-1 leading-relaxed">
+            Kelola data kredensial, peran kepengurusan, dan hak akses akun administrator serta sekretaris organisasi.
           </p>
         </div>
 
         {isAdmin && (
-          <Link
-            href="/dashboard/profil/adsek/baru"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-white text-xs font-semibold hover:bg-secondary/90 shadow-sm transition-all cursor-pointer self-start sm:self-auto shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Data Baru
-          </Link>
+          <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+            <Link
+              href="/dashboard/profil/adsek/baru"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah Data Baru
+            </Link>
+          </div>
         )}
       </div>
 
-      {/* Baris Pencarian & Filter & Badge Statistik */}
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 w-auto">
-          {/* Input Cari */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Cari nama atau email..."
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-[#CBD5E1] bg-surface/50 text-xs text-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all"
-            />
-          </div>
-
-          {/* Filter Role */}
-          <select
-            value={filterRole}
+      {/* Filter and Search Bar (Identik dengan STO di luar card tabel) */}
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-muted" />
+          <input
+            type="text"
+            placeholder="Cari nama atau email..."
+            value={search}
             onChange={(e) => {
-              setFilterRole(e.target.value);
+              setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="px-3 py-2 rounded-xl border border-[#CBD5E1] bg-surface/50 text-xs text-navy focus:bg-white focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all cursor-pointer"
-          >
-            <option value="semua">Semua Jabatan ({data.length})</option>
-            <option value={RoleAdsek.admin}>Admin ({totalAdmin})</option>
-            <option value={RoleAdsek.sekretaris_inti}>
-              Sekretaris Inti ({totalSekinti})
-            </option>
-          </select>
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy placeholder:text-slate-muted focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary"
+          />
         </div>
+
+        <select
+          value={filterRole}
+          onChange={(e) => {
+            setFilterRole(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="w-full sm:w-56 px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary cursor-pointer"
+        >
+          <option value="semua">Semua Jabatan ({data.length})</option>
+          <option value={RoleAdsek.admin}>Admin ({totalAdmin})</option>
+          <option value={RoleAdsek.sekretaris_inti}>
+            Sekretaris Inti ({totalSekinti})
+          </option>
+        </select>
       </div>
 
-      {/* Tabel Data Akun */}
-      <div className="overflow-x-auto rounded-2xl border border-[#E2E8F0]">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
-            <tr>
-              <th className="px-5 py-3.5 w-14 text-center">No</th>
-              <th className="px-5 py-3.5">Nama</th>
-              <th className="px-5 py-3.5">Jabatan</th>
-              <th className="px-5 py-3.5">Email</th>
-              <th className="px-5 py-3.5">Terakhir Login</th>
-              <th className="px-5 py-3.5 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#E2E8F0]">
-            {paginatedData.length === 0 ? (
+      {/* Table Card (Identik dengan StoTable) */}
+      <div className="bg-white border border-[#E2E8F0] rounded-3xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-surface text-slate-muted uppercase tracking-wider font-semibold border-b border-[#E2E8F0]">
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-6 py-12 text-center text-slate-muted text-xs"
-                >
-                  {search || filterRole !== "semua"
-                    ? "Tidak ada akun pengelola yang sesuai dengan filter pencarian."
-                    : "Belum ada data akun pengelola."}
-                </td>
+                <th className="px-5 py-3.5 w-14">No</th>
+                <th className="px-5 py-3.5">Nama</th>
+                <th className="px-5 py-3.5">Jabatan</th>
+                <th className="px-5 py-3.5">Email</th>
+                <th className="px-5 py-3.5">Terakhir Login</th>
+                {isAdmin && <th className="px-5 py-3.5 text-right">Aksi</th>}
               </tr>
-            ) : (
-              paginatedData.map((item, index) => {
-                const isCurrentUser = item.id === currentUserId;
-                return (
-                  <tr
-                    key={item.id}
-                    className={`hover:bg-surface/70 transition-colors ${
-                      isCurrentUser ? "bg-sky-50/40" : ""
-                    }`}
+            </thead>
+            <tbody className="divide-y divide-[#E2E8F0]">
+              {paginatedData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={isAdmin ? 6 : 5}
+                    className="px-6 py-12 text-center text-slate-muted"
                   >
-                    {/* No (Mengikuti urutan nomor pagination) */}
-                    <td className="px-5 py-4 whitespace-nowrap text-center text-slate-muted font-medium">
-                      {startIndex + index + 1}
-                    </td>
+                    {search || filterRole !== "semua"
+                      ? "Tidak ada akun pengelola yang sesuai dengan filter pencarian."
+                      : "Belum ada data akun pengelola."}
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((item, index) => {
+                  const isCurrentUser = item.id === currentUserId;
+                  return (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-surface/70 transition-colors"
+                    >
+                      {/* No */}
+                      <td className="px-5 py-4 whitespace-nowrap text-slate-muted font-medium">
+                        {startIndex + index + 1}
+                      </td>
 
-                    {/* Nama */}
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-navy text-xs">
-                          {item.nama}
-                        </span>
-                        {isCurrentUser && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-sky-100 text-secondary border border-sky-200">
-                            Anda
+                      {/* Nama */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-navy">
+                            {item.nama}
                           </span>
-                        )}
-                      </div>
-                    </td>
+                          {isCurrentUser && (
+                            <span className="px-2 py-0.5 rounded-full bg-accent/20 text-secondary border border-accent/40 text-[10px] font-bold">
+                              Anda
+                            </span>
+                          )}
+                        </div>
+                      </td>
 
-                    {/* Jabatan */}
-                    <td className="px-5 py-4 whitespace-nowrap">{item.role}</td>
+                      {/* Jabatan */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-full bg-surface text-primary border border-[#E2E8F0] text-[11px] font-medium">
+                          {formatRoleLabel(item.role)}
+                        </span>
+                      </td>
 
-                    {/* Email */}
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="font-mono text-slate-muted text-xs">
+                      {/* Email */}
+                      <td className="px-5 py-4 whitespace-nowrap text-slate-muted text-[11px]">
                         {item.email}
-                      </span>
-                    </td>
+                      </td>
 
-                    {/* Terakhir Login */}
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      {item.terakhirLogin ? (
-                        <div className="flex items-center gap-1.5 text-slate-700">
-                          <span className="font-medium text-xs">
+                      {/* Terakhir Login */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {item.terakhirLogin ? (
+                          <span className="text-navy text-[11px] font-medium">
                             {item.terakhirLogin}
                           </span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">
-                          Belum pernah login
-                        </span>
-                      )}
-                    </td>
+                        ) : (
+                          <span className="text-[11px] text-slate-muted italic">
+                            Belum pernah login
+                          </span>
+                        )}
+                      </td>
 
-                    {/* Aksi */}
-                    <td className="px-5 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {isAdmin && (
-                          <>
-                            {/* Tombol Edit (Icon Only) */}
+                      {/* Aksi */}
+                      {isAdmin && (
+                        <td className="px-5 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1">
                             <Link
                               href={`/dashboard/profil/adsek/${item.id}/edit`}
                               className="p-1.5 rounded-lg text-slate-muted hover:text-secondary hover:bg-secondary/10 transition-colors cursor-pointer inline-flex items-center justify-center"
                               title="Edit data akun"
                             >
-                              <Edit2 className="w-4 h-4" />
+                              <Edit2 className="w-3.5 h-3.5" />
                             </Link>
 
-                            {/* Tombol Hapus (Icon Only) */}
                             {isCurrentUser ? (
-                              <button
-                                type="button"
-                                disabled
-                                className="p-1.5 rounded-lg text-slate-300 cursor-not-allowed inline-flex items-center justify-center"
+                              <span
+                                className="p-1.5 rounded-lg text-slate-300 inline-flex items-center justify-center cursor-not-allowed"
                                 title="Akun aktif Anda saat ini tidak dapat dihapus"
                               >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                                <Trash2 className="w-3.5 h-3.5 opacity-40" />
+                              </span>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleHapus(item)}
                                 disabled={isPending}
-                                className="p-1.5 rounded-lg text-slate-muted hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center justify-center"
+                                className="p-1.5 rounded-lg text-slate-muted hover:text-primary hover:bg-highlight/20 transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center justify-center"
                                 title="Hapus akun pengelola ini"
                               >
                                 {isPending ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
                                 ) : (
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5" />
                                 )}
                               </button>
                             )}
-                          </>
-                        )}
-                        {!isAdmin && (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Kontrol Pagination (10 data per halaman) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-        <div className="text-xs text-slate-muted">
-          Menampilkan{" "}
-          <span className="font-semibold text-navy">
-            {totalItems === 0 ? 0 : startIndex + 1}
-          </span>{" "}
-          sampai <span className="font-semibold text-navy">{endIndex}</span>{" "}
-          dari <span className="font-semibold text-navy">{totalItems}</span>{" "}
-          akun
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {totalPages > 1 && (
-          <div className="flex items-center gap-1.5 self-end sm:self-auto">
-            {/* Tombol Sebelumnya */}
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={safeCurrentPage === 1}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium text-slate-600 hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Sebelumnya</span>
-            </button>
-
-            {/* Nomor Halaman */}
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                type="button"
-                onClick={() => setCurrentPage(page)}
-                className={`min-w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                  safeCurrentPage === page
-                    ? "bg-secondary text-white shadow-sm"
-                    : "border border-[#CBD5E1] text-slate-600 hover:bg-surface"
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-
-            {/* Tombol Selanjutnya */}
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={safeCurrentPage === totalPages}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium text-slate-600 hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <span className="hidden sm:inline">Selanjutnya</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+        {/* Kontrol Pagination (10 data per halaman di footer kartu tabel) */}
+        <div className="border-t border-[#E2E8F0] px-5 py-4 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="text-xs text-slate-muted">
+            Menampilkan{" "}
+            <span className="font-semibold text-navy">
+              {totalItems === 0 ? 0 : startIndex + 1}
+            </span>{" "}
+            sampai <span className="font-semibold text-navy">{endIndex}</span>{" "}
+            dari <span className="font-semibold text-navy">{totalItems}</span>{" "}
+            akun
           </div>
-        )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium text-slate-600 hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sebelumnya</span>
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`min-w-8 h-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    safeCurrentPage === page
+                      ? "bg-secondary text-white shadow-sm"
+                      : "border border-[#CBD5E1] text-slate-600 hover:bg-surface"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#CBD5E1] text-xs font-medium text-slate-600 hover:bg-surface transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <span className="hidden sm:inline">Selanjutnya</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

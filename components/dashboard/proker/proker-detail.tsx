@@ -267,7 +267,7 @@ export function ProkerDetail({
               <ArrowLeft className="w-3.5 h-3.5" />
               Daftar Proker
             </Link>
-            <span className="text-slate-muted text-xs">â€¢</span>
+            <span className="text-slate-muted text-xs">.</span>
             <span className="text-xs font-semibold text-secondary">
               {proker.periode.nama}
             </span>

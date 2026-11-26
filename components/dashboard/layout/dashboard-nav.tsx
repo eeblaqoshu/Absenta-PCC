@@ -14,6 +14,7 @@ import {
   Users,
   Calendar,
   MapPin,
+  User,
 } from "lucide-react";
 
 interface DashboardNavProps {
@@ -21,7 +22,10 @@ interface DashboardNavProps {
   mobile?: boolean;
 }
 
-export function DashboardNav({ mobile = false }: DashboardNavProps) {
+export function DashboardNav({
+  isAdmin = false,
+  mobile = false,
+}: DashboardNavProps) {
   const pathname = usePathname();
   const [masterDataOpen, setMasterDataOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -92,6 +96,15 @@ export function DashboardNav({ mobile = false }: DashboardNavProps) {
       label: "Lokasi",
       icon: MapPin,
     },
+    ...(isAdmin
+      ? [
+          {
+            href: "/dashboard/profil",
+            label: "Data Admin",
+            icon: User,
+          },
+        ]
+      : []),
   ];
 
   const isMasterDataActive = masterDataItems.some(

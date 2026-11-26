@@ -18,7 +18,7 @@ export default async function TambahAdsekPage() {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Kembali ke Profil &amp; Data Pengelola
+          Kembali ke Data Admin
         </Link>
       </div> 
       {/* Card Form */}

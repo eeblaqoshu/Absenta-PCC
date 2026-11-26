@@ -16,6 +16,7 @@ import {
   Users,
   Calendar,
   MapPin,
+  User,
   ChevronRight,
 } from "lucide-react";
 import { DashboardNav } from "./dashboard-nav";
@@ -110,6 +111,16 @@ export function DashboardHeader({
       icon: MapPin,
       isActive: pathname.startsWith("/dashboard/lokasi"),
     },
+    ...(isAdmin
+      ? [
+          {
+            href: "/dashboard/profil",
+            label: "Data Admin",
+            icon: User,
+            isActive: pathname.startsWith("/dashboard/profil"),
+          },
+        ]
+      : []),
   ];
 
   const roleLabel = adsek.role.replace(/_/g, " ");
@@ -221,35 +232,59 @@ export function DashboardHeader({
                 </div>
 
                 {/* Profil Pengguna Terpadu di Sidebar */}
-                <Link
-                  href="/dashboard/profil"
-                  onClick={() => setSidebarOpen(false)}
-                  className="block p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs hover:border-secondary/40 hover:shadow-sm transition-all group"
-                  title="Buka Halaman Profil"
-                >
-                  <div className="flex items-start justify-between gap-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-navy truncate group-hover:text-primary transition-colors">
-                        {adsek.nama}
-                      </p>
-                      <p className="text-[10px] text-slate-muted truncate mt-0.5 font-mono">
-                        {email}
-                      </p>
+                {isAdmin ? (
+                  <Link
+                    href="/dashboard/profil"
+                    onClick={() => setSidebarOpen(false)}
+                    className="block p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs hover:border-secondary/40 hover:shadow-sm transition-all group"
+                    title="Buka Data Admin"
+                  >
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-navy truncate group-hover:text-primary transition-colors">
+                          {adsek.nama}
+                        </p>
+                        <p className="text-[10px] text-slate-muted truncate mt-0.5 font-mono">
+                          {email}
+                        </p>
+                      </div>
+                      <div className="w-6 h-6 rounded-lg bg-surface flex items-center justify-center shrink-0 text-slate-muted group-hover:text-secondary group-hover:bg-secondary/10 transition-colors">
+                        <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </div>
                     </div>
-                    <div className="w-6 h-6 rounded-lg bg-surface flex items-center justify-center shrink-0 text-slate-muted group-hover:text-secondary group-hover:bg-secondary/10 transition-colors">
-                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </div>
 
-                  <div className="mt-2.5 pt-2 border-t border-[#E2E8F0]/70 flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-slate-muted">
-                      Jabatan :
-                    </span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-secondary/10 text-secondary border border-secondary/20">
-                      {roleLabel}
-                    </span>
+                    <div className="mt-2.5 pt-2 border-t border-[#E2E8F0]/70 flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-slate-muted">
+                        Jabatan :
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-secondary/10 text-secondary border border-secondary/20">
+                        {roleLabel}
+                      </span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-navy truncate">
+                          {adsek.nama}
+                        </p>
+                        <p className="text-[10px] text-slate-muted truncate mt-0.5 font-mono">
+                          {email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 pt-2 border-t border-[#E2E8F0]/70 flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-slate-muted">
+                        Jabatan :
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-secondary/10 text-secondary border border-secondary/20">
+                        {roleLabel}
+                      </span>
+                    </div>
                   </div>
-                </Link>
+                )}
               </div>
 
               {/* Sidebar Nav Links Body */}

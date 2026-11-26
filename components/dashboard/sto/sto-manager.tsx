@@ -292,10 +292,6 @@ export function StoManager({
                 {namaPeriode}
               </span>
             </div>
-            <span className="text-xs text-slate-muted">â€¢</span>
-            <span className="text-xs font-medium text-slate-muted">
-              TTD Digital: {totalSudahTtd}/{initialSto.length} STO
-            </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
             Data Kepengurusan STO

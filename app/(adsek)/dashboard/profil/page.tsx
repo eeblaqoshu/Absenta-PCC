@@ -4,8 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { adminAuth } from "@/lib/firebase-admin";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Users } from "lucide-react";
+import { StatusPeriode } from "@prisma/client";
 import {
   AdsekTable,
   type AdsekUserItem,
@@ -39,10 +38,20 @@ export default async function AdsekProfilPage() {
 
   const { adsek } = session;
 
-  // 1. Ambil seluruh data akun Adsek / PI yang terdaftar di database MySQL
-  const daftarAdsek = await prisma.akunAdsek.findMany({
-    orderBy: { id: "asc" },
-  });
+  if (adsek.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  // 1. Ambil data akun Adsek dan periode aktif dari database MySQL
+  const [daftarAdsek, periodeAktif] = await Promise.all([
+    prisma.akunAdsek.findMany({
+      orderBy: { id: "asc" },
+    }),
+    prisma.periode.findFirst({
+      where: { status: StatusPeriode.aktif },
+      select: { nama: true },
+    }),
+  ]);
 
   // 2. Ambil metadata waktu login terakhir dari Firebase Authentication
   const lastSignInMap = new Map<string, string>();
@@ -88,42 +97,12 @@ export default async function AdsekProfilPage() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Navigasi Kembali ke Dashboard */}
-      <div>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Dashboard
-        </Link>
-      </div>
-
-      {/* Banner Halaman */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E2E8F0] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-slate-muted">
-              Portal Pengelola Sistem Presensi
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primary flex items-center gap-2.5">
-            <Users className="w-6 h-6 text-secondary" />
-            Data Akun Adsek / PI
-          </h1>
-          <p className="text-xs text-slate-muted mt-1">
-            Kelola data kredensial, peran kepengurusan, dan hak akses akun
-            administrator serta sekretaris organisasi.
-          </p>
-        </div>
-      </div>
-
-      {/* Tabel Data Akun Adsek / PH (Full Width) */}
+    <div className="py-2 space-y-6">
       <AdsekTable
         data={adsekTableData}
         currentUserId={adsek.id}
         currentUserRole={adsek.role}
+        namaPeriode={periodeAktif?.nama || "Tidak Ada Periode Aktif"}
       />
     </div>
   );
