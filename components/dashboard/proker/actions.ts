@@ -16,6 +16,7 @@ export {
 export {
   tambahPanitiaAction,
   tambahBanyakPanitiaAction,
+  simpanSusunanPanitiaAction,
   imporCsvPanitiaAction,
   ubahPanitiaAction,
   hapusPanitiaAction,

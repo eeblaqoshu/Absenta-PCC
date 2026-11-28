@@ -3,7 +3,12 @@
 
 import Link from "next/link";
 import { Users, Edit2, Trash2 } from "lucide-react";
-import { getPeranBadge, type PanitiaItem, type ProkerData } from "./types";
+import {
+  getPeranBadge,
+  getLabelKategori,
+  type PanitiaItem,
+  type ProkerData,
+} from "./types";
 
 interface Props {
   proker: ProkerData;
@@ -20,12 +25,14 @@ export function PanitiaSection({
   onEditPanitia,
   onHapusPanitia,
 }: Props) {
+  const labels = getLabelKategori(proker.kategori);
+
   if (proker.kepanitiaan.length === 0) {
     return (
       <div className="p-12 text-center rounded-3xl border border-dashed border-[#CBD5E1] bg-white">
         <Users className="w-10 h-10 text-slate-muted mx-auto mb-3" />
         <p className="text-sm font-semibold text-navy">
-          Belum ada susunan panitia untuk proker ini
+          Belum ada susunan panitia untuk {labels.lengkap} ini
         </p>
         <p className="text-xs text-slate-muted mt-1">
           Tambahkan pengurus STO ke dalam kepanitiaan melalui halaman

@@ -25,6 +25,7 @@ export default async function HalamanEditAgenda({ params }: PageProps) {
     select: {
       id: true,
       nama: true,
+      kategori: true,
       periode: {
         select: {
           id: true,

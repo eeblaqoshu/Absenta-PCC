@@ -85,25 +85,10 @@ export function DashboardHeader({
       isActive: pathname.startsWith("/dashboard/proker"),
     },
     {
-      href: "/dashboard/leaderboard",
-      label: "Leaderboard",
-      icon: Trophy,
-      isActive: pathname.startsWith("/dashboard/leaderboard"),
-    },
-  ];
-
-  const masterDataItems = [
-    {
       href: "/dashboard/sto",
       label: "Data STO",
       icon: Users,
       isActive: pathname.startsWith("/dashboard/sto"),
-    },
-    {
-      href: "/dashboard/periode",
-      label: "Periode",
-      icon: Calendar,
-      isActive: pathname.startsWith("/dashboard/periode"),
     },
     {
       href: "/dashboard/lokasi",
@@ -113,6 +98,18 @@ export function DashboardHeader({
     },
     ...(isAdmin
       ? [
+          {
+            href: "/dashboard/periode",
+            label: "Periode",
+            icon: Calendar,
+            isActive: pathname.startsWith("/dashboard/periode"),
+          },
+          {
+            href: "/dashboard/leaderboard",
+            label: "Leaderboard",
+            icon: Trophy,
+            isActive: pathname.startsWith("/dashboard/leaderboard"),
+          },
           {
             href: "/dashboard/profil",
             label: "Data Admin",
@@ -292,48 +289,12 @@ export function DashboardHeader({
                 className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6"
                 data-lenis-prevent
               >
-                {/* Section: Menu Utama */}
+                {/* Section: Menu Navigasi */}
                 <div className="space-y-1">
                   <p className="px-3 text-[10px] font-bold text-slate-muted uppercase tracking-wider mb-2">
-                    Menu Utama
+                    Menu Navigasi
                   </p>
                   {navItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
-                          item.isActive
-                            ? "bg-secondary/10 text-secondary border border-secondary/20 shadow-xs"
-                            : "text-slate-muted hover:text-navy hover:bg-surface"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon
-                            className={`w-4 h-4 transition-colors ${
-                              item.isActive
-                                ? "text-secondary"
-                                : "text-slate-muted group-hover:text-navy"
-                            }`}
-                          />
-                          <span>{item.label}</span>
-                        </div>
-                        {item.isActive && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* Section: Master Data */}
-                <div className="space-y-1">
-                  <p className="px-3 text-[10px] font-bold text-slate-muted uppercase tracking-wider mb-2">
-                    Master Data
-                  </p>
-                  {masterDataItems.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Link

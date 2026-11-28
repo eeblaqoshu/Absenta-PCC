@@ -15,7 +15,10 @@ import {
   isSekretarisUmum,
   isDivisiLitbang,
   isPeranLitbangPengawas,
+  isJabatanAdminOrSekum,
+  validasiKesesuaianJabatanPi,
   normalisasiPeranPanitia,
+  getLabelKategori,
   type BarisFormPanitia,
   type StoOption,
   type ProkerData,
@@ -40,17 +43,33 @@ export function PanitiaStrukturTab({
   isPending,
   startTransition,
 }: Props) {
-  const panitiaStoIdSet = new Set(proker.kepanitiaan.map((k) => k.sto.id));
-  const stoBelumMasuk = availableStos.filter((s) => !panitiaStoIdSet.has(s.id));
+  const labels = getLabelKategori(proker.kategori);
+  // Inisialisasi baris form: muat kepanitiaan tersimpan bila ada
+  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>(() => {
+    if (proker.kepanitiaan && proker.kepanitiaan.length > 0) {
+      return proker.kepanitiaan.map((k) => ({
+        tempId: `panitia-${k.id}`,
+        stoId: String(k.sto.id),
+        peranTeks: k.divisiPanitia || (k.peran ? String(k.peran) : "Anggota"),
+        divisiPanitia: k.sto.divisi || "Umum",
+      }));
+    }
+    return [
+      {
+        tempId: "row-init-1",
+        stoId: "",
+        peranTeks: "Ketua Pelaksana",
+        divisiPanitia: "",
+      },
+    ];
+  });
 
-  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>([
-    {
-      tempId: "row-init-1",
-      stoId: "",
-      peranTeks: "Ketua Pelaksana",
-      divisiPanitia: "",
-    },
-  ]);
+  const stoIdTerpilihSet = new Set(
+    barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
+  );
+  const stoTersisa = availableStos.filter(
+    (s) => !isJabatanAdminOrSekum(s).dilarang && !stoIdTerpilihSet.has(s.id),
+  );
 
   const tambahBaris = (preset?: Partial<BarisFormPanitia>) => {
     setBarisStruktur((prev) => [
@@ -116,27 +135,29 @@ export function PanitiaStrukturTab({
         const stoDipilih = availableStos.find(
           (s) => String(s.id) === String(baris.stoId),
         );
-        if (
-          baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
-          stoDipilih &&
-          isSekretarisUmum(stoDipilih)
-        ) {
-          setPesan({
-            tipe: "error",
-            teks: `Pengurus "${stoDipilih.nama}" menjabat sebagai Sekretaris Umum dan tidak dapat ditugaskan sebagai Sekretaris Inti kepanitiaan.`,
-          });
-          return;
-        }
-        if (
-          stoDipilih &&
-          isDivisiLitbang(stoDipilih) &&
-          !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)
-        ) {
-          setPesan({
-            tipe: "error",
-            teks: `Pengurus "${stoDipilih.nama}" dari Divisi Litbang hanya dapat ditugaskan sebagai Litbang Pengawas.`,
-          });
-          return;
+        if (stoDipilih) {
+          const validasiPi = validasiKesesuaianJabatanPi(
+            stoDipilih,
+            baris.peranTeks,
+            baris.divisiPanitia,
+          );
+          if (!validasiPi.valid) {
+            setPesan({
+              tipe: "error",
+              teks: validasiPi.pesanError!,
+            });
+            return;
+          }
+          if (
+            isDivisiLitbang(stoDipilih) &&
+            !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)
+          ) {
+            setPesan({
+              tipe: "error",
+              teks: `Pengurus "${stoDipilih.nama}" dari Divisi Litbang hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+            });
+            return;
+          }
         }
       }
     }
@@ -175,14 +196,13 @@ export function PanitiaStrukturTab({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 rounded-2xl bg-surface border border-[#E2E8F0]">
           <div className="text-xs text-navy">
             <span className="font-semibold">Susun Kepanitiaan Manual</span>:{" "}
-            Pilih peran dan tunjuk pengurus STO secara manual untuk program
-            kerja ini.
+            Pilih peran dan tunjuk pengurus STO secara manual untuk {labels.lengkap} ini.
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => tambahBaris()}
-              disabled={stoBelumMasuk.length === 0}
+              disabled={stoTersisa.length === 0}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -229,11 +249,14 @@ export function PanitiaStrukturTab({
             const stoDipilih = availableStos.find(
               (s) => String(s.id) === String(baris.stoId),
             );
-            const isSekumSebagaiSekretarisInti =
-              baris.peranTeks
-                .trim()
-                .toLowerCase()
-                .includes("sekretaris inti") && isSekretarisUmum(stoDipilih);
+            const validasiPi = stoDipilih
+              ? validasiKesesuaianJabatanPi(
+                  stoDipilih,
+                  baris.peranTeks,
+                  baris.divisiPanitia,
+                )
+              : { valid: true };
+            const isPiTidakSesuai = !validasiPi.valid;
             const isLitbangBukanPengawas =
               stoDipilih &&
               isDivisiLitbang(stoDipilih) &&
@@ -244,7 +267,7 @@ export function PanitiaStrukturTab({
                 key={baris.tempId}
                 className={`p-3 rounded-2xl border transition-all ${
                   isDuplikat ||
-                  isSekumSebagaiSekretarisInti ||
+                  isPiTidakSesuai ||
                   isLitbangBukanPengawas
                     ? "border-rose-300 bg-rose-50/40"
                     : "border-[#E2E8F0] bg-white hover:border-secondary/40"
@@ -283,38 +306,41 @@ export function PanitiaStrukturTab({
                       <option value="">-- Pilih Pengurus STO --</option>
                       {availableStos
                         .filter((s) => {
-                          const sudahDiProker = panitiaStoIdSet.has(s.id);
+                          // Sembunyikan Admin & Sekum (dilarang masuk kepanitiaan)
+                          if (isJabatanAdminOrSekum(s).dilarang) return false;
+
+                          // Sembunyikan jika tidak sesuai dengan peran yang diketik
+                          if (baris.peranTeks.trim()) {
+                            if (
+                              !validasiKesesuaianJabatanPi(
+                                s,
+                                baris.peranTeks,
+                              ).valid
+                            ) {
+                              return false;
+                            }
+                            if (
+                              isDivisiLitbang(s) &&
+                              !isPeranLitbangPengawas(
+                                baris.peranTeks,
+                                baris.peranTeks,
+                              )
+                            ) {
+                              return false;
+                            }
+                          }
+
                           const sudahDiBarisLain = selectedInOtherRows.has(
                             s.id,
                           );
                           const isRowIni = String(s.id) === String(baris.stoId);
-                          return (
-                            (!sudahDiProker && !sudahDiBarisLain) || isRowIni
-                          );
+                          return !sudahDiBarisLain || isRowIni;
                         })
-                        .map((s) => {
-                          const isLitbang = isDivisiLitbang(s);
-                          const disabledLitbang =
-                            isLitbang &&
-                            !isPeranLitbangPengawas(
-                              baris.peranTeks,
-                              baris.peranTeks,
-                            );
-                          return (
-                            <option
-                              key={s.id}
-                              value={s.id}
-                              disabled={disabledLitbang}
-                            >
-                              {s.nama} ({s.nim})
-                              {disabledLitbang
-                                ? " - Khusus Litbang Pengawas"
-                                : s.divisi
-                                  ? ` - ${s.divisi}`
-                                  : ""}
-                            </option>
-                          );
-                        })}
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nama} ({s.nim}){s.divisi ? ` - ${s.divisi}` : ""}
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -344,11 +370,10 @@ export function PanitiaStrukturTab({
                   </div>
                 </div>
 
-                {isSekumSebagaiSekretarisInti && (
+                {isPiTidakSesuai && (
                   <p className="text-[10px] text-rose-600 mt-1.5 flex items-center gap-1 font-medium">
                     <AlertCircle className="w-3 h-3 shrink-0" />
-                    Sekretaris Umum tidak dapat ditugaskan sebagai Sekretaris
-                    Inti.
+                    {validasiPi.pesanError}
                   </p>
                 )}
                 {isLitbangBukanPengawas && (
@@ -371,15 +396,14 @@ export function PanitiaStrukturTab({
             <button
               type="button"
               onClick={() => tambahBaris()}
-              disabled={stoBelumMasuk.length === 0}
+              disabled={stoTersisa.length === 0}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CBD5E1] bg-white text-navy text-xs font-semibold hover:bg-surface shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             >
               <Plus className="w-3.5 h-3.5 text-secondary" />
               Tambah Baris Panitia
             </button>
             <span className="text-xs text-slate-muted">
-              Tersisa {Math.max(0, stoBelumMasuk.length - barisStruktur.length)}{" "}
-              STO belum masuk
+              Tersisa {stoTersisa.length} STO belum masuk
             </span>
           </div>
 

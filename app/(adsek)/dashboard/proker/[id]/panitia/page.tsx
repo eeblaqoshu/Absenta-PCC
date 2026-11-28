@@ -89,6 +89,20 @@ export default async function HalamanKelolaPanitia({ params }: PageProps) {
     orderBy: { nama: "asc" },
   });
 
+  const adsekList = await prisma.akunAdsek.findMany({
+    select: { email: true, role: true },
+  });
+  const adsekRoleMap = new Map(
+    adsekList.map((a) => [a.email.toLowerCase(), a.role]),
+  );
+
+  const availableStosWithRole = availableStos.map((s) => ({
+    ...s,
+    roleAdsek: s.emailGoogle
+      ? adsekRoleMap.get(s.emailGoogle.toLowerCase()) || null
+      : null,
+  }));
+
   return (
     <div className="py-2">
       <KelolaPanitiaPage
@@ -101,7 +115,7 @@ export default async function HalamanKelolaPanitia({ params }: PageProps) {
             statusDihitung: "akan_datang" as const,
           })),
         }}
-        availableStos={availableStos}
+        availableStos={availableStosWithRole}
       />
     </div>
   );

@@ -10,7 +10,7 @@ import {
   User,
   Mail,
   Lock,
-  Shield,
+  KeyRound,
   Eye,
   EyeOff,
   Loader2,
@@ -171,6 +171,7 @@ export function FormEditAdsek({ initialData }: Props) {
           Jabatan / Peran <span className="text-rose-500">*</span>
         </label>
         <div className="relative">
+          <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as RoleAdsek)}

@@ -12,11 +12,11 @@ import {
   CheckCircle2,
   RotateCcw,
 } from "lucide-react";
-import { JenisAgenda, TargetPeserta } from "@prisma/client";
+import { JenisAgenda, TargetPeserta, KategoriProker } from "@prisma/client";
 import { PetaPilihLokasi } from "@/components/peta-pilih-lokasi";
 import { buatAgendaAction, ubahAgendaAction } from "@/lib/actions/agenda";
 import { jamDariWaktuAgenda } from "@/lib/waktu";
-import { keTanggalWib } from "./types";
+import { keTanggalWib, getLabelKategori } from "./types";
 
 export interface MasterLokasiItem {
   id: number;
@@ -46,6 +46,7 @@ interface Props {
   proker: {
     id: number;
     nama: string;
+    kategori?: KategoriProker | "proker" | "agenda" | null;
     periode: {
       id: number;
       nama: string;
@@ -90,28 +91,6 @@ const OPSI_JENIS: {
   },
 ];
 
-const OPSI_TARGET: {
-  value: TargetPeserta;
-  label: string;
-  keterangan: string;
-}[] = [
-  {
-    value: TargetPeserta.semua_panitia,
-    label: "Semua Panitia",
-    keterangan: "Seluruh panitia proker ini",
-  },
-  {
-    value: TargetPeserta.hanya_pj_pi,
-    label: "Khusus PJ & PI",
-    keterangan: "Ketua, Sekretaris, Bendahara, PJ",
-  },
-  {
-    value: TargetPeserta.semua_panitia_sto,
-    label: "Seluruh STO",
-    keterangan: "Semua pengurus periode aktif",
-  },
-];
-
 export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -122,6 +101,25 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
 
   const isEdit = Boolean(agendaAwal);
   const isReadonly = proker.periode.status === "selesai";
+  const labels = getLabelKategori(proker.kategori);
+
+  const opsiTarget = [
+    {
+      value: TargetPeserta.semua_panitia,
+      label: `Semua Panitia`,
+      keterangan: `Seluruh panitia ${labels.lengkap} ini`,
+    },
+    {
+      value: TargetPeserta.hanya_pj_pi,
+      label: "Khusus PJ & PI",
+      keterangan: "Ketua, Sekretaris, Bendahara, PJ",
+    },
+    {
+      value: TargetPeserta.semua_panitia_sto,
+      label: "Seluruh STO",
+      keterangan: "Semua pengurus periode aktif",
+    },
+  ];
 
   // Form states
   const [judulAgenda, setJudulAgenda] = useState(agendaAwal?.judul ?? "");
@@ -241,11 +239,21 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
               className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              {proker.nama}
+              Kembali ke Detail {labels.singkat}
             </Link>
             <span className="text-slate-muted text-xs">•</span>
             <span className="text-xs font-semibold text-secondary">
               {proker.periode.nama}
+            </span>
+            <span className="text-slate-muted text-xs">•</span>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                labels.isAgenda
+                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  : "bg-blue-50 text-blue-700 border border-blue-200"
+              }`}
+            >
+              {labels.kategoriLabel}
             </span>
           </div>
 
@@ -401,7 +409,7 @@ export function AgendaFormPage({ proker, daftarLokasi, agendaAwal }: Props) {
                   Peserta Wajib Hadir <span className="text-secondary">*</span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {OPSI_TARGET.map((item) => {
+                  {opsiTarget.map((item) => {
                     const aktif = targetPeserta === item.value;
                     return (
                       <button

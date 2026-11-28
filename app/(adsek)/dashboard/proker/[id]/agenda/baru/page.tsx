@@ -24,6 +24,7 @@ export default async function HalamanTambahAgenda({ params }: PageProps) {
     select: {
       id: true,
       nama: true,
+      kategori: true,
       periode: {
         select: {
           id: true,
