@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RoleAdsek } from "@prisma/client";
 import { tambahAdsekAction } from "@/lib/actions/adsek";
+import { daftarkanUserDariKlien } from "@/lib/firebase-client";
 import {
   User,
   Mail,
@@ -47,13 +48,35 @@ export function FormTambahAdsek() {
       return;
     }
 
-    const formData = new FormData();
-    formData.set("nama", nama.trim());
-    formData.set("email", email.trim().toLowerCase());
-    formData.set("password", password);
-    formData.set("role", role);
-
     startTransition(async () => {
+      // 1. Daftarkan akun di Firebase Auth langsung dari browser (klien)
+      // Ini berjalan di koneksi internet browser pengguna, menghindari pemblokiran firewall server cPanel
+      let clientUid: string | null = null;
+      try {
+        const clientFbResult = await daftarkanUserDariKlien(
+          email.trim().toLowerCase(),
+          password,
+        );
+        if (
+          clientFbResult.error &&
+          !clientFbResult.error.includes("email-already-in-use")
+        ) {
+          console.warn("Registrasi klien Firebase:", clientFbResult.error);
+        }
+        clientUid = clientFbResult.uid;
+      } catch (clientErr) {
+        console.warn("Client firebase create error:", clientErr);
+      }
+
+      const formData = new FormData();
+      formData.set("nama", nama.trim());
+      formData.set("email", email.trim().toLowerCase());
+      formData.set("password", password);
+      formData.set("role", role);
+      if (clientUid) {
+        formData.set("firebaseUid", clientUid);
+      }
+
       const res = await tambahAdsekAction(null, formData);
       if (res.sukses) {
         await Swal.fire({

@@ -16,6 +16,7 @@ const TambahAdsekSchema = z.object({
   role: z.nativeEnum(RoleAdsek, {
     message: "Peran tidak valid",
   }),
+  firebaseUid: z.string().optional(),
 });
 
 const UbahAdsekSchema = z.object({
@@ -73,7 +74,7 @@ export async function tambahAdsekAction(
       };
     }
 
-    const { nama, email, password, role } = parsed.data;
+    const { nama, email, password, role, firebaseUid: passedUid } = parsed.data;
 
     // 3. Cek duplikasi email di tabel akun_adsek
     const emailExist = await prisma.akunAdsek.findUnique({
@@ -90,8 +91,8 @@ export async function tambahAdsekAction(
     }
 
     // 4. Sinkronisasi pembuatan akun di Firebase Authentication
-    let firebaseUid: string | null = null;
-    if (adminAuth) {
+    let firebaseUid: string | null = passedUid || null;
+    if (!firebaseUid && adminAuth) {
       try {
         const user = await adminAuth.createUser({
           email,
@@ -122,13 +123,9 @@ export async function tambahAdsekAction(
             );
           }
         } else {
-          console.error("Gagal membuat user di Firebase Auth:", fbErr);
-          return {
-            error: {
-              kode: "FIREBASE_ERROR",
-              pesan: `Gagal mendaftarkan akun di Firebase Auth: ${msg}`,
-            },
-          };
+          console.warn("Gagal mendaftarkan user di Firebase Auth (firewall hosting):", fbErr);
+          // Jika koneksi keluar server diblokir hosting, tetap simpan akun ke database MySQL.
+          // Saat akun login pertama kali dari browser, firebaseUid akan disinkronkan otomatis.
         }
       }
     }
