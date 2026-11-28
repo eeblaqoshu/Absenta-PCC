@@ -71,54 +71,82 @@ export function DashboardHeader({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const navItems = [
-    {
-      href: "/dashboard",
-      label: "Ringkasan",
-      icon: LayoutDashboard,
-      isActive: pathname === "/dashboard",
-    },
-    {
-      href: "/dashboard/proker",
-      label: "Proker & Agenda",
-      icon: FolderKanban,
-      isActive: pathname.startsWith("/dashboard/proker"),
-    },
-    {
-      href: "/dashboard/sto",
-      label: "Data STO",
-      icon: Users,
-      isActive: pathname.startsWith("/dashboard/sto"),
-    },
-    {
-      href: "/dashboard/lokasi",
-      label: "Lokasi",
-      icon: MapPin,
-      isActive: pathname.startsWith("/dashboard/lokasi"),
-    },
-    ...(isAdmin
-      ? [
-          {
-            href: "/dashboard/periode",
-            label: "Periode",
-            icon: Calendar,
-            isActive: pathname.startsWith("/dashboard/periode"),
-          },
-          {
-            href: "/dashboard/leaderboard",
-            label: "Leaderboard",
-            icon: Trophy,
-            isActive: pathname.startsWith("/dashboard/leaderboard"),
-          },
-          {
-            href: "/dashboard/profil",
-            label: "Data Admin",
-            icon: User,
-            isActive: pathname.startsWith("/dashboard/profil"),
-          },
-        ]
-      : []),
-  ];
+  const navItems = isAdmin
+    ? [
+        {
+          href: "/dashboard",
+          label: "Ringkasan",
+          icon: LayoutDashboard,
+          isActive: pathname === "/dashboard",
+        },
+        {
+          href: "/dashboard/proker",
+          label: "Proker & Agenda",
+          icon: FolderKanban,
+          isActive: pathname.startsWith("/dashboard/proker"),
+        },
+        {
+          href: "/dashboard/leaderboard",
+          label: "Leaderboard",
+          icon: Trophy,
+          isActive: pathname.startsWith("/dashboard/leaderboard"),
+        },
+      ]
+    : [
+        {
+          href: "/dashboard",
+          label: "Ringkasan",
+          icon: LayoutDashboard,
+          isActive: pathname === "/dashboard",
+        },
+        {
+          href: "/dashboard/proker",
+          label: "Proker & Agenda",
+          icon: FolderKanban,
+          isActive: pathname.startsWith("/dashboard/proker"),
+        },
+        {
+          href: "/dashboard/sto",
+          label: "Data STO",
+          icon: Users,
+          isActive: pathname.startsWith("/dashboard/sto"),
+        },
+        {
+          href: "/dashboard/lokasi",
+          label: "Lokasi",
+          icon: MapPin,
+          isActive: pathname.startsWith("/dashboard/lokasi"),
+        },
+      ];
+
+  const masterDataItems = isAdmin
+    ? [
+        {
+          href: "/dashboard/sto",
+          label: "Data STO",
+          icon: Users,
+          isActive: pathname.startsWith("/dashboard/sto"),
+        },
+        {
+          href: "/dashboard/periode",
+          label: "Periode",
+          icon: Calendar,
+          isActive: pathname.startsWith("/dashboard/periode"),
+        },
+        {
+          href: "/dashboard/lokasi",
+          label: "Lokasi",
+          icon: MapPin,
+          isActive: pathname.startsWith("/dashboard/lokasi"),
+        },
+        {
+          href: "/dashboard/profil",
+          label: "Data Admin",
+          icon: User,
+          isActive: pathname.startsWith("/dashboard/profil"),
+        },
+      ]
+    : [];
 
   const roleLabel = adsek.role.replace(/_/g, " ");
 
@@ -289,10 +317,10 @@ export function DashboardHeader({
                 className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6"
                 data-lenis-prevent
               >
-                {/* Section: Menu Navigasi */}
+                {/* Section: Menu Utama */}
                 <div className="space-y-1">
                   <p className="px-3 text-[10px] font-bold text-slate-muted uppercase tracking-wider mb-2">
-                    Menu Navigasi
+                    Menu Utama
                   </p>
                   {navItems.map((item) => {
                     const Icon = item.icon;
@@ -324,6 +352,44 @@ export function DashboardHeader({
                     );
                   })}
                 </div>
+
+                {/* Section: Master Data (Khusus Admin) */}
+                {isAdmin && masterDataItems.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="px-3 text-[10px] font-bold text-slate-muted uppercase tracking-wider mb-2">
+                      Master Data
+                    </p>
+                    {masterDataItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                            item.isActive
+                              ? "bg-secondary/10 text-secondary border border-secondary/20 shadow-xs"
+                              : "text-slate-muted hover:text-navy hover:bg-surface"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon
+                              className={`w-4 h-4 transition-colors ${
+                                item.isActive
+                                  ? "text-secondary"
+                                  : "text-slate-muted group-hover:text-navy"
+                              }`}
+                            />
+                            <span>{item.label}</span>
+                          </div>
+                          {item.isActive && (
+                            <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Sidebar Footer: Keluar & Info Akun */}
