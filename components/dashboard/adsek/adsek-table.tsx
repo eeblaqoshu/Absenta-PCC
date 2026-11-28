@@ -206,10 +206,10 @@ export function AdsekTable({
           }}
           className="w-full sm:w-56 px-3.5 py-2.5 rounded-xl border border-[#CBD5E1] bg-white text-xs text-navy focus:outline-none focus:ring-2 focus:ring-secondary focus:border-secondary cursor-pointer"
         >
-          <option value="semua">Semua Jabatan ({data.length})</option>
-          <option value={RoleAdsek.admin}>Admin ({totalAdmin})</option>
+          <option value="semua">Semua Jabatan</option>
+          <option value={RoleAdsek.admin}>Admin</option>
           <option value={RoleAdsek.sekretaris_inti}>
-            Sekretaris Inti ({totalSekinti})
+            Sekretaris Inti
           </option>
         </select>
       </div>

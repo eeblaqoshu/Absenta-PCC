@@ -28,6 +28,7 @@ import type { RekapKehadiranSesi } from "@/lib/kehadiran";
 import {
   getJenisAgendaBadge,
   getTargetPesertaLabel,
+  getLabelKategori,
   keInputJam,
   type AgendaItem,
   type ProkerData,
@@ -69,6 +70,8 @@ export function AgendaSection({
   onHapusAgenda,
   onOpenModalSesi,
 }: Props) {
+  const labels = getLabelKategori(proker.kategori);
+
   return (
     <div className="space-y-4">
       <AgendaStatusTabs
@@ -96,7 +99,7 @@ export function AgendaSection({
 
       {proker.agenda.length === 0 ? (
         <EmptyAgenda
-          judul="Belum ada kegiatan untuk proker ini"
+          judul={`Belum ada kegiatan untuk ${labels.lengkap} ini`}
           deskripsi='Klik tombol "Tambah Kegiatan" untuk membuat jadwal rapat atau hari H pelaksanaan.'
         />
       ) : agendaTerlihat.length === 0 ? (
@@ -112,7 +115,10 @@ export function AgendaSection({
             className="space-y-3"
           >
             {agendaTerlihat.map((item) => {
-              const targetText = getTargetPesertaLabel(item.targetPeserta);
+              const targetText = getTargetPesertaLabel(
+                item.targetPeserta,
+                labels.singkat,
+              );
               const sedangBerjalan = item.statusLive === "sedang_berlangsung";
               const sudahSelesai = item.statusLive === "selesai";
               const tglStr = formatTanggalIndo(new Date(item.tglPelaksanaan));

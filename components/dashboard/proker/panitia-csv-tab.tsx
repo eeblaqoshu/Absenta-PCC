@@ -10,6 +10,7 @@ import {
   type CsvBarisPanitia,
   isDivisiLitbang,
   isPeranLitbangPengawas,
+  validasiKesesuaianJabatanPi,
 } from "./types";
 import { imporCsvPanitiaAction } from "@/lib/actions/kepanitiaan";
 
@@ -175,12 +176,22 @@ export function PanitiaCsvTab({
         } else if (seenStoIds.has(matchedSto.id)) {
           valid = false;
           pesanError = "Duplikasi pengurus di dalam file";
-        } else if (
-          isDivisiLitbang(matchedSto) &&
-          !isPeranLitbangPengawas(peran, divisi)
-        ) {
-          valid = false;
-          pesanError = `${matchedSto.nama} (Divisi Litbang) hanya dapat ditugaskan sebagai Litbang Pengawas`;
+        } else if (matchedSto) {
+          const valPi = validasiKesesuaianJabatanPi(
+            matchedSto,
+            peran || divisi,
+            divisi,
+          );
+          if (!valPi.valid) {
+            valid = false;
+            pesanError = valPi.pesanError || "Peran tidak sesuai jabatan kepengurusan";
+          } else if (
+            isDivisiLitbang(matchedSto) &&
+            !isPeranLitbangPengawas(peran, divisi)
+          ) {
+            valid = false;
+            pesanError = `${matchedSto.nama} (Divisi Litbang) hanya dapat ditugaskan sebagai Litbang Pengawas`;
+          }
         }
 
         if (matchedSto) {

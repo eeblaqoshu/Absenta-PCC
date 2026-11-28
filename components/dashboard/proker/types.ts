@@ -4,6 +4,7 @@ import {
   JenisAgenda,
   TargetPeserta,
   StatusPeriode,
+  KategoriProker,
 } from "@prisma/client";
 import { keInputLokalWib } from "@/lib/waktu";
 
@@ -283,6 +284,16 @@ export interface StoOption {
   emailGoogle?: string;
   jabatan?: string | null;
   divisi: string | null;
+  roleAdsek?: string | null;
+}
+
+export type KategoriPi = "ketua" | "sekretaris" | "bendahara";
+
+export interface InfoJabatanPi {
+  kategori: KategoriPi;
+  peranWajib: PeranPanitia;
+  namaJabatan: string;
+  labelPeranWajib: string;
 }
 
 export interface BarisFormPanitia {
@@ -297,6 +308,7 @@ export interface ProkerData {
   id: number;
   nama: string;
   deskripsi: string | null;
+  kategori?: KategoriProker | "proker" | "agenda" | null;
   periode: {
     id: number;
     nama: string;
@@ -304,6 +316,17 @@ export interface ProkerData {
   };
   kepanitiaan: PanitiaItem[];
   agenda: AgendaItem[];
+}
+
+export function getLabelKategori(kategori?: KategoriProker | string | null) {
+  const isAgenda = kategori === "agenda";
+  return {
+    isAgenda,
+    kategoriLabel: isAgenda ? "Agenda" : "Program Kerja",
+    singkat: isAgenda ? "Agenda" : "Proker",
+    lengkap: isAgenda ? "agenda" : "program kerja",
+    kapital: isAgenda ? "Agenda" : "Program Kerja",
+  };
 }
 
 export const DETAK_MS = 30_000;
@@ -327,16 +350,220 @@ export function keTanggalWib(date: Date | string): string {
   return keInputLokalWib(new Date(date)).split("T")[0] ?? "";
 }
 
-export function isSekretarisUmum(sto: StoOption | null | undefined): boolean {
-  if (!sto) return false;
-  const jab = (sto.jabatan || "").toLowerCase();
-  const div = (sto.divisi || "").toLowerCase();
-  return (
+export function getKategoriJabatanPi(
+  sto: {
+    nama?: string;
+    jabatan?: string | null;
+    divisi?: string | null;
+    roleAdsek?: string | null;
+  } | null | undefined,
+): InfoJabatanPi | null {
+  if (!sto) return null;
+
+  const jab = (sto.jabatan || "").trim().toLowerCase();
+  const div = (sto.divisi || "").trim().toLowerCase();
+  const role = (sto.roleAdsek || "").trim().toLowerCase();
+
+  // 1. Kategori Admin / Ketua Umum (Pimpinan Inti)
+  const isKetuaUmumOrAdmin =
+    role === "admin" ||
+    jab.includes("ketua umum") ||
+    jab.includes("ketum") ||
+    jab.includes("wakil ketua umum") ||
+    jab.includes("pimpinan inti") ||
+    jab.includes("admin") ||
+    jab === "ketua" ||
+    jab === "pimpinan" ||
+    ((div.includes("pengurus harian") ||
+      div.includes("pimpinan inti") ||
+      div.includes("bph") ||
+      div === "pi") &&
+      jab.includes("ketua") &&
+      !jab.includes("divisi") &&
+      !jab.includes("sie") &&
+      !jab.includes("bidang"));
+
+  if (isKetuaUmumOrAdmin) {
+    return {
+      kategori: "ketua",
+      peranWajib: PeranPanitia.ketua,
+      namaJabatan: sto.jabatan?.trim() || "Ketua Umum / Admin",
+      labelPeranWajib: "Ketua (Ketua Pelaksana / Wakil Ketua Pelaksana)",
+    };
+  }
+
+  // 2. Kategori Sekretaris Umum / Sekretaris Inti
+  const isSekumOrSekretaris =
+    role === "sekretaris_umum" ||
+    role === "sekretaris_inti" ||
     jab.includes("sekretaris umum") ||
-    div.includes("sekretaris umum") ||
     jab.includes("sekum") ||
-    div.includes("sekum")
-  );
+    jab.includes("sekretaris inti") ||
+    jab.includes("sekretaris 1") ||
+    jab.includes("sekretaris 2") ||
+    div.includes("sekretaris umum") ||
+    div.includes("sekum") ||
+    ((div.includes("pengurus harian") ||
+      div.includes("pimpinan inti") ||
+      div.includes("bph") ||
+      div === "pi" ||
+      div === "sekretaris") &&
+      jab.includes("sekretaris")) ||
+    (jab.includes("sekretaris") &&
+      !jab.includes("divisi") &&
+      !jab.includes("sie") &&
+      !jab.includes("bidang"));
+
+  if (isSekumOrSekretaris) {
+    return {
+      kategori: "sekretaris",
+      peranWajib: PeranPanitia.sekretaris,
+      namaJabatan: sto.jabatan?.trim() || "Sekretaris Umum",
+      labelPeranWajib: "Sekretaris (Sekretaris Inti / Sekretaris Pelaksana)",
+    };
+  }
+
+  // 3. Kategori Bendahara Umum / Bendahara Inti
+  const isBendumOrBendahara =
+    jab.includes("bendahara umum") ||
+    jab.includes("bendum") ||
+    jab.includes("bendahara inti") ||
+    jab.includes("bendahara 1") ||
+    jab.includes("bendahara 2") ||
+    div.includes("bendahara umum") ||
+    div.includes("bendum") ||
+    ((div.includes("pengurus harian") ||
+      div.includes("pimpinan inti") ||
+      div.includes("bph") ||
+      div === "pi" ||
+      div === "bendahara") &&
+      jab.includes("bendahara")) ||
+    (jab.includes("bendahara") &&
+      !jab.includes("divisi") &&
+      !jab.includes("sie") &&
+      !jab.includes("bidang"));
+
+  if (isBendumOrBendahara) {
+    return {
+      kategori: "bendahara",
+      peranWajib: PeranPanitia.bendahara,
+      namaJabatan: sto.jabatan?.trim() || "Bendahara Umum",
+      labelPeranWajib: "Bendahara (Bendahara Inti / Bendahara Pelaksana)",
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Memeriksa apakah STO memiliki jabatan atau akun sebagai Admin atau Sekretaris Umum (Sekum).
+ * Sesuai aturan organisasi, jabatan Admin dan Sekretaris Umum TIDAK BOLEH ditambahkan ke dalam kepanitiaan.
+ */
+export function isJabatanAdminOrSekum(
+  sto: {
+    nama?: string;
+    jabatan?: string | null;
+    divisi?: string | null;
+    roleAdsek?: string | null;
+  } | null | undefined,
+): { dilarang: boolean; pesanError?: string; namaJabatan?: string } {
+  if (!sto) return { dilarang: false };
+
+  const jab = (sto.jabatan || "").trim().toLowerCase();
+  const div = (sto.divisi || "").trim().toLowerCase();
+  const role = (sto.roleAdsek || "").trim().toLowerCase();
+
+  const isAdmin =
+    role === "admin" ||
+    jab.includes("admin") ||
+    jab.includes("administrator") ||
+    jab.includes("ketua umum") ||
+    jab.includes("ketum");
+
+  const isSekum =
+    role === "sekretaris_umum" ||
+    jab.includes("sekretaris umum") ||
+    jab.includes("sekum") ||
+    div.includes("sekretaris umum") ||
+    div.includes("sekum");
+
+  if (isAdmin || isSekum) {
+    const namaJabatan = isAdmin
+      ? sto.jabatan?.trim() || "Admin"
+      : sto.jabatan?.trim() || "Sekretaris Umum";
+    return {
+      dilarang: true,
+      namaJabatan,
+      pesanError: `Pengurus "${sto.nama || "STO"}" memiliki jabatan sebagai ${namaJabatan} dan tidak boleh ditambahkan ke dalam kepanitiaan.`,
+    };
+  }
+
+  return { dilarang: false };
+}
+
+/**
+ * Validasi kesesuaian peran panitia terhadap jabatan STO (Admin, Sekum, Bendum, PI).
+ * Menjamin:
+ * 1. Admin dan Sekretaris Umum (Sekum) TIDAK BISA ditambahkan ke kepanitiaan sama sekali.
+ * 2. PI lainnya hanya bisa ditugaskan sesuai jabatannya sendiri.
+ */
+export function validasiKesesuaianJabatanPi(
+  sto: {
+    nama?: string;
+    jabatan?: string | null;
+    divisi?: string | null;
+    roleAdsek?: string | null;
+  } | null | undefined,
+  peranAtauTeks: PeranPanitia | string | null | undefined,
+  divisiPanitia?: string | null,
+): { valid: boolean; pesanError?: string; keterangan?: string } {
+  if (!sto) return { valid: true };
+
+  // 1. Larangan mutlak: Admin dan Sekretaris Umum tidak boleh menjadi panitia
+  const larangan = isJabatanAdminOrSekum(sto);
+  if (larangan.dilarang) {
+    return {
+      valid: false,
+      keterangan: "Dilarang Masuk Panitia",
+      pesanError: larangan.pesanError,
+    };
+  }
+
+  // 2. Validasi peran untuk PI lainnya
+  const pi = getKategoriJabatanPi(sto);
+  if (!pi) return { valid: true };
+
+  let peranEnum: PeranPanitia;
+  if (
+    peranAtauTeks &&
+    Object.values(PeranPanitia).includes(peranAtauTeks as PeranPanitia)
+  ) {
+    peranEnum = peranAtauTeks as PeranPanitia;
+  } else {
+    const norm = normalisasiPeranPanitia(
+      String(peranAtauTeks || ""),
+      divisiPanitia || undefined,
+    );
+    peranEnum = norm.peran;
+  }
+
+  if (peranEnum !== pi.peranWajib) {
+    const nama = sto.nama || "Pengurus";
+    return {
+      valid: false,
+      keterangan: `Khusus ${pi.labelPeranWajib}`,
+      pesanError: `Pengurus "${nama}" menjabat sebagai ${pi.namaJabatan} dan hanya dapat ditugaskan sebagai panitia dengan peran ${pi.labelPeranWajib}.`,
+    };
+  }
+
+  return { valid: true, keterangan: `Sesuai Jabatan (${pi.namaJabatan})` };
+}
+
+export function isSekretarisUmum(
+  sto: { jabatan?: string | null; divisi?: string | null; roleAdsek?: string | null } | null | undefined,
+): boolean {
+  if (!sto) return false;
+  return getKategoriJabatanPi(sto)?.kategori === "sekretaris";
 }
 
 export function isDivisiLitbang(
@@ -433,12 +660,15 @@ export function getJenisAgendaBadge(jenis: JenisAgenda) {
   }
 }
 
-export function getTargetPesertaLabel(target: TargetPeserta) {
+export function getTargetPesertaLabel(
+  target: TargetPeserta,
+  labelKategori = "Proker",
+) {
   switch (target) {
     case TargetPeserta.hanya_pj_pi:
       return "Khusus PJ & PI";
     case TargetPeserta.semua_panitia:
-      return "Semua Panitia Proker";
+      return `Semua Panitia ${labelKategori}`;
     case TargetPeserta.semua_panitia_sto:
       return "Semua STO Satu Periode";
   }

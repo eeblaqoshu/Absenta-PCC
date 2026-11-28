@@ -1,5 +1,5 @@
 // app/(adsek)/dashboard/leaderboard/page.tsx
-// Papan poin kehadiran STO per bulan pada periode aktif (khusus kegiatan Hari H saja).
+// Papan poin kehadiran STO per bulan pada periode aktif (khusus kegiatan Hari H saja, hanya untuk role admin).
 import { requireAdsek } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hitungLeaderboard } from "@/lib/rekap-poin";
@@ -9,6 +9,7 @@ import {
 } from "@/components/dashboard/leaderboard";
 import { StatusPeriode } from "@prisma/client";
 import { Info } from "lucide-react";
+import { redirect } from "next/navigation";
 
 interface LeaderboardPageProps {
   searchParams?: Promise<{ bulan?: string }>;
@@ -17,8 +18,11 @@ interface LeaderboardPageProps {
 export default async function LeaderboardPage({
   searchParams,
 }: LeaderboardPageProps) {
-  // admin & sekum boleh melihat rekap poin.
-  await requireAdsek();
+  // Hanya role admin yang boleh melihat rekap poin / leaderboard
+  const adsek = await requireAdsek();
+  if (adsek.role !== "admin") {
+    redirect("/dashboard");
+  }
 
   const resolvedParams = searchParams ? await searchParams : {};
   const bulanParam =

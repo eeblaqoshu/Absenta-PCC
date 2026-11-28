@@ -20,7 +20,10 @@ import {
   isSekretarisUmum,
   isDivisiLitbang,
   isPeranLitbangPengawas,
+  isJabatanAdminOrSekum,
+  validasiKesesuaianJabatanPi,
   normalisasiPeranPanitia,
+  getLabelKategori,
   type BarisFormPanitia,
   type StoOption,
   type ProkerData,
@@ -44,18 +47,34 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
   } | null>(null);
 
   const isReadonly = proker.periode.status === "selesai";
-  const panitiaStoIdSet = new Set(proker.kepanitiaan.map((k) => k.sto.id));
-  const stoBelumMasuk = availableStos.filter((s) => !panitiaStoIdSet.has(s.id));
+  const labels = getLabelKategori(proker.kategori);
 
-  // Inisialisasi baris pertama form
-  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>([
-    {
-      tempId: "row-init-1",
-      stoId: "",
-      peranTeks: "Ketua Pelaksana",
-      divisiPanitia: "",
-    },
-  ]);
+  // Inisialisasi baris form: muat kepanitiaan tersimpan bila ada
+  const [barisStruktur, setBarisStruktur] = useState<BarisFormPanitia[]>(() => {
+    if (proker.kepanitiaan && proker.kepanitiaan.length > 0) {
+      return proker.kepanitiaan.map((k) => ({
+        tempId: `panitia-${k.id}`,
+        stoId: String(k.sto.id),
+        peranTeks: k.divisiPanitia || (k.peran ? String(k.peran) : "Anggota"),
+        divisiPanitia: k.sto.divisi || "Umum",
+      }));
+    }
+    return [
+      {
+        tempId: "row-init-1",
+        stoId: "",
+        peranTeks: "Ketua Pelaksana",
+        divisiPanitia: "",
+      },
+    ];
+  });
+
+  const stoIdTerpilihSet = new Set(
+    barisStruktur.map((b) => Number(b.stoId)).filter(Boolean),
+  );
+  const stoTersisa = availableStos.filter(
+    (s) => !isJabatanAdminOrSekum(s).dilarang && !stoIdTerpilihSet.has(s.id),
+  );
 
   const tambahBaris = (preset?: Partial<BarisFormPanitia>) => {
     setBarisStruktur((prev) => [
@@ -120,25 +139,29 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
       const sto = availableStos.find(
         (s) => String(s.id) === String(baris.stoId),
       );
-      if (
-        baris.peranTeks.trim().toLowerCase().includes("sekretaris inti") &&
-        isSekretarisUmum(sto)
-      ) {
-        setPesan({
-          tipe: "error",
-          teks: `Sekretaris Umum (${sto?.nama}) tidak dapat ditugaskan sebagai Sekretaris Inti pada kepanitiaan ini.`,
-        });
-        return;
-      }
-      if (
-        isDivisiLitbang(sto) &&
-        !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)
-      ) {
-        setPesan({
-          tipe: "error",
-          teks: `Pengurus dari Divisi Litbang (${sto?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
-        });
-        return;
+      if (sto) {
+        const validasiPi = validasiKesesuaianJabatanPi(
+          sto,
+          baris.peranTeks,
+          baris.divisiPanitia,
+        );
+        if (!validasiPi.valid) {
+          setPesan({
+            tipe: "error",
+            teks: validasiPi.pesanError!,
+          });
+          return;
+        }
+        if (
+          isDivisiLitbang(sto) &&
+          !isPeranLitbangPengawas(baris.peranTeks, baris.peranTeks)
+        ) {
+          setPesan({
+            tipe: "error",
+            teks: `Pengurus dari Divisi Litbang (${sto?.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
+          });
+          return;
+        }
       }
     }
 
@@ -172,7 +195,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Kembali ke Detail Proker
+          Kembali ke Detail {labels.singkat}
         </Link>
       </div>
 
@@ -181,14 +204,31 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold text-slate-muted">
-              Portal Kepanitiaan Program Kerja
+              Portal Kepanitiaan {labels.kapital}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-primary">
-            Tambah Panitia Baru
+            {proker.kepanitiaan.length > 0
+              ? "Kelola & Ubah Susunan Panitia"
+              : "Susun Kepanitiaan Baru"}
           </h1>
-          <p className="text-xs text-slate-muted mt-1">
-            {proker.nama} • Periode {proker.periode.nama}
+          <p className="text-xs text-slate-muted mt-1 flex items-center gap-2 flex-wrap">
+            <span>{proker.nama} • Periode {proker.periode.nama}</span>
+            <span className="text-slate-muted text-xs">•</span>
+            <span
+              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                labels.isAgenda
+                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  : "bg-blue-50 text-blue-700 border border-blue-200"
+              }`}
+            >
+              {labels.kategoriLabel}
+            </span>
+            {proker.kepanitiaan.length > 0 && (
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-secondary/10 text-secondary border border-secondary/20">
+                {barisStruktur.length} Panitia Terdaftar
+              </span>
+            )}
           </p>
         </div>
 
@@ -255,8 +295,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 Susun Kepanitiaan Manual
               </h3>
               <p className="text-xs text-slate-muted">
-                Pilih peran dan tunjuk pengurus STO secara manual untuk program
-                kerja ini.
+                Pilih peran dan tunjuk pengurus STO secara manual untuk {labels.lengkap} ini.
               </p>
             </div>
 
@@ -264,7 +303,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
               <button
                 type="button"
                 onClick={() => tambahBaris()}
-                disabled={stoBelumMasuk.length === 0 || isReadonly}
+                disabled={stoTersisa.length === 0 || isReadonly}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" />
@@ -310,12 +349,14 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 const stoDipilih = availableStos.find(
                   (s) => String(s.id) === String(baris.stoId),
                 );
-                const isSekumSebagaiSekretarisInti =
-                  baris.peranTeks
-                    .trim()
-                    .toLowerCase()
-                    .includes("sekretaris inti") &&
-                  isSekretarisUmum(stoDipilih);
+                const validasiPi = stoDipilih
+                  ? validasiKesesuaianJabatanPi(
+                      stoDipilih,
+                      baris.peranTeks,
+                      baris.divisiPanitia,
+                    )
+                  : { valid: true };
+                const isPiTidakSesuai = !validasiPi.valid;
                 const isLitbangBukanPengawas =
                   stoDipilih &&
                   isDivisiLitbang(stoDipilih) &&
@@ -326,7 +367,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                     key={baris.tempId}
                     className={`p-4 sm:p-5 rounded-3xl border bg-white shadow-xs transition-all ${
                       isDuplikat ||
-                      isSekumSebagaiSekretarisInti ||
+                      isPiTidakSesuai ||
                       isLitbangBukanPengawas
                         ? "border-rose-300 ring-2 ring-rose-100"
                         : "border-[#E2E8F0] hover:border-secondary/40"
@@ -369,40 +410,42 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                           <option value="">-- Pilih Pengurus STO --</option>
                           {availableStos
                             .filter((s) => {
-                              const sudahDiProker = panitiaStoIdSet.has(s.id);
+                              // Sembunyikan Admin & Sekum (dilarang masuk kepanitiaan)
+                              if (isJabatanAdminOrSekum(s).dilarang) return false;
+
+                              // Sembunyikan jika tidak sesuai dengan peran yang diketik
+                              if (baris.peranTeks.trim()) {
+                                if (
+                                  !validasiKesesuaianJabatanPi(
+                                    s,
+                                    baris.peranTeks,
+                                  ).valid
+                                ) {
+                                  return false;
+                                }
+                                if (
+                                  isDivisiLitbang(s) &&
+                                  !isPeranLitbangPengawas(
+                                    baris.peranTeks,
+                                    baris.peranTeks,
+                                  )
+                                ) {
+                                  return false;
+                                }
+                              }
+
                               const sudahDiBarisLain = selectedInOtherRows.has(
                                 s.id,
                               );
                               const isRowIni =
                                 String(s.id) === String(baris.stoId);
-                              return (
-                                (!sudahDiProker && !sudahDiBarisLain) ||
-                                isRowIni
-                              );
+                              return !sudahDiBarisLain || isRowIni;
                             })
-                            .map((s) => {
-                              const isLitbang = isDivisiLitbang(s);
-                              const disabledLitbang =
-                                isLitbang &&
-                                !isPeranLitbangPengawas(
-                                  baris.peranTeks,
-                                  baris.peranTeks,
-                                );
-                              return (
-                                <option
-                                  key={s.id}
-                                  value={s.id}
-                                  disabled={disabledLitbang}
-                                >
-                                  {s.nama}
-                                  {disabledLitbang
-                                    ? " (Divisi Litbang - Khusus Pengawas)"
-                                    : isLitbang
-                                      ? " (Divisi Litbang)"
-                                      : ""}
-                                </option>
-                              );
-                            })}
+                            .map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.nama}
+                              </option>
+                            ))}
                         </select>
                       </div>
 
@@ -441,11 +484,10 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                         Pengurus ini sudah dipilih pada baris lain.
                       </p>
                     )}
-                    {isSekumSebagaiSekretarisInti && (
+                    {isPiTidakSesuai && (
                       <p className="text-xs text-rose-600 mt-2.5 flex items-center gap-1.5 font-medium">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        Sekretaris Umum tidak dapat ditugaskan sebagai
-                        Sekretaris Inti.
+                        {validasiPi.pesanError}
                       </p>
                     )}
                     {isLitbangBukanPengawas && (
@@ -468,7 +510,7 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 <button
                   type="button"
                   onClick={() => tambahBaris()}
-                  disabled={stoBelumMasuk.length === 0 || isReadonly}
+                  disabled={stoTersisa.length === 0 || isReadonly}
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#CBD5E1] bg-white hover:bg-surface text-navy text-xs font-semibold shadow-xs transition-all cursor-pointer disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4 text-secondary" />
@@ -477,9 +519,9 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                 <span className="text-xs text-slate-muted">
                   Tersisa{" "}
                   <strong className="text-navy font-bold">
-                    {Math.max(0, stoBelumMasuk.length - barisStruktur.length)}
+                    {stoTersisa.length}
                   </strong>{" "}
-                  STO belum masuk
+                  pengurus STO yang dapat ditambahkan
                 </span>
               </div>
 
@@ -503,7 +545,9 @@ export function KelolaPanitiaPage({ proker, availableStos }: Props) {
                   ) : (
                     <CheckCircle2 className="w-4 h-4" />
                   )}
-                  Simpan Susunan Panitia
+                  {proker.kepanitiaan.length > 0
+                    ? "Simpan Perubahan Susunan Panitia"
+                    : "Simpan Susunan Panitia"}
                 </button>
               </div>
             </div>

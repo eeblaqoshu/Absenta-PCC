@@ -83,6 +83,20 @@ export default async function ProkerDetailPage({ params }: PageProps) {
     orderBy: { nama: "asc" },
   });
 
+  const adsekList = await prisma.akunAdsek.findMany({
+    select: { email: true, role: true },
+  });
+  const adsekRoleMap = new Map(
+    adsekList.map((a) => [a.email.toLowerCase(), a.role]),
+  );
+
+  const availableStosWithRole = availableStos.map((s) => ({
+    ...s,
+    roleAdsek: s.emailGoogle
+      ? adsekRoleMap.get(s.emailGoogle.toLowerCase()) || null
+      : null,
+  }));
+
   // Daftar master lokasi untuk pilihan titik presensi agenda
   const daftarLokasi = await prisma.lokasi.findMany({
     select: { id: true, nama: true, lat: true, lng: true, radiusM: true },
@@ -112,7 +126,7 @@ export default async function ProkerDetailPage({ params }: PageProps) {
             ),
           })),
         }}
-        availableStos={availableStos}
+        availableStos={availableStosWithRole}
         rekap={Object.fromEntries(rekapMap)}
         daftarLokasi={daftarLokasi.map((l) => ({
           id: l.id,

@@ -36,8 +36,10 @@ import {
   isDivisiLitbang,
   isSekretarisUmum,
   isPeranLitbangPengawas,
+  validasiKesesuaianJabatanPi,
   DETAK_MS,
   keTanggalWib,
+  getLabelKategori,
   type AgendaItem,
   type PanitiaItem,
   type StoOption,
@@ -75,6 +77,7 @@ export function ProkerDetail({
   } | null>(null);
 
   const isReadonly = proker.periode.status === StatusPeriode.selesai;
+  const labels = getLabelKategori(proker.kategori);
 
   // Snapshot waktu deterministik saat SSR & hidrasi awal, lalu diperbarui berkala di klien
   const [tabStatus, setTabStatus] =
@@ -167,6 +170,19 @@ export function ProkerDetail({
       availableStos.find((s) => s.id === selectedStoIdEdit) ||
       panitiaDiedit.sto;
 
+    const validasiPi = validasiKesesuaianJabatanPi(
+      targetSto,
+      selectedRoleKeyEdit,
+      divisiPanitiaEdit,
+    );
+    if (!validasiPi.valid) {
+      setPesan({
+        tipe: "error",
+        teks: validasiPi.pesanError!,
+      });
+      return;
+    }
+
     if (
       isDivisiLitbang(targetSto) &&
       !isPeranLitbangPengawas(selectedRoleKeyEdit, selectedRoleKeyEdit)
@@ -174,17 +190,6 @@ export function ProkerDetail({
       setPesan({
         tipe: "error",
         teks: `Pengurus dari Divisi Litbang (${targetSto.nama}) hanya dapat ditugaskan sebagai Litbang Pengawas.`,
-      });
-      return;
-    }
-
-    if (
-      selectedRoleKeyEdit.trim().toLowerCase().includes("sekretaris inti") &&
-      isSekretarisUmum(targetSto)
-    ) {
-      setPesan({
-        tipe: "error",
-        teks: `Sekretaris Umum (${targetSto.nama}) tidak dapat ditugaskan sebagai Sekretaris Inti pada kepanitiaan ini.`,
       });
       return;
     }
@@ -218,7 +223,7 @@ export function ProkerDetail({
   const handleHapusPanitia = async (kepanitiaanId: number, namaSto: string) => {
     const setuju = await konfirmasiHapus({
       judul: "Hapus dari Kepanitiaan?",
-      pesan: `Anda yakin ingin menghapus "${namaSto}" dari kepanitiaan proker ini?`,
+      pesan: `Anda yakin ingin menghapus "${namaSto}" dari kepanitiaan ${labels.lengkap} ini?`,
       tombolHapus: "Ya, Hapus Panitia",
     });
     if (!setuju) return;
@@ -265,11 +270,22 @@ export function ProkerDetail({
               className="inline-flex items-center gap-1 text-xs font-semibold text-slate-muted hover:text-secondary transition-colors whitespace-nowrap shrink-0"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Daftar Proker
+              Kembali
             </Link>
-            <span className="text-slate-muted text-xs">.</span>
-            <span className="text-xs font-semibold text-secondary">
+            <span className="text-slate-muted text-xs">•</span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-secondary">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
               {proker.periode.nama}
+            </span>
+            <span className="text-slate-muted text-xs">•</span>
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                labels.isAgenda
+                  ? "bg-purple-50 text-purple-700 border border-purple-200"
+                  : "bg-blue-50 text-blue-700 border border-blue-200"
+              }`}
+            >
+              {labels.kategoriLabel}
             </span>
           </div>
 
@@ -293,7 +309,9 @@ export function ProkerDetail({
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold shadow-md shadow-secondary/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
                   <Users className="w-4 h-4" />
-                  Tambah Panitia Baru
+                  {proker.kepanitiaan.length > 0
+                    ? "Edit Susunan Panitia"
+                    : "Tambah Panitia Baru"}
                 </Link>
               ) : (
                 <Link
@@ -404,6 +422,7 @@ export function ProkerDetail({
       <ModalEditPanitia
         isOpen={modalEditPanitiaBuka}
         panitiaDiedit={panitiaDiedit}
+        kategori={proker.kategori}
         availableStos={availableStos}
         existingPanitiaStoIds={new Set(proker.kepanitiaan.map((k) => k.sto.id))}
         selectedStoIdEdit={selectedStoIdEdit}

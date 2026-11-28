@@ -11,14 +11,20 @@ import { Loader2, AlertCircle } from "lucide-react";
 import {
   DAFTAR_SARAN_PERAN,
   isDivisiLitbang,
+  isPeranLitbangPengawas,
   isSekretarisUmum,
+  isJabatanAdminOrSekum,
+  getKategoriJabatanPi,
+  validasiKesesuaianJabatanPi,
   type PanitiaItem,
   type StoOption,
 } from "./types";
+import type { KategoriProker } from "@prisma/client";
 
 interface Props {
   isOpen: boolean;
   panitiaDiedit: PanitiaItem | null;
+  kategori?: KategoriProker | "proker" | "agenda" | null;
   availableStos: StoOption[];
   existingPanitiaStoIds: Set<number>;
   selectedStoIdEdit: number;
@@ -34,6 +40,7 @@ interface Props {
 export function ModalEditPanitia({
   isOpen,
   panitiaDiedit,
+  kategori,
   availableStos,
   existingPanitiaStoIds,
   selectedStoIdEdit,
@@ -50,14 +57,20 @@ export function ModalEditPanitia({
   const stoTerpilih =
     availableStos.find((s) => s.id === selectedStoIdEdit) || panitiaDiedit.sto;
   const isLitbang = isDivisiLitbang(stoTerpilih);
-  const isSekum = isSekretarisUmum(stoTerpilih);
+  const laranganAdsek = isJabatanAdminOrSekum(stoTerpilih);
+  const pi = getKategoriJabatanPi(stoTerpilih);
+  const validasiPiEdit = validasiKesesuaianJabatanPi(
+    stoTerpilih,
+    selectedRoleKeyEdit,
+    divisiPanitiaEdit,
+  );
 
   return (
     <Modal onClose={onClose} ariaLabel="Ubah Panitia" size="md">
       <form onSubmit={onSubmit} className="flex min-h-0 flex-1 flex-col">
         <ModalHeader
           title="Ubah Anggota & Peran Panitia"
-          description="Sesuaikan pengurus STO atau peran kepanitiaan pada program kerja ini."
+          description={`Sesuaikan pengurus STO atau peran kepanitiaan pada ${kategori === "agenda" ? "agenda" : "program kerja"} ini.`}
           onClose={onClose}
         />
         <ModalBody>
@@ -86,11 +99,37 @@ export function ModalEditPanitia({
 
                 {/* STO lain yang belum masuk dalam kepanitiaan proker ini */}
                 {availableStos
-                  .filter(
-                    (s) =>
+                  .filter((s) => {
+                    // Sembunyikan Admin & Sekum
+                    if (isJabatanAdminOrSekum(s).dilarang) return false;
+
+                    // Sembunyikan yang tidak cocok dengan selectedRoleKeyEdit
+                    if (selectedRoleKeyEdit.trim()) {
+                      if (
+                        !validasiKesesuaianJabatanPi(
+                          s,
+                          selectedRoleKeyEdit,
+                          divisiPanitiaEdit,
+                        ).valid
+                      ) {
+                        return false;
+                      }
+                      if (
+                        isDivisiLitbang(s) &&
+                        !isPeranLitbangPengawas(
+                          selectedRoleKeyEdit,
+                          selectedRoleKeyEdit,
+                        )
+                      ) {
+                        return false;
+                      }
+                    }
+
+                    return (
                       s.id !== panitiaDiedit.sto.id &&
-                      !existingPanitiaStoIds.has(s.id),
-                  )
+                      !existingPanitiaStoIds.has(s.id)
+                    );
+                  })
                   .map((sto) => (
                     <option key={sto.id} value={sto.id}>
                       {sto.nama}
@@ -112,16 +151,38 @@ export function ModalEditPanitia({
               </div>
             )}
 
-            {/* Peringatan Sekretaris Umum */}
-            {isSekum && (
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+            {/* Peringatan Larangan Masuk Kepanitiaan (Admin & Sekum) */}
+            {laranganAdsek.dilarang ? (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
                 <div>
-                  <span className="font-bold">Pengurus Sekretaris Umum:</span>{" "}
-                  Sekretaris Umum tidak dapat ditugaskan sebagai{" "}
-                  <strong>Sekretaris Inti</strong>.
+                  <span className="font-bold">Dilarang Masuk Kepanitiaan:</span>{" "}
+                  {laranganAdsek.pesanError}
                 </div>
               </div>
+            ) : (
+              <>
+                {/* Info Pengurus Inti */}
+                {pi && (
+                  <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-blue-600 mt-0.5" />
+                    <div>
+                      <span className="font-bold">Pengurus Inti ({pi.namaJabatan}):</span>{" "}
+                      Sesuai struktur organisasi, pengurus dengan jabatan {pi.namaJabatan} hanya dapat ditugaskan dengan peran <strong>{pi.labelPeranWajib}</strong>.
+                    </div>
+                  </div>
+                )}
+
+                {/* Peringatan Ketidaksesuaian Peran PI */}
+                {!validasiPiEdit.valid && (
+                  <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                    <div>
+                      <span className="font-bold">Peran Tidak Sesuai:</span> {validasiPiEdit.pesanError}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Pilihan Peran / Posisi Panitia */}
@@ -169,7 +230,7 @@ export function ModalEditPanitia({
           </button>
           <button
             type="submit"
-            disabled={isPending}
+            disabled={isPending || !validasiPiEdit.valid}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary hover:bg-primary text-white text-xs font-semibold disabled:opacity-60 shadow-md shadow-secondary/25 cursor-pointer"
           >
             {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
