@@ -72,7 +72,7 @@ export default async function AdsekDashboardPage() {
         if (rekapPoin) {
           periodeNamaRekap = rekapPoin.periodeNama;
           bulanLabelRekap = rekapPoin.bulanAktifLabel;
-          topPoin = rekapPoin.baris.slice(0, 3);
+          topPoin = rekapPoin.baris.slice(0, 5);
         }
       }
     }
@@ -288,13 +288,35 @@ export default async function AdsekDashboardPage() {
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </Link>
+
+                  {/* Leaderboard Card untuk mengisi posisi kosong pada grid 3x2 */}
+                  <Link
+                    href="/dashboard/leaderboard"
+                    className="p-5 rounded-3xl bg-white border border-[#E2E8F0] hover:border-secondary transition-all shadow-sm hover:shadow-md group flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-11 h-11 rounded-2xl bg-highlight/15 text-[#B45309] flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                        <Trophy className="w-5 h-5 text-[#B45309]" />
+                      </div>
+                      <h4 className="text-sm font-bold text-navy group-hover:text-secondary transition-colors">
+                        Leaderboard Kehadiran
+                      </h4>
+                      <p className="text-xs text-slate-muted mt-1">
+                        Pantau perolehan poin dan peringkat kehadiran pengurus STO per bulan.
+                      </p>
+                    </div>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-secondary">
+                      Buka Leaderboard{" "}
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </Link>
                 </>
               )}
             </div>
           </div>
         </div>
 
-        {/* Khusus Admin: Card Top 3 Poin Kehadiran */}
+        {/* Khusus Admin: Card Top 5 Poin Kehadiran */}
         {isAdmin && (
           <aside className="lg:col-span-4">
             <div className="flex h-full flex-col rounded-3xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
@@ -303,7 +325,7 @@ export default async function AdsekDashboardPage() {
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-highlight/15">
                     <Trophy className="h-4 w-4 text-[#B45309]" />
                   </span>
-                  Top 3 Poin Kehadiran
+                  Top 5 Poin Kehadiran
                 </h3>
                 <p className="mt-1 text-xs text-slate-muted">
                   {periodeNamaRekap
@@ -322,11 +344,13 @@ export default async function AdsekDashboardPage() {
                     const gayaPeringkat =
                       [
                         "border-highlight/50 bg-highlight/10",
-                        "border-[#E2E8F0] bg-white",
+                        "border-[#CBD5E1] bg-slate-50/50",
                         "border-accent/30 bg-accent/10",
+                        "border-[#E2E8F0] bg-white",
+                        "border-[#E2E8F0] bg-white",
                       ][b.peringkat - 1] ?? "border-[#E2E8F0] bg-white";
                     const warnaMedali =
-                      ["bg-highlight/25", "bg-surface", "bg-accent/20"][
+                      ["bg-highlight/25", "bg-surface", "bg-accent/20", "bg-surface", "bg-surface"][
                         b.peringkat - 1
                       ] ?? "bg-surface";
 
@@ -336,9 +360,9 @@ export default async function AdsekDashboardPage() {
                         className={`flex items-center gap-3 rounded-2xl border p-3 ${gayaPeringkat}`}
                       >
                         <div
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${warnaMedali}`}
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold text-navy ${warnaMedali}`}
                         >
-                          {["🥇", "🥈", "🥉"][b.peringkat - 1] ??
+                          {["🥇", "🥈", "🥉", "4", "5"][b.peringkat - 1] ??
                             `#${b.peringkat}`}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -358,7 +382,9 @@ export default async function AdsekDashboardPage() {
                               ? "bg-highlight/20 text-[#B45309]"
                               : b.peringkat === 2
                                 ? "bg-surface text-navy"
-                                : "bg-surface text-slate-muted"
+                                : b.peringkat === 3
+                                  ? "bg-accent/20 text-secondary"
+                                  : "bg-surface text-slate-muted"
                           }`}
                         >
                           {b.poin} poin
