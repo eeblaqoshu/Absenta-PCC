@@ -164,7 +164,21 @@ export async function POST(req: NextRequest) {
         });
       }
     } else {
-      // 3. Cek STO pada periode aktif
+      // 3. Validasi domain: Login STO wajib menggunakan akun Google resmi kampus @mhs.polines.ac.id
+      if (!email.endsWith("@mhs.polines.ac.id")) {
+        return NextResponse.json(
+          {
+            error: {
+              kode: "DOMAIN_TIDAK_VALID",
+              pesan:
+                "Login STO wajib menggunakan email resmi kampus Polines (@mhs.polines.ac.id).",
+            },
+          },
+          { status: 403 },
+        );
+      }
+
+      // 4. Cek STO pada periode aktif
       const periodeAktif = await prisma.periode.findFirst({
         where: { status: StatusPeriode.aktif },
       });
