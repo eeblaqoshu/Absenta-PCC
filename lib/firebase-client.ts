@@ -41,3 +41,48 @@ googleProvider.setCustomParameters({
   hd: "mhs.polines.ac.id",
   prompt: "select_account",
 });
+
+/**
+ * Mendaftarkan akun baru di Firebase Auth langsung dari peramban (client-side)
+ * menggunakan instance Firebase App terpisah tanpa mengubah status login admin saat ini.
+ * Ini memastikan pembuatan akun selalu berhasil meskipun server hosting memblokir koneksi keluar ke Google.
+ */
+export async function daftarkanUserDariKlien(
+  email: string,
+  password: string,
+): Promise<{ uid: string | null; error?: string }> {
+  if (typeof window === "undefined") {
+    return { uid: null, error: "Hanya dapat dipanggil di browser." };
+  }
+
+  const { initializeApp, deleteApp } = await import("firebase/app");
+  const { getAuth, createUserWithEmailAndPassword } = await import(
+    "firebase/auth"
+  );
+
+  const tempAppName = `AdsekCreator_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const tempApp = initializeApp(firebaseConfig, tempAppName);
+
+  try {
+    const tempAuth = getAuth(tempApp);
+    const cred = await createUserWithEmailAndPassword(tempAuth, email, password);
+    return { uid: cred.user.uid };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("auth/email-already-in-use")) {
+      return { uid: null }; // Email sudah terdaftar di Firebase Auth
+    }
+    return { uid: null, error: msg };
+  } finally {
+    await deleteApp(tempApp).catch(() => {});
+  }
+}
+
+/**
+ * Mengirim email tautan pemulihan / reset kata sandi resmi dari Firebase ke email pengguna.
+ */
+export async function kirimEmailResetPassword(email: string): Promise<void> {
+  const { sendPasswordResetEmail } = await import("firebase/auth");
+  const auth = getClientAuth();
+  await sendPasswordResetEmail(auth, email);
+}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { RoleAdsek } from "@prisma/client";
 import { ubahAdsekAction } from "@/lib/actions/adsek";
+import { kirimEmailResetPassword } from "@/lib/firebase-client";
 import {
   User,
   Mail,
@@ -38,6 +39,37 @@ export function FormEditAdsek({ initialData }: Props) {
   const [role, setRole] = useState<RoleAdsek>(initialData.role);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSendingReset, setIsSendingReset] = useState(false);
+
+  async function handleKirimResetEmail() {
+    if (!email.trim()) return;
+    setIsSendingReset(true);
+    try {
+      await kirimEmailResetPassword(email.trim());
+      await Swal.fire({
+        icon: "success",
+        title: "Tautan Terkirim!",
+        text: `Email instruksi atur ulang kata sandi telah dikirim ke ${email}.`,
+        confirmButtonColor: "#0284C7",
+        customClass: {
+          popup: "rounded-2xl font-sans shadow-2xl border border-[#E2E8F0]",
+        },
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal Mengirim Email",
+        text: msg || "Terjadi kesalahan saat meminta reset password.",
+        confirmButtonColor: "#EF4444",
+        customClass: {
+          popup: "rounded-2xl font-sans shadow-2xl border border-[#E2E8F0]",
+        },
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -161,8 +193,21 @@ export function FormEditAdsek({ initialData }: Props) {
           </button>
         </div>
         <p className="text-[11px] text-slate-muted">
-          Isi kolom ini hanya jika Anda ingin mereset kata sandi akun tersebut.
+          Isi kolom ini jika Anda ingin mengganti kata sandi akun tersebut secara langsung.
         </p>
+        <div className="pt-0.5">
+          <button
+            type="button"
+            disabled={isSendingReset}
+            onClick={handleKirimResetEmail}
+            className="text-[11px] font-semibold text-secondary hover:underline inline-flex items-center gap-1 cursor-pointer disabled:opacity-60"
+          >
+            <Mail className="w-3 h-3" />
+            {isSendingReset
+              ? "Mengirim instruksi reset..."
+              : "Kirim Tautan Atur Ulang Sandi ke Email Pengguna"}
+          </button>
+        </div>
       </div>
 
       {/* Pilihan Peran / Jabatan */}
